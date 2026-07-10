@@ -6,14 +6,15 @@ import { withTenant } from "../db/with-tenant";
 import { createSession, revokeSession } from "../repositories/session.repository";
 import { findActiveTenantBySlug } from "../repositories/tenant.repository";
 import { findUserByCpfHash, registerFailedLogin, registerSuccessfulLogin } from "../repositories/user.repository";
+import { authConfig, SESSION_MAX_AGE_SECONDS } from "./edge-config";
 
-// Duracao de sessao (JWT + linha em `Session`, ADR-007). 12h cobre um turno
-// de trabalho sem forcar novo login no meio do expediente.
-export const SESSION_MAX_AGE_SECONDS = 12 * 60 * 60;
+// Config completa (Node-only) — usada pelo route handler e por Server
+// Components/Actions, nunca pelo middleware (ver edge-config.ts). Reexporta
+// SESSION_MAX_AGE_SECONDS so' para nao quebrar quem ja importava daqui.
+export { SESSION_MAX_AGE_SECONDS };
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  session: { strategy: "jwt", maxAge: SESSION_MAX_AGE_SECONDS },
-  pages: { signIn: "/login" },
+  ...authConfig,
   providers: [
     Credentials({
       credentials: {
@@ -62,24 +63,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user?.id) {
-        token.userId = user.id;
-        token.tenantId = user.tenantId;
-        token.role = user.role;
-        token.sessionId = user.sessionId;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      session.user.id = token.userId;
-      session.user.tenantId = token.tenantId;
-      session.user.role = token.role;
-      session.user.sessionId = token.sessionId;
-      return session;
-    },
-  },
   events: {
     // Revoga a linha em `Session` no logout — o que torna "logout invalida
     // de verdade" (LGPD/ADR-006) real, nao so' o cookie sendo limpo no

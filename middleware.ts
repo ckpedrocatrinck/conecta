@@ -1,5 +1,12 @@
+import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
-import { auth } from "./src/lib/auth/config";
+import { authConfig } from "./src/lib/auth/edge-config";
+
+// Usa SO' a config edge-safe (sem providers) — importar ./src/lib/auth/config
+// aqui puxaria o Credentials provider (hashCpf/withTenant), que dependem de
+// node:crypto e conexao Postgres direta, nenhum edge-compativel. Ver
+// edge-config.ts.
+const { auth } = NextAuth(authConfig);
 
 // Guard rapido, edge-safe (so' decodifica o JWT do cookie, sem tocar banco):
 // exige sessao para qualquer rota fora da lista publica, e um papel admin
