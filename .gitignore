@@ -37,6 +37,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# storage mock local (INC-003) — arquivos de usuario nunca versionados
+/.local-media/
+
 # editor vault config (local, não faz parte do vault versionado)
 /.obsidian/
 

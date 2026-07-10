@@ -18,6 +18,8 @@
 
 > **Nota de versão (INC-002):** Prisma fixado em **6.x**, não a v7 (instalada por padrão em jul/2026). A v7 remove `datasource.url` do `schema.prisma` em favor de `prisma.config.ts` + driver adapters — paradigma não validado e incompatível de cara com o desenho de RLS do INC-002 (duas roles Postgres — owner para migrate/seed, `conecta_app` para runtime — cada uma com uma connection string diferente via override no client). Reavaliar a migração para Prisma 7 num INC dedicado, não de passagem em outro INC.
 
+> **Nota de versão (INC-003):** `next-auth` (Auth.js) fixado em **`5.0.0-beta.31`** (versão exata, sem `^`) — não existe release estável da v5 ainda (`latest` do pacote aponta para a v4, sem o helper `auth()`/App Router de primeira classe que o INC-003 usa). Fixado exato, não com `^`, porque é software beta: um patch de beta pode trazer breaking change sem seguir semver estrito. Reavaliar o pin quando a v5 estabilizar (ou o Credentials provider passar a suportar sessão "database strategy" — ver ADR-007).
+
 ## Infraestrutura
 
 | Item | Escolha |
