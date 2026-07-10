@@ -1,6 +1,6 @@
 # INC-002 — Schema, migrations e multi-tenancy
 
-**Status:** ✅ Implementado (aguardando revisão/merge)
+**Status:** ✅ Concluído
 **Fase:** 1
 **Depende de:** INC-001
 **ADRs relevantes:** 001, 003, 006
@@ -25,4 +25,11 @@ Banco PostgreSQL com o modelo de dados completo do MVP, RLS por tenant ativa e t
 ## Registro de conclusão
 - **Data:** 2026-07-10
 - **Branch:** `inc-002-schema-multitenancy`
-- **Ver Relatório de Entrega** na sessão de execução para decisões tomadas, passo a passo de teste manual e pendências. Merge para `main` a cargo do Pedro após revisão.
+- **Commit de merge em `main`:** `73a01a3` (fast-forward — sem commit de merge próprio)
+- **Notas técnicas:**
+  - RLS por `tenant_id` com role de runtime separada (`conecta_app`, não-superuser) da role de migração/seed — necessário porque o `POSTGRES_USER` do Docker é superuser e superuser sempre bypassa RLS, mesmo com `FORCE ROW LEVEL SECURITY`.
+  - `AnnouncementAck` imutável por trigger de banco (recusa UPDATE/DELETE/TRUNCATE independente de role/GRANT), além de o repositório nunca expor essas funções.
+  - Guarda de regressão nos testes de isolamento: falha automaticamente se uma tabela de domínio futura ficar sem RLS habilitada.
+  - Duas decisões de implementação (pin do Prisma em 6.x; unicidade do `cpf_hash` por tenant, não global) registradas em `02-Arquitetura/stack.md` e `02-Arquitetura/modelo-de-dados.md`.
+- **Pendência aberta:** CI não roda em `main` (`branches-ignore: main` no `ci.yml`, herdado do INC-001) — não há run para confirmar "CI verde na main"; só a CI da branch do INC foi validada (verde). Decisão sobre alterar esse trigger fica para revisão futura.
+- Merge para `main` a cargo do Pedro após revisão. Ver Relatório de Entrega na sessão de execução para decisões tomadas e passo a passo de teste manual.
