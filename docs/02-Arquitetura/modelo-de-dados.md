@@ -17,6 +17,8 @@ User          id, tenant_id, branch_id, role(admin|manager|employee),
               anonymized_at?,                               -- preenchido quando dados pessoais são anonimizados
               password_hash, must_change_password(bool)
 PushSubscription  id, user_id, endpoint, keys, created_at
+Session       id, tenant_id, user_id, expires_at, revoked_at?,
+              created_at                                    -- ponteiro do JWT (ADR-007)
 AuditLog      id, tenant_id, actor_user_id, action, entity, entity_id,
               metadata(jsonb), created_at                   -- ações administrativas
 ```
@@ -80,3 +82,5 @@ JobApplication id, job_opening_id, user_id, note?, created_at,
 - **`AnnouncementRead`:** grava só a **primeira** abertura por versão (não toda visualização).
 - **Autenticação:** login por CPF completo; `cpf_hash` é determinístico com pepper (busca no login sem valor em claro). `registration_code` não é credencial.
 - **Unicidade de `cpf_hash` (INC-002):** `@@unique([tenant_id, cpf_hash])`, não global. O pepper é único por aplicação (não por tenant, ver ADR-006), então a mesma pessoa cadastrada em duas empresas-cliente gera o mesmo hash — unicidade global impediria esse caso real sem ganho de segurança. Como o login localiza o usuário (dentro de um tenant só, ou globalmente entre tenants) é decisão do INC-003; o schema do INC-002 só não fecha essa porta.
+- **Resolução de tenant no login (INC-003):** o usuário seleciona a empresa (tenant) no login, junto de CPF completo + senha. A RLS força `tenant_id` conhecido antes de qualquer query em `users` (ADR-003) — não há caminho para buscar `cpf_hash` "globalmente" sem furar essa garantia no único endpoint não autenticado do sistema.
+- **`Session` (INC-003, ADR-007):** o Credentials provider do Auth.js só suporta sessão via JWT, não via "database strategy" — para cumprir a exigência de sessão revogável (LGPD/ADR-006), a tabela `Session` acima é tratada como qualquer outra tabela de domínio (tenant_id + RLS + `withTenant`) e o JWT carrega só um ponteiro (`sessionId`) para ela; revogar = marcar `revoked_at`, verificado a cada request. Ver ADR-007 para o raciocínio completo.
