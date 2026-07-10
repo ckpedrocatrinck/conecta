@@ -15,6 +15,11 @@
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
+  "overrides": {
+    "@emnapi/core": "1.11.2",
+    "@emnapi/runtime": "1.11.2",
+    "@emnapi/wasi-threads": "1.2.2"
+  },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
     "@prisma/client": "^6.19.3",
