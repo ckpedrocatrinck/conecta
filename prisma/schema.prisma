@@ -122,6 +122,7 @@ model User {
   cpfHash            String     @map("cpf_hash") @db.VarChar(64)
   birthDate          DateTime?  @map("birth_date") @db.Date
   birthdayVisible    Boolean    @default(false) @map("birthday_visible")
+  birthdayVisibleChangedAt DateTime? @map("birthday_visible_changed_at") @db.Timestamptz
   hiredAt            DateTime?  @map("hired_at") @db.Timestamptz
   photoUrl           String?    @map("photo_url")
   phone              String?
@@ -133,6 +134,7 @@ model User {
   failedLoginAttempts Int       @default(0) @map("failed_login_attempts")
   lockedUntil        DateTime?  @map("locked_until") @db.Timestamptz
   photoVisible       Boolean    @default(false) @map("photo_visible")
+  photoVisibleChangedAt DateTime? @map("photo_visible_changed_at") @db.Timestamptz
   privacyAcceptedAt  DateTime?  @map("privacy_accepted_at") @db.Timestamptz
   privacyNoticeVersion String?  @map("privacy_notice_version")
   createdAt          DateTime   @default(now()) @map("created_at") @db.Timestamptz

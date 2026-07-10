@@ -57,12 +57,29 @@ export function updatePhotoUrl(tx: Prisma.TransactionClient, userId: string, pho
   return tx.user.update({ where: { id: userId }, data: { photoUrl } });
 }
 
-export function updateConsentToggles(
+/** So' registra changed_at quando o valor de fato muda — reenviar o mesmo
+ * formulario nao deve "renovar" a data do consentimento (LGPD: registro de
+ * quando foi dado/revogado precisa refletir a mudanca real, nao o clique). */
+export async function updateConsentToggles(
   tx: Prisma.TransactionClient,
   userId: string,
-  data: { birthdayVisible?: boolean; photoVisible?: boolean },
+  data: { birthdayVisible: boolean; photoVisible: boolean },
 ) {
-  return tx.user.update({ where: { id: userId }, data });
+  const current = await tx.user.findUniqueOrThrow({
+    where: { id: userId },
+    select: { birthdayVisible: true, photoVisible: true },
+  });
+
+  const now = new Date();
+  return tx.user.update({
+    where: { id: userId },
+    data: {
+      birthdayVisible: data.birthdayVisible,
+      ...(data.birthdayVisible !== current.birthdayVisible ? { birthdayVisibleChangedAt: now } : {}),
+      photoVisible: data.photoVisible,
+      ...(data.photoVisible !== current.photoVisible ? { photoVisibleChangedAt: now } : {}),
+    },
+  });
 }
 
 export type NewEmployeeData = {
