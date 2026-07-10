@@ -17,7 +17,7 @@
 |---|---|---|---|---|
 | 001 | Setup do repositório e esqueleto | 1 | ✅ | ADRs aceitos |
 | 002 | Schema, migrations e multi-tenancy | 1 | ✅ | 001 |
-| 003 | Autenticação, papéis e cadastro (import CSV) | 1 | ⬜ | 002 |
+| 003 | Autenticação, papéis e cadastro (import CSV) | 1 | ✅ | 002 |
 | 004 | Comunicados: CRUD admin + versionamento | 2 | ⬜ | 003 |
 | 005 | Comunicados: leitura e confirmação de ciência | 2 | ⬜ | 004 |
 | 006 | Painel de pendências + visão do gestor | 2 | ⬜ | 005 |

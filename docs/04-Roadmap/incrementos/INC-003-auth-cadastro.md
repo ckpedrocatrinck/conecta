@@ -1,6 +1,6 @@
 # INC-003 — Autenticação, papéis e cadastro
 
-**Status:** 🔄 Implementado, aguardando revisão de Pedro
+**Status:** ✅ Concluído
 **Fase:** 1
 **Depende de:** INC-002
 **ADRs relevantes:** 003, 006
@@ -29,6 +29,7 @@ Login funcional por CPF + senha, papéis aplicados, e RH capaz de popular a base
 ## Relatório de Entrega — INC-003
 **Data:** 2026-07-10
 **Branch:** inc-003-auth-cadastro
+**Merge:** fast-forward para `main` em 2026-07-10, commit `3dcf123a69cd37896a4f04fb34dcd0f5346a45e5`
 
 ### O que foi implementado
 
@@ -99,8 +100,25 @@ Login funcional por CPF + senha, papéis aplicados, e RH capaz de popular a base
   recomendado pelo próprio Auth.js v5.
 - **Bug de infra de teste encontrado e corrigido:** dois arquivos de teste de
   integração chamando `ensureAppRolePassword()` no próprio `beforeAll`, rodando
-  em paralelo, colidiam (`tuple concurrently updated` no Postgres). Extraído
+  em paralelo, colidiam (`tuple concurrently updated` no Postgres, duas roles
+  de teste alterando a mesma role `conecta_app` ao mesmo tempo). Extraído
   para um `globalSetup` do vitest (roda uma vez, não por arquivo).
+- **CI quebrado no fechamento do INC, corrigido:** ao abrir a branch no GitHub
+  pela primeira vez (só existia local até então), `npm ci` falhava com o
+  lockfile fora de sincronia. Duas causas empilhadas: (1) `package-lock.json`
+  desatualizado após instalar `next-auth`/`papaparse`/componentes shadcn
+  incrementalmente — resolvido regenerando do zero (mesmo problema e mesma
+  correção do INC-002); (2) mesmo com o lockfile do zero, `npm ci` ainda
+  falhava por um conflito real de versões entre pacotes WASM opcionais do
+  Tailwind v4 (`@emnapi/core`/`@emnapi/runtime`/`@emnapi/wasi-threads`, nunca
+  de fato instalados em máquina real, mas validados pelo `npm ci` mesmo assim)
+  — resolvido fixando essas versões via `overrides` no `package.json`.
+  Verificado localmente rodando o comando exato do CI (`rm -rf node_modules
+  && npm ci`) antes de cada novo push, para não gastar mais rodadas de CI.
+- **CI não roda em `main`** (`branches-ignore: main` no workflow) — Pedro
+  confirmou manter assim: o merge para `main` foi fast-forward do mesmo
+  commit já validado verde na branch do INC, então não há nada de novo para
+  validar. Decisão registrada aqui, não alterei o workflow.
 
 ### Como testar
 
