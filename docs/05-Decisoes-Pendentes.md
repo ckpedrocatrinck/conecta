@@ -27,8 +27,11 @@
 **DP-09 — Contraste AA de `--primary`/`--action` no modo escuro.** O `design-system.md` (seção 8) pede "luminância ajustada para AA" para o verde/laranja no dark mode, mas não dá o hex resultante. O INC-003.5 implementou só os tokens neutros do escuro (fundo/superfície/texto, hex exato documentado) e reaproveitou o hex do modo claro para `--primary`/`--action` sem ajuste — dark mode "funciona" mas o contraste desses dois tokens no escuro não foi validado/ajustado. Bloqueia considerar o dark mode "pronto" (hoje é bônus, não MVP).
 **Responsável:** Pedro (Claude Design define o hex ajustado quando dark mode for priorizado).
 
-**DP-10 — Itens reais do bottom nav.** O componente `BottomNav` (INC-003.5) existe e está estilizado conforme a seção 4 do design-system, mas sem os 4–5 itens de navegação reais nem integração em nenhuma tela — o próprio design-system pede para não copiar os itens da portal legado sem revisar. Precisa de um INC de navegação (IA do app: quais telas, em que ordem, quais ícones) antes de qualquer tela usar o componente.
+**DP-10 — Itens reais do bottom nav.** O componente `BottomNav` (INC-003.5) existe e está estilizado conforme a seção 4 do design-system, mas sem os 4–5 itens de navegação reais nem integração em nenhuma tela — o próprio design-system pede para não copiar os itens da portal legado sem revisar. Precisa de um INC de navegação (IA do app: quais telas, em que ordem, quais ícones) antes de qualquer tela usar o componente. O INC-005 (leitura/ack de comunicados) navega até `/comunicados` só pelo banner de pendência e um link na home, sem integrar o `BottomNav`, exatamente por essa decisão continuar aberta.
 **Responsável:** Pedro (definir escopo do INC de navegação).
+
+**DP-11 — Comunicado arquivado com pendência de ciência aberta absolve a pendência.** `findVisibleAnnouncementIdsForUser`/`isAnnouncementVisibleToUser` (INC-004/INC-005) só consideram anúncios com `status: "published"`. Se o RH arquivar um comunicado `requires_ack` com colaboradores ainda pendentes, o item some da lista e do banner deles — a pendência é absolvida silenciosamente, sem deixar rastro de que ficou sem resposta. Aceito para o MVP (decisão de Pedro no INC-005, 2026-07-10); o painel de pendências do RH (INC-006) deveria sinalizar "arquivados com pendência não resolvida" como métrica, em vez de deixar isso invisível.
+**Responsável:** Pedro (confirmar escopo no INC-006).
 
 ---
 

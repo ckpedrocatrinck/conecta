@@ -175,3 +175,32 @@ export async function findVisibleAnnouncementIdsForUser(
 
   return published.map((a) => a.id).filter((id) => !restrictedIds.has(id) || visibleToUserBranch.has(id));
 }
+
+/**
+ * Mesma regra de `findVisibleAnnouncementIdsForUser`, mas ponto-a-ponto
+ * (O(1), sem escanear todos os anuncios do tenant) — usada para revalidar
+ * visibilidade na tela de leitura E no server action de ack. Nunca confiar
+ * so' na checagem feita ao montar a lista: sem revalidar aqui, um usuario
+ * que descubra/adivinhe o UUID de um comunicado restrito a outra filial
+ * poderia gravar um ack valido nele (contamina o registro probatorio,
+ * ADR-001).
+ */
+export async function isAnnouncementVisibleToUser(
+  tx: Prisma.TransactionClient,
+  tenantId: string,
+  userId: string,
+  announcementId: string,
+): Promise<boolean> {
+  const [user, announcement] = await Promise.all([
+    tx.user.findFirst({ where: { id: userId, tenantId }, select: { branchId: true } }),
+    tx.announcement.findFirst({ where: { id: announcementId, tenantId, status: "published" }, select: { id: true } }),
+  ]);
+  if (!user || !announcement) return false;
+
+  const audienceRows = await tx.announcementAudience.findMany({
+    where: { announcementId, tenantId },
+    select: { branchId: true },
+  });
+  if (audienceRows.length === 0) return true;
+  return audienceRows.some((a) => a.branchId === user.branchId);
+}

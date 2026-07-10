@@ -51,3 +51,27 @@ export function findAnnouncementVersionHistory(tx: Prisma.TransactionClient, ann
     orderBy: { versionNumber: "desc" },
   });
 }
+
+/**
+ * Busca uma versao EXIGINDO que ela pertenca a `announcementId` (e ao
+ * tenant) — nao ha' constraint composta no banco ligando
+ * AnnouncementVersion.announcementId a AnnouncementAck.announcementId (sao
+ * duas FKs independentes), entao esta checagem e' a unica defesa contra
+ * gravar um ack com announcementId de um comunicado e versionId de outro.
+ * Usar SEMPRE antes de gravar um AnnouncementAck a partir de um versionId
+ * vindo de fora (form/request).
+ */
+export function findAnnouncementVersionScoped(
+  tx: Prisma.TransactionClient,
+  tenantId: string,
+  announcementId: string,
+  versionId: string,
+) {
+  return tx.announcementVersion.findFirst({ where: { id: versionId, announcementId, tenantId } });
+}
+
+/** Uma query para as versoes de VARIOS anuncios — usada pela lista do
+ * colaborador para montar o estado (leitura/ack por versao) sem N+1. */
+export function findAnnouncementVersionsForAnnouncements(tx: Prisma.TransactionClient, announcementIds: string[]) {
+  return tx.announcementVersion.findMany({ where: { announcementId: { in: announcementIds } } });
+}
