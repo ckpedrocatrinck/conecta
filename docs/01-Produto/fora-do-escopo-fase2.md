@@ -4,6 +4,7 @@ Registrado para não esquecer — e para não escopo-crescer o MVP. Nada daqui e
 
 ## Fase 1.5 (logo após piloto estável)
 
+- **Anexos em comunicados** (PDF/imagem): deferido do INC-004. O RH da portal legado está acostumado a anexar imagem escaneada — avaliar no piloto se sentem falta. Exige entidade `AnnouncementAttachment` + storage (reusa a abstração do R2 do INC-003).
 - **Ouvidoria anônima**: canal com protocolo de acompanhamento (a portal legado tem; é sensível — anonimato real exige cuidado técnico e de processo; especificar direito antes).
 - **Benefícios/parceiros**: catálogo simples (categoria → parceiro → página com desconto, endereço, contato). Baixa complexidade, mas baixa dor também.
 - **Enquetes** com resultados para o RH.

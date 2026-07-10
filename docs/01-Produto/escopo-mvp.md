@@ -5,7 +5,7 @@ Referências: tese em `visao-e-tese.md`; o que ficou de fora em `fora-do-escopo-
 ## Módulo A — Núcleo: Comunicados com trilha de auditoria
 
 **A1. Criação (painel admin)**
-- Comunicado como entidade: número sequencial automático (`CI 25/2026`), título, corpo em rich text (não imagem), categoria, anexos opcionais, público-alvo (todos | filiais específicas), criticidade (informativo | requer confirmação), agendamento de publicação.
+- Comunicado como entidade: número sequencial automático (`CI 25/2026`), título, corpo em rich text (não imagem), categoria, público-alvo (todos | filiais específicas), criticidade (informativo | requer confirmação), agendamento de publicação.
 - Preview do card visual gerado por template antes de publicar.
 
 **A2. Consumo (app colaborador)**

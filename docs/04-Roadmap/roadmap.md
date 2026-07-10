@@ -19,7 +19,7 @@
 | 002 | Schema, migrations e multi-tenancy | 1 | ✅ | 001 |
 | 003 | Autenticação, papéis e cadastro (import CSV) | 1 | ✅ | 002 |
 | 003.5 | Fundação de design (tokens + componentes-base) | 1 | ✅ | 003 |
-| 004 | Comunicados: CRUD admin + versionamento | 2 | ⬜ | 003.5 |
+| 004 | Comunicados: CRUD admin + versionamento | 2 | ✅ | 003.5 |
 | 005 | Comunicados: leitura e confirmação de ciência | 2 | ⬜ | 004 |
 | 006 | Painel de pendências + visão do gestor | 2 | ⬜ | 005 |
 | 007 | Cobrança, exportação CSV e AuditLog | 2 | ⬜ | 006 |
