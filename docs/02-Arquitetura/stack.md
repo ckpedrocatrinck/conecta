@@ -16,6 +16,8 @@
 | Geração de cards | **Templates HTML/CSS renderizados** (satori/og-image ou screenshot server-side) | Custo zero por card (ADR-004) |
 | E-mail transacional | Nenhum no MVP | Colaborador não tem e-mail corporativo; reavaliar na fase 2 |
 
+> **Nota de versão (INC-002):** Prisma fixado em **6.x**, não a v7 (instalada por padrão em jul/2026). A v7 remove `datasource.url` do `schema.prisma` em favor de `prisma.config.ts` + driver adapters — paradigma não validado e incompatível de cara com o desenho de RLS do INC-002 (duas roles Postgres — owner para migrate/seed, `conecta_app` para runtime — cada uma com uma connection string diferente via override no client). Reavaliar a migração para Prisma 7 num INC dedicado, não de passagem em outro INC.
+
 ## Infraestrutura
 
 | Item | Escolha |
