@@ -130,12 +130,18 @@ model User {
   anonymizedAt       DateTime?  @map("anonymized_at") @db.Timestamptz
   passwordHash       String     @map("password_hash")
   mustChangePassword Boolean    @default(true) @map("must_change_password")
+  failedLoginAttempts Int       @default(0) @map("failed_login_attempts")
+  lockedUntil        DateTime?  @map("locked_until") @db.Timestamptz
+  photoVisible       Boolean    @default(false) @map("photo_visible")
+  privacyAcceptedAt  DateTime?  @map("privacy_accepted_at") @db.Timestamptz
+  privacyNoticeVersion String?  @map("privacy_notice_version")
   createdAt          DateTime   @default(now()) @map("created_at") @db.Timestamptz
   updatedAt          DateTime   @updatedAt @map("updated_at") @db.Timestamptz
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   branch Branch @relation(fields: [branchId], references: [id], onDelete: Restrict)
 
+  sessions                    Session[]
   pushSubscriptions           PushSubscription[]
   auditLogsAsActor            AuditLog[]
   announcementVersionsCreated AnnouncementVersion[]
@@ -167,6 +173,24 @@ model PushSubscription {
   @@unique([userId, endpoint])
   @@index([tenantId])
   @@map("push_subscriptions")
+}
+
+// Ponteiro do JWT do Auth.js (ADR-007): o Credentials provider so suporta
+// sessao via JWT, entao esta tabela e' a fonte de verdade sobre validade da
+// sessao (revoked_at/expires_at) — o JWT so carrega o id dela. Segue o mesmo
+// padrao de qualquer outra tabela de dominio (tenant_id + RLS via withTenant).
+model Session {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String    @map("tenant_id") @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, userId])
+  @@map("sessions")
 }
 
 model AuditLog {
