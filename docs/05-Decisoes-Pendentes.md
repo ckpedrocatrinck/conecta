@@ -24,6 +24,12 @@
 **DP-07 — Migração do histórico da portal legado.** Importar os ~450 comunicados legados (imagens) como arquivo morto ou começar do zero? Impacta INC-013. Proposta: começar do zero + legado guardado pelo RH fora do sistema.
 **Responsável:** Pedro + RH do piloto.
 
+**DP-09 — Contraste AA de `--primary`/`--action` no modo escuro.** O `design-system.md` (seção 8) pede "luminância ajustada para AA" para o verde/laranja no dark mode, mas não dá o hex resultante. O INC-003.5 implementou só os tokens neutros do escuro (fundo/superfície/texto, hex exato documentado) e reaproveitou o hex do modo claro para `--primary`/`--action` sem ajuste — dark mode "funciona" mas o contraste desses dois tokens no escuro não foi validado/ajustado. Bloqueia considerar o dark mode "pronto" (hoje é bônus, não MVP).
+**Responsável:** Pedro (Claude Design define o hex ajustado quando dark mode for priorizado).
+
+**DP-10 — Itens reais do bottom nav.** O componente `BottomNav` (INC-003.5) existe e está estilizado conforme a seção 4 do design-system, mas sem os 4–5 itens de navegação reais nem integração em nenhuma tela — o próprio design-system pede para não copiar os itens da portal legado sem revisar. Precisa de um INC de navegação (IA do app: quais telas, em que ordem, quais ícones) antes de qualquer tela usar o componente.
+**Responsável:** Pedro (definir escopo do INC de navegação).
+
 ---
 
 ## Situação para começar a codar
