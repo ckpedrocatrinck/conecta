@@ -12,9 +12,9 @@ export default async function LoginPage({
   const [tenants, { erro }] = await Promise.all([findActiveTenants(), searchParams]);
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center bg-zinc-50 px-6 py-16 dark:bg-black">
+    <div className="flex flex-1 flex-col items-center justify-center bg-background px-6 py-16">
       <div className="w-full max-w-sm">
-        <h1 className="mb-6 text-center text-2xl font-semibold tracking-tight text-black dark:text-zinc-50">
+        <h1 className="mb-6 text-center text-2xl font-extrabold tracking-tight text-foreground">
           Conecta
         </h1>
 
@@ -26,7 +26,7 @@ export default async function LoginPage({
               name="tenantSlug"
               required
               defaultValue=""
-              className="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
+              className="h-12 w-full min-w-0 rounded-lg border border-input bg-transparent px-3.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
             >
               <option value="" disabled>
                 Selecione sua empresa
@@ -41,12 +41,20 @@ export default async function LoginPage({
 
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="cpf">CPF</Label>
-            <Input id="cpf" name="cpf" inputMode="numeric" autoComplete="username" required placeholder="Somente números" />
+            <Input
+              id="cpf"
+              name="cpf"
+              size="lg"
+              inputMode="numeric"
+              autoComplete="username"
+              required
+              placeholder="Somente números"
+            />
           </div>
 
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="password">Senha</Label>
-            <Input id="password" name="password" type="password" autoComplete="current-password" required />
+            <Input id="password" name="password" size="lg" type="password" autoComplete="current-password" required />
           </div>
 
           {erro && (
@@ -55,7 +63,7 @@ export default async function LoginPage({
             </p>
           )}
 
-          <Button type="submit" className="mt-2">
+          <Button type="submit" size="xl" className="mt-2 w-full">
             Entrar
           </Button>
         </form>

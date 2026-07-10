@@ -19,27 +19,27 @@ export default async function TrocarSenhaPage({
   const { erro } = await searchParams;
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center bg-zinc-50 px-6 py-16 dark:bg-black">
+    <div className="flex flex-1 flex-col items-center justify-center bg-background px-6 py-16">
       <div className="w-full max-w-sm">
-        <h1 className="mb-2 text-center text-2xl font-semibold tracking-tight text-black dark:text-zinc-50">
+        <h1 className="mb-2 text-center text-2xl font-extrabold tracking-tight text-foreground">
           Troque sua senha
         </h1>
-        <p className="mb-6 text-center text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="mb-6 text-center text-sm text-muted-foreground">
           Este é o seu primeiro acesso (ou sua senha foi redefinida). Defina uma senha nova antes de continuar.
         </p>
 
         <form action={changePasswordAction} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="currentPassword">Senha atual</Label>
-            <Input id="currentPassword" name="currentPassword" type="password" autoComplete="current-password" required />
+            <Input id="currentPassword" name="currentPassword" size="lg" type="password" autoComplete="current-password" required />
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="newPassword">Nova senha</Label>
-            <Input id="newPassword" name="newPassword" type="password" autoComplete="new-password" minLength={8} required />
+            <Input id="newPassword" name="newPassword" size="lg" type="password" autoComplete="new-password" minLength={8} required />
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="confirmPassword">Confirmar nova senha</Label>
-            <Input id="confirmPassword" name="confirmPassword" type="password" autoComplete="new-password" minLength={8} required />
+            <Input id="confirmPassword" name="confirmPassword" size="lg" type="password" autoComplete="new-password" minLength={8} required />
           </div>
 
           {erro && ERROR_MESSAGES[erro] && (
@@ -48,7 +48,7 @@ export default async function TrocarSenhaPage({
             </p>
           )}
 
-          <Button type="submit" className="mt-2">
+          <Button type="submit" size="xl" className="mt-2 w-full">
             Trocar senha
           </Button>
         </form>

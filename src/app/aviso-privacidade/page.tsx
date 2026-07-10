@@ -11,18 +11,18 @@ export default async function AvisoPrivacidadePage() {
   if (session.privacyAccepted) redirect("/");
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center bg-zinc-50 px-6 py-16 dark:bg-black">
+    <div className="flex flex-1 flex-col items-center justify-center bg-background px-6 py-16">
       <div className="w-full max-w-lg">
-        <h1 className="mb-4 text-center text-xl font-semibold tracking-tight text-black dark:text-zinc-50">
+        <h1 className="mb-4 text-center text-xl font-extrabold tracking-tight text-foreground">
           {PRIVACY_NOTICE_TITLE}
         </h1>
 
-        <div className="mb-6 max-h-80 overflow-y-auto whitespace-pre-wrap rounded-lg border border-zinc-200 bg-white p-4 text-sm text-zinc-700 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
+        <div className="mb-6 max-h-80 overflow-y-auto whitespace-pre-wrap rounded-[var(--radius-card)] border border-border bg-card p-4 text-sm text-foreground">
           {PRIVACY_NOTICE_BODY}
         </div>
 
         <form action={acceptPrivacyNoticeAction}>
-          <Button type="submit" className="w-full">
+          <Button type="submit" variant="action" size="xl" className="w-full">
             Li e estou ciente
           </Button>
         </form>

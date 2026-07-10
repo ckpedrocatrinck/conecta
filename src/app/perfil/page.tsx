@@ -1,4 +1,6 @@
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { requireOnboardedSession } from "../../lib/auth/session";
@@ -30,54 +32,56 @@ export default async function PerfilPage({
   const photoViewUrl = user.photoUrl ? await mediaStorage.getViewUrl(user.photoUrl) : null;
 
   return (
-    <div className="mx-auto flex w-full max-w-lg flex-col gap-8 px-4 py-10">
-      <h1 className="text-2xl font-semibold tracking-tight text-black dark:text-zinc-50">Meus dados</h1>
+    <div className="mx-auto flex w-full max-w-lg flex-col gap-6 bg-background px-4 py-10">
+      <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Meus dados</h1>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Foto de perfil</h2>
+        <h2 className="text-sm font-semibold text-muted-foreground">Foto de perfil</h2>
         <PhotoUploader currentPhotoUrl={photoViewUrl} />
       </section>
 
-      <section className="flex flex-col gap-2 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-        <h2 className="mb-2 text-sm font-medium text-zinc-500 dark:text-zinc-400">Dados cadastrais</h2>
-        <p><span className="font-medium">Nome:</span> {user.fullName}</p>
-        <p><span className="font-medium">Matrícula:</span> {user.registrationCode}</p>
-        <p><span className="font-medium">Papel:</span> {user.role}</p>
-        {user.phone && <p><span className="font-medium">Telefone:</span> {user.phone}</p>}
-        {user.email && <p><span className="font-medium">E-mail:</span> {user.email}</p>}
-      </section>
+      <Card>
+        <h2 className="text-sm font-semibold text-muted-foreground">Dados cadastrais</h2>
+        <div className="flex flex-col gap-1 text-foreground">
+          <p><span className="font-medium">Nome:</span> {user.fullName}</p>
+          <p><span className="font-medium">Matrícula:</span> {user.registrationCode}</p>
+          <p><span className="font-medium">Papel:</span> {user.role}</p>
+          {user.phone && <p><span className="font-medium">Telefone:</span> {user.phone}</p>}
+          {user.email && <p><span className="font-medium">E-mail:</span> {user.email}</p>}
+        </div>
+      </Card>
 
-      <section>
-        <h2 className="mb-2 text-sm font-medium text-zinc-500 dark:text-zinc-400">Consentimentos</h2>
+      <Card>
+        <h2 className="text-sm font-semibold text-muted-foreground">Consentimentos</h2>
         <form action={updateConsentAction} className="flex flex-col gap-3">
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" name="birthdayVisible" defaultChecked={user.birthdayVisible} />
+          <label className="flex items-center gap-2.5 text-sm text-foreground">
+            <Checkbox name="birthdayVisible" defaultChecked={user.birthdayVisible} />
             Exibir meu aniversário para os demais colaboradores
           </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" name="photoVisible" defaultChecked={user.photoVisible} />
+          <label className="flex items-center gap-2.5 text-sm text-foreground">
+            <Checkbox name="photoVisible" defaultChecked={user.photoVisible} />
             Exibir minha foto para os demais colaboradores
           </label>
-          <Button type="submit" variant="secondary" className="self-start">
+          <Button type="submit" variant="secondary" size="lg" className="self-start">
             Salvar consentimentos
           </Button>
         </form>
-      </section>
+      </Card>
 
-      <section>
-        <h2 className="mb-2 text-sm font-medium text-zinc-500 dark:text-zinc-400">Trocar senha</h2>
+      <Card>
+        <h2 className="text-sm font-semibold text-muted-foreground">Trocar senha</h2>
         <form action={changePasswordFromProfileAction} className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="currentPassword">Senha atual</Label>
-            <Input id="currentPassword" name="currentPassword" type="password" autoComplete="current-password" required />
+            <Input id="currentPassword" name="currentPassword" size="lg" type="password" autoComplete="current-password" required />
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="newPassword">Nova senha</Label>
-            <Input id="newPassword" name="newPassword" type="password" autoComplete="new-password" minLength={8} required />
+            <Input id="newPassword" name="newPassword" size="lg" type="password" autoComplete="new-password" minLength={8} required />
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="confirmPassword">Confirmar nova senha</Label>
-            <Input id="confirmPassword" name="confirmPassword" type="password" autoComplete="new-password" minLength={8} required />
+            <Input id="confirmPassword" name="confirmPassword" size="lg" type="password" autoComplete="new-password" minLength={8} required />
           </div>
 
           {erro && PASSWORD_ERROR_MESSAGES[erro] && (
@@ -85,13 +89,13 @@ export default async function PerfilPage({
               {PASSWORD_ERROR_MESSAGES[erro]}
             </p>
           )}
-          {senha === "ok" && <p className="text-sm text-emerald-600 dark:text-emerald-400">Senha alterada com sucesso.</p>}
+          {senha === "ok" && <p className="text-sm text-success">Senha alterada com sucesso.</p>}
 
-          <Button type="submit" className="self-start">
+          <Button type="submit" size="lg" className="self-start">
             Trocar senha
           </Button>
         </form>
-      </section>
+      </Card>
     </div>
   );
 }
