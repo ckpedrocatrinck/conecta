@@ -8,6 +8,25 @@ on:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: conecta
+          POSTGRES_PASSWORD: conecta_ci
+          POSTGRES_DB: conecta_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U conecta -d conecta_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://conecta:conecta_ci@localhost:5432/conecta_test
+      APP_DB_PASSWORD: conecta_ci_app
+      APP_DATABASE_URL: postgresql://conecta_app:conecta_ci_app@localhost:5432/conecta_test
+      CPF_HASH_PEPPER: conecta_ci_pepper
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -15,6 +34,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npx prisma migrate deploy
+      - run: npx prisma db seed
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test

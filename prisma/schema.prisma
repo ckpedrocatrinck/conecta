@@ -1,0 +1,407 @@
+// Schema físico do MVP — implementa docs/02-Arquitetura/modelo-de-dados.md (INC-002).
+//
+// Convenções: model PascalCase / campo camelCase mapeados via @map/@@map para
+// tabelas e colunas snake_case (como o doc já escreve). Datas sempre em UTC
+// (@db.Timestamptz), conversão para America/Sao_Paulo só na exibição.
+//
+// Divergências deliberadas em relação ao doc (ADR-003 exige tenant_id em toda
+// tabela de domínio; o doc lista algumas tabelas de junção sem o campo):
+// 1. tenantId foi adicionado também em tabelas de junção/log que o doc não
+//    lista explicitamente (PushSubscription, AnnouncementVersion,
+//    AnnouncementAudience, AnnouncementRead, AnnouncementAck, PostPerson,
+//    PostMedia, PostReaction, JobApplication) — necessário para a policy de
+//    RLS filtrar sem precisar de join.
+// 2. Nessas mesmas tabelas de junção/log, tenantId é uma coluna indexada mas
+//    SEM relação/FK direta para Tenant (só o FK para a entidade-pai, que já
+//    referencia o tenant). Duplicar o FK direto para Tenant não traz garantia
+//    adicional de integridade (a policy RLS e a camada de acesso são a
+//    garantia real de consistência) e evitaria inflar Tenant com ~10 arrays
+//    de relação só para navegação que nunca é usada.
+// 3. Tabelas append-only/imutáveis por natureza (AuditLog, AnnouncementRead,
+//    AnnouncementAck, PostReaction, JobApplication, PushSubscription) recebem
+//    só createdAt — updatedAt não faz sentido para um registro que nunca é
+//    atualizado pela aplicação.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  admin
+  manager
+  employee
+}
+
+enum UserStatus {
+  active
+  inactive
+}
+
+enum AnnouncementCriticality {
+  info
+  requires_ack
+}
+
+enum AnnouncementStatus {
+  draft
+  scheduled
+  published
+  archived
+}
+
+enum PostType {
+  recognition
+  tenure
+  promotion
+  general
+}
+
+enum PostStatus {
+  draft
+  published
+}
+
+enum JobStatus {
+  open
+  closed
+}
+
+// ---------------------------------------------------------------------------
+// Fundação
+// ---------------------------------------------------------------------------
+
+model Tenant {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  slug      String   @unique
+  status    String   @default("active")
+  plan      String   @default("pilot")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  branches      Branch[]
+  users         User[]
+  auditLogs     AuditLog[]
+  announcements Announcement[]
+  posts         Post[]
+  jobOpenings   JobOpening[]
+
+  @@map("tenants")
+}
+
+model Branch {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  name      String
+  code      String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant                Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  users                 User[]
+  announcementAudiences AnnouncementAudience[]
+  jobOpenings           JobOpening[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@map("branches")
+}
+
+model User {
+  id                 String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId           String     @map("tenant_id") @db.Uuid
+  branchId           String     @map("branch_id") @db.Uuid
+  role               UserRole
+  fullName           String     @map("full_name")
+  registrationCode   String     @map("registration_code")
+  cpfHash            String     @map("cpf_hash") @db.VarChar(64)
+  birthDate          DateTime?  @map("birth_date") @db.Date
+  birthdayVisible    Boolean    @default(false) @map("birthday_visible")
+  hiredAt            DateTime?  @map("hired_at") @db.Timestamptz
+  photoUrl           String?    @map("photo_url")
+  phone              String?
+  email              String?
+  status             UserStatus @default(active)
+  anonymizedAt       DateTime?  @map("anonymized_at") @db.Timestamptz
+  passwordHash       String     @map("password_hash")
+  mustChangePassword Boolean    @default(true) @map("must_change_password")
+  createdAt          DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch Branch @relation(fields: [branchId], references: [id], onDelete: Restrict)
+
+  pushSubscriptions           PushSubscription[]
+  auditLogsAsActor            AuditLog[]
+  announcementVersionsCreated AnnouncementVersion[]
+  announcementsCreated        Announcement[]
+  announcementReads           AnnouncementRead[]
+  announcementAcks            AnnouncementAck[]
+  postsCreated                Post[]
+  postPeople                  PostPerson[]
+  postReactions               PostReaction[]
+  jobOpeningsCreated          JobOpening[]
+  jobApplications             JobApplication[]
+
+  @@unique([tenantId, cpfHash])
+  @@unique([tenantId, registrationCode])
+  @@index([tenantId, branchId, status])
+  @@map("users")
+}
+
+model PushSubscription {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  endpoint  String
+  keys      Json
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, endpoint])
+  @@index([tenantId])
+  @@map("push_subscriptions")
+}
+
+model AuditLog {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  actorUserId String?  @map("actor_user_id") @db.Uuid
+  action      String
+  entity      String
+  entityId    String   @map("entity_id") @db.Uuid
+  metadata    Json
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  actorUser User?  @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, entity, entityId])
+  @@map("audit_logs")
+}
+
+// ---------------------------------------------------------------------------
+// Núcleo — Comunicados
+// ---------------------------------------------------------------------------
+
+model Announcement {
+  id          String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId    String                  @map("tenant_id") @db.Uuid
+  seqNumber   Int?                    @map("seq_number")
+  year        Int
+  category    String
+  criticality AnnouncementCriticality
+  status      AnnouncementStatus      @default(draft)
+  publishAt   DateTime?               @map("publish_at") @db.Timestamptz
+  createdBy   String                  @map("created_by") @db.Uuid
+  createdAt   DateTime                @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime                @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant    Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  creator   User                   @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+  versions  AnnouncementVersion[]
+  audiences AnnouncementAudience[]
+  reads     AnnouncementRead[]
+  acks      AnnouncementAck[]
+
+  @@unique([tenantId, year, seqNumber])
+  @@index([tenantId, status])
+  @@map("announcements")
+}
+
+model AnnouncementVersion {
+  id             String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String                   @map("tenant_id") @db.Uuid
+  announcementId String                   @map("announcement_id") @db.Uuid
+  versionNumber  Int                      @map("version_number")
+  title          String
+  body           String
+  contentHash    String                   @map("content_hash") @db.VarChar(64)
+  searchVector   Unsupported("tsvector")? @map("search_vector")
+  createdBy      String                   @map("created_by") @db.Uuid
+  createdAt      DateTime                 @default(now()) @map("created_at") @db.Timestamptz
+
+  announcement Announcement       @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  creator      User               @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+  reads        AnnouncementRead[]
+  acks         AnnouncementAck[]
+
+  @@unique([announcementId, versionNumber])
+  @@index([tenantId])
+  @@map("announcement_versions")
+}
+
+model AnnouncementAudience {
+  announcementId String   @map("announcement_id") @db.Uuid
+  branchId       String   @map("branch_id") @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  announcement Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  branch       Branch       @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@id([announcementId, branchId])
+  @@index([tenantId])
+  @@map("announcement_audiences")
+}
+
+model AnnouncementRead {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  announcementId String   @map("announcement_id") @db.Uuid
+  versionId      String   @map("version_id") @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  readAt         DateTime @default(now()) @map("read_at") @db.Timestamptz
+
+  announcement Announcement        @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  version      AnnouncementVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Grava só a 1a abertura por versao (ADR-006) — a aplicacao insere com
+  // ON CONFLICT DO NOTHING; esta constraint e' o que torna isso possivel.
+  @@unique([announcementId, versionId, userId])
+  @@index([tenantId])
+  @@map("announcement_reads")
+}
+
+// AnnouncementAck e' IMUTAVEL (ADR-001 / LGPD): nenhuma funcao de update ou
+// delete existe no repositorio (src/lib/repositories/announcement-ack.ts), e
+// a migration rls_and_triggers adiciona um trigger no banco que recusa
+// UPDATE/DELETE/TRUNCATE independente de role — garantia estrutural, nao so
+// convencao de nao chamar o metodo.
+model AnnouncementAck {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId         String   @map("tenant_id") @db.Uuid
+  announcementId   String   @map("announcement_id") @db.Uuid
+  versionId        String   @map("version_id") @db.Uuid
+  userId           String   @map("user_id") @db.Uuid
+  ackedAt          DateTime @default(now()) @map("acked_at") @db.Timestamptz
+  contentHashAtAck String   @map("content_hash_at_ack") @db.VarChar(64)
+
+  announcement Announcement        @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  version      AnnouncementVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([announcementId, versionId, userId])
+  @@index([announcementId, versionId])
+  @@index([userId])
+  @@map("announcement_acks")
+}
+
+// ---------------------------------------------------------------------------
+// Engajamento — Feed
+// ---------------------------------------------------------------------------
+
+model Post {
+  id        String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String     @map("tenant_id") @db.Uuid
+  type      PostType
+  title     String
+  body      String?
+  eventDate DateTime   @map("event_date") @db.Date
+  status    PostStatus @default(draft)
+  createdBy String     @map("created_by") @db.Uuid
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant    Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  creator   User           @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+  people    PostPerson[]
+  media     PostMedia[]
+  reactions PostReaction[]
+
+  @@index([tenantId, status])
+  @@map("posts")
+}
+
+model PostPerson {
+  postId    String   @map("post_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  label     String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([postId, userId])
+  @@index([tenantId])
+  @@map("post_people")
+}
+
+model PostMedia {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  postId    String   @map("post_id") @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  mediaUrl  String   @map("media_url")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("post_media")
+}
+
+model PostReaction {
+  postId    String   @map("post_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([postId, userId])
+  @@index([tenantId])
+  @@map("post_reactions")
+}
+
+// ---------------------------------------------------------------------------
+// Vagas internas
+// ---------------------------------------------------------------------------
+
+model JobOpening {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId     String    @map("tenant_id") @db.Uuid
+  title        String
+  description  String
+  branchId     String?   @map("branch_id") @db.Uuid
+  shift        String?
+  requirements String?
+  deadline     DateTime  @db.Timestamptz
+  status       JobStatus @default(open)
+  createdBy    String    @map("created_by") @db.Uuid
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant       Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch       Branch?          @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  creator      User             @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+  applications JobApplication[]
+
+  @@index([tenantId, status])
+  @@map("job_openings")
+}
+
+model JobApplication {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  jobOpeningId String   @map("job_opening_id") @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  note         String?
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  jobOpening JobOpening @relation(fields: [jobOpeningId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([jobOpeningId, userId])
+  @@index([tenantId])
+  @@map("job_applications")
+}
