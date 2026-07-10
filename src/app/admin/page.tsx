@@ -11,6 +11,9 @@ export default function AdminHomePage() {
         <Link href="/admin/colaboradores" className="text-sm text-primary underline-offset-4 hover:underline">
           Colaboradores
         </Link>
+        <Link href="/admin/comunicados" className="text-sm text-primary underline-offset-4 hover:underline">
+          Comunicados
+        </Link>
       </nav>
     </div>
   );

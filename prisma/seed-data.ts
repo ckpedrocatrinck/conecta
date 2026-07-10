@@ -12,6 +12,14 @@ export type BuildTenantFixturesOptions = {
   userCount?: number;
   /** Evita CPFs/matriculas iguais quando varios tenants sao criados no mesmo teste. */
   cpfSeedOffset?: number;
+  /** Default true. Testes que exercitam a numeracao/sequencia de
+   * comunicados do zero (INC-004) precisam de um tenant sem nenhum
+   * announcement/seq_number pre-existente — passar false evita colisao com
+   * a sequencia de exemplo abaixo (seq 1..3) e evita que a limpeza desse
+   * teste precise desabilitar o trigger de imutabilidade de
+   * announcement_acks (menos superficie para a corrida entre arquivos de
+   * teste que rodam em paralelo e compartilham esse ALTER TABLE global). */
+  includeSampleAnnouncements?: boolean;
 };
 
 const BRANCH_NAMES = ["Filial Centro", "Filial Norte", "Filial Sul", "Filial Leste", "Filial Oeste"];
@@ -84,18 +92,20 @@ export async function buildTenantFixtures(db: PrismaClient, opts: BuildTenantFix
   const admin = users[0];
   const year = new Date().getUTCFullYear();
 
-  const announcementsData = [
-    { category: "seguranca", criticality: "requires_ack" as const, status: "published" as const, seq: 1 },
-    {
-      category: "rh",
-      criticality: "requires_ack" as const,
-      status: "published" as const,
-      seq: 2,
-      branchOnly: true,
-    },
-    { category: "aviso", criticality: "info" as const, status: "published" as const, seq: 3 },
-    { category: "rh", criticality: "info" as const, status: "draft" as const },
-  ];
+  const announcementsData = opts.includeSampleAnnouncements === false
+    ? []
+    : [
+        { category: "seguranca", criticality: "requires_ack" as const, status: "published" as const, seq: 1 },
+        {
+          category: "rh",
+          criticality: "requires_ack" as const,
+          status: "published" as const,
+          seq: 2,
+          branchOnly: true,
+        },
+        { category: "aviso", criticality: "info" as const, status: "published" as const, seq: 3 },
+        { category: "rh", criticality: "info" as const, status: "draft" as const },
+      ];
 
   const announcements = [];
   for (const a of announcementsData) {
@@ -152,6 +162,20 @@ export async function buildTenantFixtures(db: PrismaClient, opts: BuildTenantFix
     }
 
     announcements.push({ announcement, version });
+  }
+
+  // A amostra acima atribui seq_number direto (1..3), sem passar pelo
+  // contador atomico (announcement_sequences, INC-004) — sem este upsert, a
+  // PRIMEIRA publicacao real feita pelo app depois do seed colidiria com a
+  // unique constraint (tenantId, year, seqNumber), porque o contador comecaria
+  // do zero sem saber que 1..3 ja foram usados.
+  const maxSeq = Math.max(0, ...announcementsData.filter((a) => a.status === "published").map((a) => a.seq ?? 0));
+  if (maxSeq > 0) {
+    await db.announcementSequence.upsert({
+      where: { tenantId_year: { tenantId: tenant.id, year } },
+      create: { tenantId: tenant.id, year, lastNumber: maxSeq },
+      update: { lastNumber: maxSeq },
+    });
   }
 
   const postsData = [

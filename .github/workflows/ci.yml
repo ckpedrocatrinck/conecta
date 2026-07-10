@@ -27,6 +27,7 @@ jobs:
       APP_DB_PASSWORD: conecta_ci_app
       APP_DATABASE_URL: postgresql://conecta_app:conecta_ci_app@localhost:5432/conecta_test
       CPF_HASH_PEPPER: conecta_ci_pepper
+      CRON_SECRET: conecta_ci_cron_secret
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

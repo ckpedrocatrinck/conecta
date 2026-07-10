@@ -220,7 +220,7 @@ model Announcement {
   id          String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId    String                  @map("tenant_id") @db.Uuid
   seqNumber   Int?                    @map("seq_number")
-  year        Int
+  year        Int?
   category    String
   criticality AnnouncementCriticality
   status      AnnouncementStatus      @default(draft)
@@ -241,6 +241,19 @@ model Announcement {
   @@map("announcements")
 }
 
+// Contador por tenant+ano usado para atribuir seq_number de forma atomica na
+// publicacao (INC-004) — ver src/lib/repositories/announcement-sequence.repository.ts.
+// UPSERT com ON CONFLICT DO UPDATE serializa concorrentes na mesma linha, sem
+// necessidade de SELECT ... FOR UPDATE nem advisory lock.
+model AnnouncementSequence {
+  tenantId   String @map("tenant_id") @db.Uuid
+  year       Int
+  lastNumber Int    @default(0) @map("last_number")
+
+  @@id([tenantId, year])
+  @@map("announcement_sequences")
+}
+
 model AnnouncementVersion {
   id             String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId       String                   @map("tenant_id") @db.Uuid
@@ -249,6 +262,7 @@ model AnnouncementVersion {
   title          String
   body           String
   contentHash    String                   @map("content_hash") @db.VarChar(64)
+  isMaterialChange Boolean                @default(false) @map("is_material_change")
   searchVector   Unsupported("tsvector")? @map("search_vector")
   createdBy      String                   @map("created_by") @db.Uuid
   createdAt      DateTime                 @default(now()) @map("created_at") @db.Timestamptz
