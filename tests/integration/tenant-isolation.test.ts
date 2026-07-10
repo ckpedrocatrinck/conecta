@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { ensureAppRolePassword } from "../../prisma/db-admin";
 import { buildTenantFixtures } from "../../prisma/seed-data";
 import { withTenant } from "../../src/lib/db/with-tenant";
 import { createAnnouncementAck, findAnnouncementAcksByTenant } from "../../src/lib/repositories/announcement-ack.repository";
@@ -19,8 +18,10 @@ let tenantA: Awaited<ReturnType<typeof buildTenantFixtures>>;
 let tenantB: Awaited<ReturnType<typeof buildTenantFixtures>>;
 
 beforeAll(async () => {
-  await ensureAppRolePassword(ownerDb);
-
+  // Senha da role conecta_app e' garantida uma unica vez pelo globalSetup do
+  // vitest (tests/global-setup.ts) — chamar de novo aqui, em paralelo com
+  // outros arquivos de teste, causava "tuple concurrently updated" no
+  // Postgres (dois ALTER ROLE concorrentes na mesma role).
   const suffix = randomUUID().slice(0, 8);
   tenantA = await buildTenantFixtures(ownerDb, {
     name: `Isolation Test A ${suffix}`,

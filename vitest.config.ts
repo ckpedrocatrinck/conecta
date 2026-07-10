@@ -23,5 +23,6 @@ export default defineConfig({
   test: {
     environment: "node",
     env,
+    globalSetup: "./tests/global-setup.ts",
   },
 });
