@@ -30,9 +30,9 @@ export function revokeSession(tx: Prisma.TransactionClient, sessionId: string) {
  * verdade" do ADR-007, aplicada em massa). Nunca revoga a propria sessao que
  * esta fazendo a troca — senao o usuario cai do proprio fluxo de primeiro
  * acesso (troca de senha -> aviso de privacidade -> home) no meio do caminho. */
-export function revokeOtherUserSessions(tx: Prisma.TransactionClient, userId: string, exceptSessionId: string) {
+export function revokeOtherUserSessions(tx: Prisma.TransactionClient, userId: string, exceptSessionId?: string) {
   return tx.session.updateMany({
-    where: { userId, revokedAt: null, id: { not: exceptSessionId } },
+    where: { userId, revokedAt: null, ...(exceptSessionId ? { id: { not: exceptSessionId } } : {}) },
     data: { revokedAt: new Date() },
   });
 }

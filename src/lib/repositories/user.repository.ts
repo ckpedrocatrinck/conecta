@@ -64,3 +64,74 @@ export function updateConsentToggles(
 ) {
   return tx.user.update({ where: { id: userId }, data });
 }
+
+export type NewEmployeeData = {
+  tenantId: string;
+  branchId: string;
+  role: "admin" | "manager" | "employee";
+  fullName: string;
+  registrationCode: string;
+  cpfHash: string;
+  passwordHash: string;
+  birthDate?: Date;
+  hiredAt?: Date;
+  phone?: string;
+  email?: string;
+};
+
+export function createEmployee(tx: Prisma.TransactionClient, data: NewEmployeeData) {
+  return tx.user.create({
+    data: {
+      ...data,
+      status: "active",
+      mustChangePassword: true,
+    },
+  });
+}
+
+export type EmployeeProfileUpdate = {
+  branchId: string;
+  role: "admin" | "manager" | "employee";
+  fullName: string;
+  birthDate?: Date | null;
+  hiredAt?: Date | null;
+  phone?: string | null;
+  email?: string | null;
+};
+
+/** Atualiza cadastro de um colaborador ja existente — NUNCA mexe em
+ * password_hash/must_change_password/cpf_hash (decisao tecnica do INC-003,
+ * ver plano: reimport/edicao de cadastro nao pode resetar credenciais de
+ * quem ja tem conta). Redefinicao de senha e' acao explicita separada
+ * (resetEmployeePassword). */
+export function updateEmployeeProfile(
+  tx: Prisma.TransactionClient,
+  tenantId: string,
+  userId: string,
+  data: EmployeeProfileUpdate,
+) {
+  return tx.user.updateMany({ where: { id: userId, tenantId }, data });
+}
+
+export function setEmployeeStatus(
+  tx: Prisma.TransactionClient,
+  tenantId: string,
+  userId: string,
+  status: "active" | "inactive",
+) {
+  return tx.user.updateMany({ where: { id: userId, tenantId }, data: { status } });
+}
+
+/** Redefine a senha para uma nova provisoria (acao administrativa explicita,
+ * separada de updateEmployeeProfile de proposito). */
+export function resetEmployeePassword(
+  tx: Prisma.TransactionClient,
+  tenantId: string,
+  userId: string,
+  passwordHash: string,
+) {
+  return tx.user.updateMany({
+    where: { id: userId, tenantId },
+    data: { passwordHash, mustChangePassword: true, failedLoginAttempts: 0, lockedUntil: null },
+  });
+}
