@@ -1,6 +1,6 @@
 # INC-005 — Comunicados: leitura e confirmação de ciência
 
-**Status:** ⬜ Não iniciado
+**Status:** ✅ Concluído
 **Fase:** 2
 **Depende de:** INC-004
 **ADRs relevantes:** 001
@@ -22,4 +22,9 @@ Colaborador lê comunicados no celular e declara ciência com registro probatór
 - [ ] Fluxo inteiro utilizável em viewport 360px.
 
 ## Registro de conclusão
-_(preencher)_
+
+- **Data:** 2026-07-10
+- **Branch:** `inc-005-comunicados-leitura-ack`
+- **Commit de merge (fast-forward):** `361b5dfc7d9ed89bb7ad9f3f6eac75bf72bcd6c1`
+- **CI:** verde na branch antes do merge (mesmo commit foi fast-forwarded para a `main`; o workflow tem `branches-ignore: [main]` por desenho, então não roda de novo na main).
+- **Decisões registradas:** DP-11 (`docs/05-Decisoes-Pendentes.md`) — arquivar comunicado com pendência aberta absolve a pendência; aceito para o MVP, sugerido como métrica para o INC-006.
