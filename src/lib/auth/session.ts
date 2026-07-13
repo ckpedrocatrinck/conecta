@@ -8,6 +8,7 @@ import { auth } from "./config";
 export type ActiveSession = {
   tenantId: string;
   userId: string;
+  branchId: string;
   sessionId: string;
   role: UserRole;
   mustChangePassword: boolean;
@@ -37,6 +38,7 @@ export async function getActiveSession(): Promise<ActiveSession | null> {
     return {
       tenantId: token.tenantId,
       userId: user.id,
+      branchId: user.branchId,
       sessionId: token.sessionId,
       role: user.role,
       mustChangePassword: user.mustChangePassword,
@@ -67,5 +69,14 @@ export async function requireOnboardedSession(): Promise<ActiveSession> {
 export async function requireAdmin(): Promise<ActiveSession> {
   const session = await requireOnboardedSession();
   if (session.role !== "admin") redirect("/403");
+  return session;
+}
+
+/** Painel de pendencias (INC-006): admin ve todas as filiais, manager so' a
+ * propria (ver ActiveSession.branchId). Primeiro guard que aceita `manager` —
+ * ate o INC-005 esse papel nao tinha nenhuma tela propria. */
+export async function requireAdminOrManager(): Promise<ActiveSession> {
+  const session = await requireOnboardedSession();
+  if (session.role !== "admin" && session.role !== "manager") redirect("/403");
   return session;
 }

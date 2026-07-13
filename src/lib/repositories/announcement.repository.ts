@@ -149,6 +149,19 @@ export async function searchAnnouncementIds(
 }
 
 /**
+ * Comunicados `requires_ack` publicados OU arquivados de um tenant — base do
+ * painel de pendencias (INC-006). Inclui arquivados deliberadamente (DP-11):
+ * diferente de `findVisibleAnnouncementIdsForUser` (so' published, usado pela
+ * lista do colaborador), o RH precisa enxergar pendencia que ficou sem
+ * resposta e foi "absolvida" pelo arquivamento.
+ */
+export function findRequiresAckAnnouncementsForPanel(tx: Prisma.TransactionClient, tenantId: string) {
+  return tx.announcement.findMany({
+    where: { tenantId, criticality: "requires_ack", status: { in: ["published", "archived"] } },
+  });
+}
+
+/**
  * Anuncios publicados visiveis para um usuario: audiencia vazia = todos;
  * audiencia com filiais = so' quem esta numa delas. Usada pelo INC-005 (tela
  * de leitura do colaborador) — aqui so' garantimos que a regra de dados

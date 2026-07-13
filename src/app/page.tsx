@@ -34,6 +34,12 @@ export default async function Home() {
         Ver comunicados
       </Link>
 
+      {session.role !== "employee" && (
+        <Link href="/pendencias" className="text-primary underline-offset-4 hover:underline">
+          Painel de pendências
+        </Link>
+      )}
+
       <form
         action={async () => {
           "use server";

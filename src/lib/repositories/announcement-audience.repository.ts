@@ -22,3 +22,16 @@ export async function replaceAnnouncementAudience(
 export function findAnnouncementAudienceBranchIds(tx: Prisma.TransactionClient, announcementId: string) {
   return tx.announcementAudience.findMany({ where: { announcementId }, select: { branchId: true } });
 }
+
+/** Audiencia de VARIOS comunicados em 1 query — usada pelo painel de
+ * pendencias (INC-006) para nao fazer 1 query por comunicado. */
+export function findAnnouncementAudienceBranchIdsForAnnouncements(
+  tx: Prisma.TransactionClient,
+  tenantId: string,
+  announcementIds: string[],
+) {
+  return tx.announcementAudience.findMany({
+    where: { tenantId, announcementId: { in: announcementIds } },
+    select: { announcementId: true, branchId: true },
+  });
+}

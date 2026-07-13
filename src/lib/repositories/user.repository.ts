@@ -11,6 +11,16 @@ export function findUserById(tx: Prisma.TransactionClient, tenantId: string, id:
   return tx.user.findFirst({ where: { id, tenantId } });
 }
 
+/** Usuarios ATIVOS do tenant, projecao enxuta — base do denominador de
+ * pendencia (INC-006): desligados nunca entram no publico-alvo, mas seus
+ * acks historicos (tabela `AnnouncementAck`, imutavel) nao sao afetados. */
+export function findActiveUsersByTenant(tx: Prisma.TransactionClient, tenantId: string) {
+  return tx.user.findMany({
+    where: { tenantId, status: "active" },
+    select: { id: true, branchId: true, fullName: true },
+  });
+}
+
 export function findUserByCpfHash(tx: Prisma.TransactionClient, tenantId: string, cpfHash: string) {
   return tx.user.findFirst({ where: { tenantId, cpfHash } });
 }

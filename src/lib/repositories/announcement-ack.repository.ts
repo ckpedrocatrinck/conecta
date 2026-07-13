@@ -41,6 +41,18 @@ export function findAnnouncementAcksForUser(
   });
 }
 
+/** Acks de VARIOS comunicados, de TODOS os usuarios, em 1 query — base do
+ * painel de pendencias (INC-006): evita 1 query por comunicado x usuario. */
+export function findAnnouncementAcksForAnnouncements(
+  tx: Prisma.TransactionClient,
+  tenantId: string,
+  announcementIds: string[],
+) {
+  return tx.announcementAck.findMany({
+    where: { tenantId, announcementId: { in: announcementIds } },
+  });
+}
+
 // Deliberadamente NAO existe updateAnnouncementAck/deleteAnnouncementAck
 // neste arquivo — AnnouncementAck e' imutavel (ADR-001 / LGPD). O banco
 // tambem recusa a mutacao via trigger, independente da camada de acesso
