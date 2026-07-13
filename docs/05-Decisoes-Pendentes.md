@@ -44,6 +44,9 @@
 **DP-14 — Redesenho visual completo com Claude Design.** Fazer uma única passada de reformulação visual de todas as telas de uma vez, enviando print de cada tela ao Claude Design para ter contexto completo e manter consistência (em vez de retrabalhar tela a tela). Ressalva 1: é elevação do design-system Balcão, não substituição — preservar os princípios funcionais (verde como base, laranja só para ação, Figtree, mobile-first); se o Claude Design propuser abandonar esses princípios, recusar, pois servem à tese do produto, não são só estética. Ressalva 2: fazer antes do INC-013 (hardening), nunca depois — o hardening precisa testar o produto já com o visual final, senão gera retrabalho de QA. Resultado alimenta atualização de `docs/06-Design/design-system.md`. Agendado para rodar entre o INC-012 e o INC-013 (mesma janela do DP-13; considerar se dá pra fazer em conjunto).
 **Responsável:** Pedro + Claude Design.
 
+**DP-15 — Tela de admin para logo/cor do tenant.** O INC-009 adicionou `Tenant.logoUrl`/`Tenant.accentColor` ao schema, mas sem UI para editar — no piloto, configurado direto no banco. Antes da fase comercial (onboarding de novos clientes sem acesso ao banco), precisa de uma tela de admin (provavelmente super-admin, não o admin de tenant) para upload de logo + escolha da cor de destaque, com validação de contraste AA contra `--background`/`--card` (o design-system exige AA em toda combinação texto/fundo nova).
+**Responsável:** Pedro (priorizar quando o segundo cliente entrar).
+
 ---
 
 ## Situação para começar a codar

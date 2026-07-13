@@ -17,3 +17,16 @@ export function findActiveTenantBySlug(slug: string) {
     where: { slug, status: "active" },
   });
 }
+
+export type TenantBranding = { logoUrl: string | null; accentColor: string | null };
+
+/** Identidade injetada nos cards gerados (INC-009). `logoUrl` e' asset
+ * publico (nao pessoal), servido direto — nao passa pelo MediaStorage
+ * assinado usado para fotos de pessoa. */
+export async function findTenantBranding(tenantId: string): Promise<TenantBranding> {
+  const tenant = await appDb.tenant.findUnique({
+    where: { id: tenantId },
+    select: { logoUrl: true, accentColor: true },
+  });
+  return { logoUrl: tenant?.logoUrl ?? null, accentColor: tenant?.accentColor ?? null };
+}

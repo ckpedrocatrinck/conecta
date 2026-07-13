@@ -81,6 +81,14 @@ model Tenant {
   slug      String   @unique
   status    String   @default("active")
   plan      String   @default("pilot")
+  // Identidade visual injetada nos cards gerados (INC-009 / design-system §1):
+  // logo + 1 cor de destaque, nunca substitui a marca fixa do produto nem o
+  // laranja de acao. logoUrl e' um asset publico (nao pessoal/sensivel, sem
+  // LGPD envolvida) — ao contrario de User.photoUrl, nao passa pelo
+  // MediaStorage assinado. Sem UI de edicao neste INC (DP-15); piloto
+  // configura direto no banco.
+  logoUrl     String? @map("logo_url")
+  accentColor String? @map("accent_color") @db.VarChar(7)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 

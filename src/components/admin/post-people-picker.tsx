@@ -10,6 +10,10 @@ export type PickablePerson = {
   fullName: string;
   registrationCode: string;
   photoVisible: boolean;
+  /** Já resolvida com o consentimento aplicado (null quando photoVisible é
+   * false) — mesma regra de toPostPersonView, usada pelo preview de card
+   * (INC-009) para não vazar foto de quem não consente nem no rascunho. */
+  photoUrl: string | null;
 };
 
 /**
@@ -21,11 +25,29 @@ export type PickablePerson = {
 export function PostPeoplePicker({
   people,
   defaultSelectedIds = [],
+  onSelectionChange,
 }: {
   people: PickablePerson[];
   defaultSelectedIds?: string[];
+  /** Usado pelo preview de card no formulário do admin (INC-009) — não afeta
+   * o submit do form, que continua lendo os checkboxes via FormData. */
+  onSelectionChange?: (selected: PickablePerson[]) => void;
 }) {
   const [query, setQuery] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set(defaultSelectedIds));
+
+  function toggle(person: PickablePerson, checked: boolean) {
+    // Monta o proximo Set fora do updater do setState: chamar
+    // onSelectionChange (que dispara o setState do componente pai) de
+    // DENTRO do updater conta como "atualizar um componente durante a
+    // renderizacao de outro" para o React — precisa rodar so' depois, como
+    // uma chamada normal no corpo do handler.
+    const next = new Set(selectedIds);
+    if (checked) next.add(person.id);
+    else next.delete(person.id);
+    setSelectedIds(next);
+    onSelectionChange?.(people.filter((p) => next.has(p.id)));
+  }
 
   const filtered = people.filter((p) => {
     const term = query.trim().toLowerCase();
@@ -46,7 +68,12 @@ export function PostPeoplePicker({
         {filtered.length === 0 && <p className="p-2 text-sm text-muted-foreground">Ninguém encontrado.</p>}
         {filtered.map((person) => (
           <label key={person.id} className="flex items-start gap-2.5 rounded-md p-1.5 text-sm text-foreground hover:bg-muted">
-            <Checkbox name="personIds" value={person.id} defaultChecked={defaultSelectedIds.includes(person.id)} />
+            <Checkbox
+              name="personIds"
+              value={person.id}
+              checked={selectedIds.has(person.id)}
+              onCheckedChange={(checked) => toggle(person, checked === true)}
+            />
             <span className="flex flex-col">
               <span>
                 {person.fullName} <span className="text-muted-foreground">({person.registrationCode})</span>
