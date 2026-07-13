@@ -26,3 +26,15 @@ export function recordAuditLog(
     },
   });
 }
+
+/** Tela de consulta simples do admin (INC-007) — mais recentes primeiro,
+ * limitado (sem paginacao completa no MVP). Traz o nome do ator em 1 query
+ * (join via a relacao `actorUser`) em vez de N+1. */
+export function findAuditLogsForTenant(tx: Prisma.TransactionClient, tenantId: string, limit = 200) {
+  return tx.auditLog.findMany({
+    where: { tenantId },
+    include: { actorUser: { select: { fullName: true } } },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+  });
+}

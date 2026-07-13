@@ -6,7 +6,7 @@ import { withTenant } from "../../../../lib/db/with-tenant";
 import { hashPassword } from "../../../../lib/crypto/password-hash";
 import { generateProvisionalPassword } from "../../../../lib/crypto/provisional-password";
 import { findBranchById } from "../../../../lib/repositories/branch.repository";
-import { resetEmployeePassword, setEmployeeStatus, updateEmployeeProfile } from "../../../../lib/repositories/user.repository";
+import { findUserById, resetEmployeePassword, setEmployeeStatus, updateEmployeeProfile } from "../../../../lib/repositories/user.repository";
 import { recordAuditLog } from "../../../../lib/repositories/audit-log.repository";
 import { revokeOtherUserSessions } from "../../../../lib/repositories/session.repository";
 
@@ -31,6 +31,8 @@ export async function updateEmployeeAction(formData: FormData) {
     const branch = await findBranchById(tx, session.tenantId, branchId);
     if (!branch) return "filial-invalida" as const;
 
+    const before = await findUserById(tx, session.tenantId, id);
+
     await updateEmployeeProfile(tx, session.tenantId, id, {
       fullName,
       branchId,
@@ -41,12 +43,17 @@ export async function updateEmployeeAction(formData: FormData) {
       email: email || null,
     });
 
+    // Trilha de mudanca de privilegio (LGPD/auditoria) — so' grava
+    // previousRole/newRole quando o papel de fato muda, nunca dado pessoal.
+    const roleChanged = before != null && before.role !== role;
+
     await recordAuditLog(tx, {
       tenantId: session.tenantId,
       actorUserId: session.userId,
       action: "employee.update",
       entity: "User",
       entityId: id,
+      metadata: roleChanged ? { roleChanged: true, previousRole: before.role, newRole: role } : undefined,
     });
 
     return "ok" as const;

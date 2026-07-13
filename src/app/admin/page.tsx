@@ -17,6 +17,9 @@ export default function AdminHomePage() {
         <Link href="/pendencias" className="text-sm text-primary underline-offset-4 hover:underline">
           Painel de pendências
         </Link>
+        <Link href="/admin/auditoria" className="text-sm text-primary underline-offset-4 hover:underline">
+          Auditoria
+        </Link>
       </nav>
     </div>
   );

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { PendingBanner } from "@/components/ui/pending-banner";
 import { signOut } from "../lib/auth/config";
@@ -6,12 +7,14 @@ import { requireOnboardedSession } from "../lib/auth/session";
 import { withTenant } from "../lib/db/with-tenant";
 import { findUserById } from "../lib/repositories/user.repository";
 import { countPendingAcksForUser } from "../lib/announcements/list-for-user";
+import { findUnreadNotificationsForUser, markNotificationRead } from "../lib/repositories/notification.repository";
 
 export default async function Home() {
   const session = await requireOnboardedSession();
-  const { user, pendingCount } = await withTenant({ tenantId: session.tenantId }, async (tx) => ({
+  const { user, pendingCount, notifications } = await withTenant({ tenantId: session.tenantId }, async (tx) => ({
     user: await findUserById(tx, session.tenantId, session.userId),
     pendingCount: await countPendingAcksForUser(tx, session.tenantId, session.userId),
+    notifications: await findUnreadNotificationsForUser(tx, session.tenantId, session.userId),
   }));
 
   return (
@@ -28,6 +31,30 @@ export default async function Home() {
             </Link>
           }
         />
+      )}
+
+      {notifications.length > 0 && (
+        <div className="flex flex-col gap-2">
+          {notifications.map((n) => (
+            <form
+              key={n.id}
+              action={async () => {
+                "use server";
+                await withTenant({ tenantId: session.tenantId }, (tx) =>
+                  markNotificationRead(tx, session.tenantId, session.userId, n.id),
+                );
+                redirect(n.announcementId ? `/comunicados/${n.announcementId}` : "/comunicados");
+              }}
+            >
+              <button
+                type="submit"
+                className="w-full rounded-lg bg-action-subtle px-4 py-3 text-left text-sm font-medium text-foreground hover:bg-action-subtle/80"
+              >
+                {n.message}
+              </button>
+            </form>
+          ))}
+        </div>
       )}
 
       <Link href="/comunicados" className="text-primary underline-offset-4 hover:underline">

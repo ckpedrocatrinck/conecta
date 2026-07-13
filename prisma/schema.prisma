@@ -113,32 +113,32 @@ model Branch {
 }
 
 model User {
-  id                 String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId           String     @map("tenant_id") @db.Uuid
-  branchId           String     @map("branch_id") @db.Uuid
-  role               UserRole
-  fullName           String     @map("full_name")
-  registrationCode   String     @map("registration_code")
-  cpfHash            String     @map("cpf_hash") @db.VarChar(64)
-  birthDate          DateTime?  @map("birth_date") @db.Date
-  birthdayVisible    Boolean    @default(false) @map("birthday_visible")
-  birthdayVisibleChangedAt DateTime? @map("birthday_visible_changed_at") @db.Timestamptz
-  hiredAt            DateTime?  @map("hired_at") @db.Timestamptz
-  photoUrl           String?    @map("photo_url")
-  phone              String?
-  email              String?
-  status             UserStatus @default(active)
-  anonymizedAt       DateTime?  @map("anonymized_at") @db.Timestamptz
-  passwordHash       String     @map("password_hash")
-  mustChangePassword Boolean    @default(true) @map("must_change_password")
-  failedLoginAttempts Int       @default(0) @map("failed_login_attempts")
-  lockedUntil        DateTime?  @map("locked_until") @db.Timestamptz
-  photoVisible       Boolean    @default(false) @map("photo_visible")
-  photoVisibleChangedAt DateTime? @map("photo_visible_changed_at") @db.Timestamptz
-  privacyAcceptedAt  DateTime?  @map("privacy_accepted_at") @db.Timestamptz
-  privacyNoticeVersion String?  @map("privacy_notice_version")
-  createdAt          DateTime   @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt          DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+  id                       String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId                 String     @map("tenant_id") @db.Uuid
+  branchId                 String     @map("branch_id") @db.Uuid
+  role                     UserRole
+  fullName                 String     @map("full_name")
+  registrationCode         String     @map("registration_code")
+  cpfHash                  String     @map("cpf_hash") @db.VarChar(64)
+  birthDate                DateTime?  @map("birth_date") @db.Date
+  birthdayVisible          Boolean    @default(false) @map("birthday_visible")
+  birthdayVisibleChangedAt DateTime?  @map("birthday_visible_changed_at") @db.Timestamptz
+  hiredAt                  DateTime?  @map("hired_at") @db.Timestamptz
+  photoUrl                 String?    @map("photo_url")
+  phone                    String?
+  email                    String?
+  status                   UserStatus @default(active)
+  anonymizedAt             DateTime?  @map("anonymized_at") @db.Timestamptz
+  passwordHash             String     @map("password_hash")
+  mustChangePassword       Boolean    @default(true) @map("must_change_password")
+  failedLoginAttempts      Int        @default(0) @map("failed_login_attempts")
+  lockedUntil              DateTime?  @map("locked_until") @db.Timestamptz
+  photoVisible             Boolean    @default(false) @map("photo_visible")
+  photoVisibleChangedAt    DateTime?  @map("photo_visible_changed_at") @db.Timestamptz
+  privacyAcceptedAt        DateTime?  @map("privacy_accepted_at") @db.Timestamptz
+  privacyNoticeVersion     String?    @map("privacy_notice_version")
+  createdAt                DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                DateTime   @updatedAt @map("updated_at") @db.Timestamptz
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   branch Branch @relation(fields: [branchId], references: [id], onDelete: Restrict)
@@ -146,6 +146,7 @@ model User {
   sessions                    Session[]
   pushSubscriptions           PushSubscription[]
   auditLogsAsActor            AuditLog[]
+  notifications               Notification[]
   announcementVersionsCreated AnnouncementVersion[]
   announcementsCreated        Announcement[]
   announcementReads           AnnouncementRead[]
@@ -212,6 +213,29 @@ model AuditLog {
   @@map("audit_logs")
 }
 
+// Canal de entrega e' um detalhe de "como foi enviada" (string livre, nao
+// enum): INC-007 so grava "in_app"; o INC-012 adiciona um PushNotificationChannel
+// que grava "push" no mesmo historico, sem migração de schema nem mudança no
+// código de dominio que decide QUEM notificar (ver NotificationChannel em
+// src/lib/notifications/channel.ts).
+model Notification {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  type           String
+  message        String
+  announcementId String?   @map("announcement_id") @db.Uuid
+  channel        String    @default("in_app")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  readAt         DateTime? @map("read_at") @db.Timestamptz
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  announcement Announcement? @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, userId, readAt])
+  @@map("notifications")
+}
+
 // ---------------------------------------------------------------------------
 // Núcleo — Comunicados
 // ---------------------------------------------------------------------------
@@ -229,12 +253,13 @@ model Announcement {
   createdAt   DateTime                @default(now()) @map("created_at") @db.Timestamptz
   updatedAt   DateTime                @updatedAt @map("updated_at") @db.Timestamptz
 
-  tenant    Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  creator   User                   @relation(fields: [createdBy], references: [id], onDelete: Restrict)
-  versions  AnnouncementVersion[]
-  audiences AnnouncementAudience[]
-  reads     AnnouncementRead[]
-  acks      AnnouncementAck[]
+  tenant        Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  creator       User                   @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+  versions      AnnouncementVersion[]
+  audiences     AnnouncementAudience[]
+  reads         AnnouncementRead[]
+  acks          AnnouncementAck[]
+  notifications Notification[]
 
   @@unique([tenantId, year, seqNumber])
   @@index([tenantId, status])
@@ -255,17 +280,17 @@ model AnnouncementSequence {
 }
 
 model AnnouncementVersion {
-  id             String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId       String                   @map("tenant_id") @db.Uuid
-  announcementId String                   @map("announcement_id") @db.Uuid
-  versionNumber  Int                      @map("version_number")
-  title          String
-  body           String
-  contentHash    String                   @map("content_hash") @db.VarChar(64)
-  isMaterialChange Boolean                @default(false) @map("is_material_change")
-  searchVector   Unsupported("tsvector")? @map("search_vector")
-  createdBy      String                   @map("created_by") @db.Uuid
-  createdAt      DateTime                 @default(now()) @map("created_at") @db.Timestamptz
+  id               String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId         String                   @map("tenant_id") @db.Uuid
+  announcementId   String                   @map("announcement_id") @db.Uuid
+  versionNumber    Int                      @map("version_number")
+  title            String
+  body             String
+  contentHash      String                   @map("content_hash") @db.VarChar(64)
+  isMaterialChange Boolean                  @default(false) @map("is_material_change")
+  searchVector     Unsupported("tsvector")? @map("search_vector")
+  createdBy        String                   @map("created_by") @db.Uuid
+  createdAt        DateTime                 @default(now()) @map("created_at") @db.Timestamptz
 
   announcement Announcement       @relation(fields: [announcementId], references: [id], onDelete: Cascade)
   creator      User               @relation(fields: [createdBy], references: [id], onDelete: Restrict)

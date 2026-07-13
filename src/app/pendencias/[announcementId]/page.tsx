@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { requireAdminOrManager } from "../../../lib/auth/session";
 import { withTenant } from "../../../lib/db/with-tenant";
 import { getAnnouncementPendencyDetail } from "../../../lib/announcements/pending-panel";
 import { formatAnnouncementCode } from "../../../lib/announcements/publish";
 import { findBranchesByTenant } from "../../../lib/repositories/branch.repository";
 import { formatDateTimeSaoPaulo } from "../../../lib/dates/format-datetime";
+import { remindPendingAction } from "./actions";
 
 const STATUS_LABEL: Record<string, string> = {
   published: "Publicado",
@@ -17,12 +19,12 @@ export default async function PendenciaDetalhePage({
   searchParams,
 }: {
   params: Promise<{ announcementId: string }>;
-  searchParams: Promise<{ filial?: string }>;
+  searchParams: Promise<{ filial?: string; cobranca?: string }>;
 }) {
   const session = await requireAdminOrManager();
   const isManager = session.role === "manager";
   const { announcementId } = await params;
-  const { filial } = await searchParams;
+  const { filial, cobranca } = await searchParams;
 
   const { detail, branches } = await withTenant({ tenantId: session.tenantId }, async (tx) => ({
     detail: await getAnnouncementPendencyDetail(tx, session.tenantId, announcementId, {
@@ -61,6 +63,30 @@ export default async function PendenciaDetalhePage({
           </p>
         )}
       </div>
+
+      {cobranca != null && (
+        <p className="rounded-lg bg-action-subtle px-4 py-3 text-sm font-medium text-foreground">
+          {Number(cobranca) > 0
+            ? `${cobranca} colaborador${Number(cobranca) > 1 ? "es" : ""} notificado${Number(cobranca) > 1 ? "s" : ""}.`
+            : "Ninguém pendente para notificar."}
+        </p>
+      )}
+
+      {detail.pending.length > 0 && (
+        <form action={remindPendingAction}>
+          <input type="hidden" name="announcementId" value={announcementId} />
+          <Button type="submit" variant="action" className="w-full">
+            Cobrar pendentes
+          </Button>
+        </form>
+      )}
+
+      <a
+        href={`/pendencias/${announcementId}/export${filial ? `?filial=${filial}` : ""}`}
+        className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+      >
+        Exportar CSV de confirmações
+      </a>
 
       {!isManager && branches.length > 0 && (
         <div className="flex flex-wrap gap-1.5 text-sm">
