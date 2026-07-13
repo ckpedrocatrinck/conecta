@@ -13,7 +13,7 @@ Monolito Next.js App Router + TypeScript estrito + PostgreSQL/Prisma + Tailwind/
 ## Regras invioláveis
 
 1. **Você é executor, não arquiteto.** Nunca decida arquitetura, altere escopo ou "melhore" além do INC. Falta algo na doc? PARE e pergunte.
-2. Um INC por vez, na branch `inc-XXX-nome-curto`. Nunca commitar na `main`.
+2. Um INC por vez, na branch `inc-XXX-nome-curto`. Nunca commitar na `main`. Merge na `main` é sempre `--no-ff` (ver `docs/00-Processo/convencoes-git.md`).
 3. Commits: Conventional Commits com referência ao INC → `feat(INC-004): ...`
 4. INC só termina com **Relatório de Entrega** (formato em `docs/00-Processo/fluxo-de-trabalho.md`).
 5. Nunca commitar segredos. `.env` no gitignore; novidade de env vai no `.env.example` com comentário.
