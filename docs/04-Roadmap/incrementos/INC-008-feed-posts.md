@@ -1,6 +1,6 @@
 # INC-008 — Feed: posts estruturados
 
-**Status:** ⬜ Não iniciado
+**Status:** ✅ Concluído
 **Fase:** 3 — Engajamento
 **Depende de:** INC-003
 
@@ -19,4 +19,13 @@ RH publica reconhecimentos/tempo de casa/promoções como dados estruturados; co
 - [ ] Feed em 360px sem scroll horizontal.
 
 ## Registro de conclusão
-_(preencher)_
+- **Concluído em:** 2026-07-13
+- **Branch:** inc-008-feed-posts
+- **Commit de merge:** 550a7f8
+- **QA validado por Pedro:** consentimento de foto testado no navegador —
+  colaborador sem consentimento aparece só com nome; ao ligar o consentimento
+  no perfil, a foto surge no card sem reeditar o post (prova de que a checagem
+  é na renderização, não snapshot).
+- **Notas:** saneamento de histórico de migração (ADR-008) feito em branch
+  separada antes deste merge. Erro de drop de tabelas durante a implementação
+  foi detectado e revertido pelo Claude Code sem perda.
