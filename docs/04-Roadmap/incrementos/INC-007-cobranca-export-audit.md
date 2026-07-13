@@ -1,6 +1,6 @@
 # INC-007 — Cobrança, exportação CSV e AuditLog
 
-**Status:** ⬜ Não iniciado
+**Status:** ✅ Concluído
 **Fase:** 2
 **Depende de:** INC-006
 
@@ -14,9 +14,13 @@ Fechar o ciclo probatório: cobrar pendentes e exportar evidência; ações admi
 4. `AuditLog` implementado para: publicar/editar/arquivar comunicado, importar CSV, mudar papel, exportar dados; tela de consulta simples para admin.
 
 ## Critérios de aceite
-- [ ] CSV abre corretamente no Excel pt-BR (separador/encoding testados).
-- [ ] Toda ação listada gera entrada no AuditLog com actor correto.
-- [ ] Cobrança não duplica notificação para quem já confirmou entre o clique e o processamento.
+- [x] CSV abre corretamente no Excel pt-BR (separador/encoding testados) — `src/lib/csv/announcement-ack-export.ts`, `tests/integration/announcement-ack-export.test.ts`.
+- [x] Toda ação listada gera entrada no AuditLog com actor correto — `src/lib/repositories/audit-log.repository.ts`, `tests/integration/audit-log.test.ts`.
+- [x] Cobrança não duplica notificação para quem já confirmou entre o clique e o processamento — `src/lib/announcements/remind-pending.ts`, `tests/integration/remind-pending.test.ts`.
 
 ## Registro de conclusão
-_(preencher)_
+
+- **Data:** 2026-07-13 (marcação retroativa — implementação já estava mergeada em `main`, doc não tinha sido fechada)
+- **Branch:** `inc-007-cobranca-export-audit`
+- **Commit:** `857a381` (`feat(INC-007): cobranca de pendentes, export CSV e AuditLog`)
+- **CI:** cobertura via `tests/integration/announcement-ack-export.test.ts`, `tests/integration/audit-log.test.ts` e `tests/integration/remind-pending.test.ts`.

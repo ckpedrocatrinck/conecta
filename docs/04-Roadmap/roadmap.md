@@ -22,7 +22,7 @@
 | 004 | Comunicados: CRUD admin + versionamento | 2 | ✅ | 003.5 |
 | 005 | Comunicados: leitura e confirmação de ciência | 2 | ✅ | 004 |
 | 006 | Painel de pendências + visão do gestor | 2 | ✅ | 005 |
-| 007 | Cobrança, exportação CSV e AuditLog | 2 | ⬜ | 006 |
+| 007 | Cobrança, exportação CSV e AuditLog | 2 | ✅ | 006 |
 | 008 | Feed: posts estruturados (CRUD + timeline) | 3 | ✅ | 003 |
 | 008.5 | Navegação global (bottom nav + header admin) | transversal (3/4) | ✅ | 008 |
 | 009 | Templates visuais de cards | 3 | ⬜ | 008 |
