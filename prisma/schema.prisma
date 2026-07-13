@@ -105,6 +105,7 @@ model Branch {
   tenant                Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   users                 User[]
   announcementAudiences AnnouncementAudience[]
+  posts                 Post[]
   jobOpenings           JobOpening[]
 
   @@unique([tenantId, code])
@@ -374,12 +375,18 @@ model Post {
   title     String
   body      String?
   eventDate DateTime   @map("event_date") @db.Date
+  // Opcional, null = post geral (toda a empresa) — mesmo padrao de
+  // JobOpening.branchId. Nao esta em modelo-de-dados.md original do INC-002;
+  // adicionado no INC-008 porque o escopo do incremento pede "filial
+  // associada opcional" no CRUD (doc atualizada junto, ver git log).
+  branchId  String?    @map("branch_id") @db.Uuid
   status    PostStatus @default(draft)
   createdBy String     @map("created_by") @db.Uuid
   createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz
 
   tenant    Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch    Branch?        @relation(fields: [branchId], references: [id], onDelete: SetNull)
   creator   User           @relation(fields: [createdBy], references: [id], onDelete: Restrict)
   people    PostPerson[]
   media     PostMedia[]

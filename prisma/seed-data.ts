@@ -179,7 +179,7 @@ export async function buildTenantFixtures(db: PrismaClient, opts: BuildTenantFix
   }
 
   const postsData = [
-    { type: "recognition" as const, title: "Foi Show da semana" },
+    { type: "recognition" as const, title: "Foi Show da semana", branchId: branches[0].id },
     { type: "tenure" as const, title: "5 anos de casa" },
     { type: "general" as const, title: "Aviso geral do mural" },
   ];
@@ -193,6 +193,7 @@ export async function buildTenantFixtures(db: PrismaClient, opts: BuildTenantFix
         title: p.title,
         body: `${p.title} — ${tenant.name}`,
         eventDate: new Date(),
+        branchId: p.branchId,
         status: "published",
         createdBy: admin.id,
       },

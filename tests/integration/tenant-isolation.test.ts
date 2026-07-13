@@ -95,6 +95,40 @@ describe("caminho feliz — via camada de acesso (withTenant + repositorio)", ()
   });
 });
 
+describe("adversarial — query SEM filtro dentro do contexto de tenant A (prova a RLS, nao so o filtro da app) [INC-008]", () => {
+  it("postPerson.findMany() sem where ainda retorna so tenant A", async () => {
+    const rows = await withTenant({ tenantId: tenantA.tenant.id }, (tx) => tx.postPerson.findMany());
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((r) => r.tenantId === tenantA.tenant.id)).toBe(true);
+  });
+
+  it("postMedia.findMany() sem where ainda retorna so tenant A", async () => {
+    const rows = await withTenant({ tenantId: tenantA.tenant.id }, (tx) => tx.postMedia.findMany());
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((r) => r.tenantId === tenantA.tenant.id)).toBe(true);
+  });
+
+  it("postReaction.findMany() sem where ainda retorna so tenant A", async () => {
+    const rows = await withTenant({ tenantId: tenantA.tenant.id }, (tx) => tx.postReaction.findMany());
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((r) => r.tenantId === tenantA.tenant.id)).toBe(true);
+  });
+
+  it("tenant A nao consegue gravar postPerson com tenant_id de B estando no contexto de A (WITH CHECK)", async () => {
+    await expect(
+      withTenant({ tenantId: tenantA.tenant.id }, (tx) =>
+        tx.postPerson.create({
+          data: {
+            postId: tenantB.posts[0].id,
+            userId: tenantB.users[1].id,
+            tenantId: tenantB.tenant.id,
+          },
+        }),
+      ),
+    ).rejects.toThrow();
+  });
+});
+
 describe("adversarial — query SEM filtro dentro do contexto de tenant A (prova a RLS, nao so o filtro da app)", () => {
   it("users.findMany() sem where ainda retorna so tenant A", async () => {
     const users = await withTenant({ tenantId: tenantA.tenant.id }, (tx) => tx.user.findMany());
@@ -132,6 +166,14 @@ describe("adversarial — acesso direto por ID que pertence ao outro tenant", ()
     const targetId = tenantB.announcements[0].announcement.id;
     const result = await withTenant({ tenantId: tenantA.tenant.id }, (tx) =>
       findAnnouncementById(tx, tenantA.tenant.id, targetId),
+    );
+    expect(result).toBeNull();
+  });
+
+  it("tenant A nao encontra, por ID, um post_media que pertence ao tenant B [INC-008]", async () => {
+    const targetMedia = await ownerDb.postMedia.findFirstOrThrow({ where: { postId: tenantB.posts[0].id } });
+    const result = await withTenant({ tenantId: tenantA.tenant.id }, (tx) =>
+      tx.postMedia.findFirst({ where: { id: targetMedia.id } }),
     );
     expect(result).toBeNull();
   });
