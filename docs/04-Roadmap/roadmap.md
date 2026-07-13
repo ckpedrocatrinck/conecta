@@ -21,7 +21,7 @@
 | 003.5 | Fundação de design (tokens + componentes-base) | 1 | ✅ | 003 |
 | 004 | Comunicados: CRUD admin + versionamento | 2 | ✅ | 003.5 |
 | 005 | Comunicados: leitura e confirmação de ciência | 2 | ✅ | 004 |
-| 006 | Painel de pendências + visão do gestor | 2 | ⬜ | 005 |
+| 006 | Painel de pendências + visão do gestor | 2 | ✅ | 005 |
 | 007 | Cobrança, exportação CSV e AuditLog | 2 | ⬜ | 006 |
 | 008 | Feed: posts estruturados (CRUD + timeline) | 3 | ⬜ | 003 |
 | 009 | Templates visuais de cards | 3 | ⬜ | 008 |

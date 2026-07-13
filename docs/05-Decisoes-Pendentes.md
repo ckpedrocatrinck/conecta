@@ -10,6 +10,10 @@
 - **Login (contradição do kickoff).** ✅ Resolvida no **ADR-006**: login por CPF completo + senha; `cpf_hash` determinístico com pepper. "CPF parcial" eliminado do escopo.
 - **Pendências de modelagem** (User desligado / AnnouncementRead). ✅ Resolvidas no **ADR-006**.
 
+## ✅ Resolvidas em 2026-07-13
+
+- **DP-11 — Comunicado arquivado com pendência de ciência aberta absolve a pendência.** ✅ Implementado no **INC-006**: o painel de pendências (`src/lib/announcements/pending-panel.ts`, `isArchivedWithPendency`) sinaliza comunicados `requires_ack` arquivados cujo público-alvo ativo ainda não confirmou ciência — alerta destacado (vermelho) na lista e no detalhe, coberto por teste (`tests/integration/pending-panel.test.ts`). A absolvição silenciosa continua existindo para o colaborador (decisão aceita para o MVP), mas deixou de ser invisível para o RH.
+
 ## Ainda abertas — não bloqueiam o início do desenvolvimento
 
 **DP-02 — Nome do produto.** "Conecta" é placeholder. Impacta domínio, repo, manifest do PWA e marca. Verificar disponibilidade no INPI antes de fixar. Pode rodar INC-001 com o placeholder e renomear depois (custo baixo se decidido cedo).
@@ -30,8 +34,8 @@
 **DP-10 — Itens reais do bottom nav.** O componente `BottomNav` (INC-003.5) existe e está estilizado conforme a seção 4 do design-system, mas sem os 4–5 itens de navegação reais nem integração em nenhuma tela — o próprio design-system pede para não copiar os itens da portal legado sem revisar. Precisa de um INC de navegação (IA do app: quais telas, em que ordem, quais ícones) antes de qualquer tela usar o componente. O INC-005 (leitura/ack de comunicados) navega até `/comunicados` só pelo banner de pendência e um link na home, sem integrar o `BottomNav`, exatamente por essa decisão continuar aberta.
 **Responsável:** Pedro (definir escopo do INC de navegação).
 
-**DP-11 — Comunicado arquivado com pendência de ciência aberta absolve a pendência.** `findVisibleAnnouncementIdsForUser`/`isAnnouncementVisibleToUser` (INC-004/INC-005) só consideram anúncios com `status: "published"`. Se o RH arquivar um comunicado `requires_ack` com colaboradores ainda pendentes, o item some da lista e do banner deles — a pendência é absolvida silenciosamente, sem deixar rastro de que ficou sem resposta. Aceito para o MVP (decisão de Pedro no INC-005, 2026-07-10); o painel de pendências do RH (INC-006) deveria sinalizar "arquivados com pendência não resolvida" como métrica, em vez de deixar isso invisível.
-**Responsável:** Pedro (confirmar escopo no INC-006).
+**DP-12 — Gestor multi-filial não suportado.** `User.branchId` é uma filial por usuário — não existe vínculo "gestor → várias filiais" no modelo de dados. O painel de pendências (INC-006) usa exatamente essa única filial para restringir a visão do gestor (`requireAdminOrManager` + `session.branchId`); a redação do INC-006 ("à(s) sua(s) filial(is)") é genérica, mas na prática resolve para 1 filial com o schema atual. Se um gestor cobrindo múltiplas filiais virar requisito real do piloto, é mudança de modelo de dados (tabela de vínculo gestor↔filiais) + ADR novo, não ajuste trivial no painel existente.
+**Responsável:** Pedro (confirmar se é requisito real do piloto).
 
 ---
 
