@@ -47,20 +47,28 @@ vagas, INC-012 push) vão redescobrir o mesmo erro do zero.
 mão e aplicada com `prisma migrate deploy` — nunca com `prisma migrate dev`**,
 por causa da coluna `GENERATED` `search_vector`.
 
-Procedimento padrão (o mesmo usado nos INCs 002/003/007):
+Procedimento padrão (revisado em 2026-07-13 — ver seção "Entrada órfã em
+`_prisma_migrations`" abaixo para o porquê da revisão; usado desde então):
 
 1. Editar `schema.prisma` normalmente (novos models/campos — nunca modelar
    `search_vector` ali).
-2. Rodar `npx prisma migrate dev --name <nome>` **apenas para gerar o SQL** —
-   ele vai falhar ao aplicar (esperado). Copiar o SQL gerado em
-   `prisma/migrations/<timestamp>_<nome>/migration.sql`.
-3. Rodar `npx prisma migrate resolve --rolled-back "<timestamp>_<nome>"` para
-   limpar o estado de migração falha no histórico do banco.
-4. Apagar a pasta de migração gerada e recriar uma nova (timestamp posterior),
-   removendo do SQL copiado qualquer `DROP INDEX .../ ALTER COLUMN
-   "search_vector" ...` indevido — só sobra o que de fato muda (as tabelas/
-   colunas novas).
-5. Se a migração criar tabela de domínio nova, completar à mão o bloco de
+2. Rodar `npx prisma migrate dev --create-only --name <nome>` para **gerar o
+   SQL sem aplicar**. Com `--create-only` o Prisma nunca tenta rodar o SQL
+   contra o banco, então nunca grava nada em `_prisma_migrations` — não há
+   apply parcial, não há estado de falha para limpar depois (ver validação
+   na seção abaixo). **Não usar `npx prisma migrate dev --name <nome>` sem
+   `--create-only`** — essa forma tenta aplicar de verdade, falha no passo do
+   `search_vector` (P3018) e deixa uma entrada `rolled_back_at` no histórico
+   do banco sem pasta correspondente em disco (era o procedimento antigo,
+   causa raiz do problema documentado abaixo).
+3. Editar o próprio arquivo gerado
+   (`prisma/migrations/<timestamp>_<nome>/migration.sql`), removendo
+   qualquer `DROP INDEX ..._search_vector_idx` / `ALTER COLUMN
+   "search_vector" DROP DEFAULT` indevido — só sobra o que de fato muda
+   (tabelas/colunas novas). **Não é preciso apagar a pasta nem trocar o
+   timestamp**: como nada foi aplicado no passo 2, esta pasta não carrega
+   nenhum estado de falha — editar no lugar é seguro.
+4. Se a migração criar tabela de domínio nova, completar à mão o bloco de
    **GRANT mínimo + Row-Level Security por `tenant_id`**, no mesmo padrão de
    `sessions_rls_and_grants` (INC-003) e `inc007_notifications` (INC-007):
    ```sql
@@ -76,10 +84,73 @@ Procedimento padrão (o mesmo usado nos INCs 002/003/007):
    (Grant é o mínimo necessário por tabela — nunca `GRANT ALL`; tabelas
    append-only recebem só `SELECT, INSERT`, como já documentado no topo da
    migration `rls_and_triggers`.)
-6. Aplicar com `npx prisma migrate deploy` (não `migrate dev`) e depois
+5. Aplicar com `npx prisma migrate deploy` (não `migrate dev`) e depois
    `npx prisma generate`.
-7. Confirmar com `npx prisma migrate status` que não há migração pendente/
+6. Confirmar com `npx prisma migrate status` que não há migração pendente/
    falha.
+
+## Entrada órfã em `_prisma_migrations` — causa, remediação e prevenção
+
+**O que aconteceu:** o procedimento original (antes da revisão de
+2026-07-13) mandava rodar `npx prisma migrate dev --name <nome>` **sem**
+`--create-only` — essa forma tenta aplicar o SQL gerado de verdade. Como
+sempre falha no passo do `search_vector` (P3018, por desenho — é exatamente
+o problema que este ADR existe para contornar), o Prisma grava uma linha em
+`_prisma_migrations` com `finished_at = NULL` antes de falhar. O passo
+seguinte do procedimento antigo (`migrate resolve --rolled-back`) só marca
+essa linha como `rolled_back_at = <agora>` — não a remove. Como o passo
+seguinte manda apagar a pasta gerada e recriar uma com timestamp novo, essa
+linha fica **permanentemente órfã**: presente no histórico do banco, sem
+pasta correspondente em disco.
+
+**Efeito:** `prisma migrate dev` (mesmo com `--create-only`, usado só para
+inspecionar o diff) recusa rodar enquanto existir qualquer linha em
+`_prisma_migrations` sem pasta em disco — ele pede `migrate reset` (apagaria
+todos os dados). `prisma migrate deploy`/`migrate status` não são afetados
+(por isso o problema passou despercebido até alguém precisar gerar SQL de
+novo).
+
+**Isto é evitável, não inevitável** — confirmado empiricamente (2026-07-13,
+contra bancos descartáveis, nunca contra dados reais antes de validar):
+usar `--create-only` desde o início (passo 2 da seção acima) faz o Prisma
+**nunca gravar nenhuma linha** em `_prisma_migrations`, mesmo quando o diff
+gerado inclui uma mudança real de schema — testado gerando o diff de
+"adicionar `posts.branch_id`" contra um banco com só as migrations
+anteriores aplicadas: a contagem de linhas em `_prisma_migrations` não mudou
+depois do `--create-only`. Sem apply, não há falha; sem falha, não há
+`rolled_back_at`; sem `rolled_back_at` órfão, `migrate dev` nunca mais pede
+reset por essa causa. A revisão de procedimento acima (passos 2-3) elimina o
+problema na origem — **a partir de agora, este cenário não deveria voltar a
+acontecer se o procedimento revisado for seguido**.
+
+**Remediação aplicada em 2026-07-13** (para a única entrada órfã que já
+existia, sobra do INC-007 — `20260713115605_inc007_notifications`,
+`finished_at IS NULL`, `rolled_back_at` preenchido, `applied_steps_count=0`):
+
+```sql
+-- Exemplo real aplicado em 2026-07-13 (troque migration_name se reaparecer
+-- com outro nome no futuro):
+DELETE FROM _prisma_migrations
+WHERE migration_name = '20260713115605_inc007_notifications'
+  AND rolled_back_at IS NOT NULL
+  AND finished_at IS NULL
+  AND applied_steps_count = 0;
+```
+
+O `WHERE` composto é deliberado: só casa com uma linha que nunca terminou,
+foi explicitamente marcada como rolled-back, e não aplicou nenhum passo —
+não há forma de essa condição atingir uma migração que de fato alterou o
+schema. Validado antes de tocar o banco real: reproduzido o problema num
+banco descartável (inserindo uma linha sintética idêntica), confirmado que
+o mesmo `DELETE` resolve (`migrate dev --create-only` volta a rodar sem
+pedir reset, `migrate status` limpo), só então aplicado contra `conecta_dev`.
+
+**Se este cenário reaparecer no futuro** (ex.: alguém rodar `migrate dev`
+sem `--create-only` por engano, ou uma versão futura do Prisma mudar esse
+comportamento): o `DELETE` acima, com a mesma condição composta, é o
+remédio — rodar antes de qualquer `migrate dev` voltar a ser necessário, no
+mesmo INC/chore em que a entrada órfã for identificada (não deixar
+acumular).
 
 ## Alternativas consideradas
 - **Modelar `search_vector` como campo gerenciado pelo Prisma (não
@@ -100,6 +171,11 @@ Procedimento padrão (o mesmo usado nos INCs 002/003/007):
   conhecido — o procedimento é copiável.
 + O padrão de GRANT+RLS por tabela nova fica documentado num único lugar
   (antes só existia implícito nas migrations anteriores).
++ (2026-07-13) O procedimento revisado (`--create-only` em vez de
+  `migrate dev --name` puro) elimina a causa raiz das entradas órfãs em
+  `_prisma_migrations` — não é mais preciso confiar em disciplina para
+  limpar depois; o passo que causava o problema simplesmente não existe
+  mais no procedimento.
 − Toda migração de tabela exige um passo manual extra (editar o SQL gerado
   antes de aplicar) — dívida de tooling aceita conscientemente, não um bug a
   corrigir agora.
