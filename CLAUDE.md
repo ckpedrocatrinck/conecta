@@ -20,6 +20,7 @@ Monolito Next.js App Router + TypeScript estrito + PostgreSQL/Prisma + Tailwind/
 6. `AnnouncementAck` é imutável: nenhum caminho de UPDATE/DELETE na aplicação, jamais.
 7. Toda query de domínio passa pela camada de acesso com tenant do contexto. Nenhum endpoint aceita `tenant_id` do cliente.
 8. Login é por **CPF completo + senha** (ADR-006). CPF só como hash determinístico com pepper (env), nunca em claro.
+9. Migração que cria/altera tabela: escrever/ajustar à mão e aplicar com `prisma migrate deploy` — nunca `prisma migrate dev` (ver ADR-008, coluna GENERATED `search_vector`).
 
 ## Convenções de código
 

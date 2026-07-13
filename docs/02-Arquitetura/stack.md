@@ -20,6 +20,8 @@
 
 > **Nota de versão (INC-003):** `next-auth` (Auth.js) fixado em **`5.0.0-beta.31`** (versão exata, sem `^`) — não existe release estável da v5 ainda (`latest` do pacote aponta para a v4, sem o helper `auth()`/App Router de primeira classe que o INC-003 usa). Fixado exato, não com `^`, porque é software beta: um patch de beta pode trazer breaking change sem seguir semver estrito. Reavaliar o pin quando a v5 estabilizar (ou o Credentials provider passar a suportar sessão "database strategy" — ver ADR-007).
 
+> **Nota de migrações (INC-002/003/007):** toda migração que cria ou altera tabela é escrita/ajustada à mão e aplicada com `prisma migrate deploy`, nunca `prisma migrate dev` — o diff automático do Prisma tenta alterar `announcement_versions.search_vector` (coluna `GENERATED`, fora do schema.prisma) de um jeito que o Postgres recusa. Procedimento completo em ADR-008.
+
 ## Infraestrutura
 
 | Item | Escolha |
