@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import type { UserRole } from "@prisma/client";
 import { withTenant } from "../db/with-tenant";
@@ -22,8 +23,12 @@ export type ActiveSession = {
  * depois do JWT ser emitido) sao sempre lidos frescos do banco aqui, nunca
  * confiados a partir do token. Chamar em toda Server Component/Server Action
  * de rota protegida — e' o que faz "logout invalida de verdade" ser real.
+ *
+ * Envolvida em `cache()` (React) para deduplicar dentro do mesmo request: o
+ * layout de navegacao (INC-008.5) e a pagina chamam isso independentemente,
+ * `cache()` garante que so' uma consulta ao banco roda por navegacao.
  */
-export async function getActiveSession(): Promise<ActiveSession | null> {
+export const getActiveSession = cache(async (): Promise<ActiveSession | null> => {
   const jwtSession = await auth();
   const token = jwtSession?.user;
   if (!token?.sessionId || !token.tenantId || !token.id) return null;
@@ -45,7 +50,7 @@ export async function getActiveSession(): Promise<ActiveSession | null> {
       privacyAccepted: Boolean(user.privacyAcceptedAt),
     };
   });
-}
+});
 
 /** Exige sessao valida, sem exigir onboarding completo — usado pelas
  * proprias paginas de troca de senha/aviso de privacidade (senao criam

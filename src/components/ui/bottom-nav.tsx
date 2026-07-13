@@ -7,6 +7,7 @@ interface BottomNavItem {
   href: string
   label: string
   icon: LucideIcon
+  badge?: number
 }
 
 interface BottomNavProps extends React.ComponentProps<"nav"> {
@@ -19,12 +20,12 @@ function BottomNav({ items, activeHref, className, ...props }: BottomNavProps) {
     <nav
       data-slot="bottom-nav"
       className={cn(
-        "flex items-stretch justify-around border-t border-border bg-card",
+        "flex items-stretch justify-around border-t border-border bg-card pb-[env(safe-area-inset-bottom)]",
         className
       )}
       {...props}
     >
-      {items.map(({ href, label, icon: Icon }) => {
+      {items.map(({ href, label, icon: Icon, badge }) => {
         const isActive = href === activeHref
         return (
           <Link
@@ -36,8 +37,19 @@ function BottomNav({ items, activeHref, className, ...props }: BottomNavProps) {
               isActive ? "text-primary" : "text-muted-foreground"
             )}
           >
-            <Icon className="size-5" aria-hidden="true" />
+            <span className="relative">
+              <Icon className="size-5" aria-hidden="true" />
+              {Boolean(badge) && badge! > 0 && (
+                <span
+                  className="absolute -top-1.5 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[0.625rem] font-bold leading-none text-primary-foreground"
+                  aria-hidden="true"
+                >
+                  {badge! > 9 ? "9+" : badge}
+                </span>
+              )}
+            </span>
             {label}
+            {Boolean(badge) && badge! > 0 && <span className="sr-only">, {badge} pendente{badge! > 1 ? "s" : ""}</span>}
           </Link>
         )
       })}
