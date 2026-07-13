@@ -24,6 +24,7 @@
 | 006 | Painel de pendências + visão do gestor | 2 | ✅ | 005 |
 | 007 | Cobrança, exportação CSV e AuditLog | 2 | ⬜ | 006 |
 | 008 | Feed: posts estruturados (CRUD + timeline) | 3 | ✅ | 003 |
+| 008.5 | Navegação global (bottom nav + header admin) | transversal (3/4) | ✅ | 008 |
 | 009 | Templates visuais de cards | 3 | ⬜ | 008 |
 | 010 | Aniversariantes + reações + opt-outs de perfil | 3 | ⬜ | 008 |
 | 011 | Vagas internas + candidatura | 4 | ⬜ | 003 |

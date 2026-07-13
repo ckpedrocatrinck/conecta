@@ -13,6 +13,7 @@
 ## ✅ Resolvidas em 2026-07-13
 
 - **DP-11 — Comunicado arquivado com pendência de ciência aberta absolve a pendência.** ✅ Implementado no **INC-006**: o painel de pendências (`src/lib/announcements/pending-panel.ts`, `isArchivedWithPendency`) sinaliza comunicados `requires_ack` arquivados cujo público-alvo ativo ainda não confirmou ciência — alerta destacado (vermelho) na lista e no detalhe, coberto por teste (`tests/integration/pending-panel.test.ts`). A absolvição silenciosa continua existindo para o colaborador (decisão aceita para o MVP), mas deixou de ser invisível para o RH.
+- **DP-10 — Itens reais do bottom nav.** ✅ Resolvido no **ADR-009** + **INC-008.5**: bottom nav populado com Início/Comunicados/Perfil (badge de pendência reusando `countPendingAcksForUser`), header administrativo para admin (6 telas) e acesso simplificado a Pendências para manager, navegação resolvida por papel no servidor (`src/app/(app)/layout.tsx`). Vagas como 4º item continua fora de escopo, agora explicitamente adiado para o **INC-011**.
 
 ## Ainda abertas — não bloqueiam o início do desenvolvimento
 
@@ -36,6 +37,12 @@
 
 **DP-12 — Gestor multi-filial não suportado.** `User.branchId` é uma filial por usuário — não existe vínculo "gestor → várias filiais" no modelo de dados. O painel de pendências (INC-006) usa exatamente essa única filial para restringir a visão do gestor (`requireAdminOrManager` + `session.branchId`); a redação do INC-006 ("à(s) sua(s) filial(is)") é genérica, mas na prática resolve para 1 filial com o schema atual. Se um gestor cobrindo múltiplas filiais virar requisito real do piloto, é mudança de modelo de dados (tabela de vínculo gestor↔filiais) + ADR novo, não ajuste trivial no painel existente.
 **Responsável:** Pedro (confirmar se é requisito real do piloto).
+
+**DP-13 — Polimento de navegação e shell visual.** Refinamentos identificados no QA do INC-008.5 (nenhum é bug, são melhorias sobre a fundação de navegação do ADR-009): (1) header admin hoje é uma fileira de links de texto — melhorar hierarquia visual, indicar a seção ativa, dar aos itens um carinho equivalente ao bottom nav (ícones); (2) identidade do usuário logado + logout acessível no header — o botão "Sair" saiu da home na limpeza de links soltos do INC-008.5 e ainda não tem um lugar novo; (3) "voltar ao início" pouco óbvio para o admin (hoje só via bottom nav, que ele pode nem estar olhando no fluxo de desktop); (4) avaliar se o bottom nav deve sumir em viewport desktop (é um padrão mobile, pode ficar deslocado em tela larga); (5) política de senha (ver DP separada, se registrada). Agendado para rodar entre o INC-012 e o INC-013.
+**Responsável:** Pedro (priorizar no calendário entre INC-012/013).
+
+**DP-14 — Redesenho visual completo com Claude Design.** Fazer uma única passada de reformulação visual de todas as telas de uma vez, enviando print de cada tela ao Claude Design para ter contexto completo e manter consistência (em vez de retrabalhar tela a tela). Ressalva 1: é elevação do design-system Balcão, não substituição — preservar os princípios funcionais (verde como base, laranja só para ação, Figtree, mobile-first); se o Claude Design propuser abandonar esses princípios, recusar, pois servem à tese do produto, não são só estética. Ressalva 2: fazer antes do INC-013 (hardening), nunca depois — o hardening precisa testar o produto já com o visual final, senão gera retrabalho de QA. Resultado alimenta atualização de `docs/06-Design/design-system.md`. Agendado para rodar entre o INC-012 e o INC-013 (mesma janela do DP-13; considerar se dá pra fazer em conjunto).
+**Responsável:** Pedro + Claude Design.
 
 ---
 
