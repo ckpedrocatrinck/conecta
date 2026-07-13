@@ -1,4 +1,6 @@
+import { cache } from "react";
 import type { Announcement, AnnouncementVersion, Prisma } from "@prisma/client";
+import { withTenant } from "../db/with-tenant";
 import { findVisibleAnnouncementIdsForUser, searchAnnouncementIds } from "../repositories/announcement.repository";
 import { findAnnouncementVersionsForAnnouncements } from "../repositories/announcement-version.repository";
 import { findAnnouncementReadsForUser } from "../repositories/announcement-read.repository";
@@ -83,3 +85,13 @@ export async function countPendingAcksForUser(tx: Prisma.TransactionClient, tena
   const { items } = await listAnnouncementsForUser(tx, tenantId, userId);
   return items.filter((i) => i.state.awaitingAck).length;
 }
+
+/**
+ * Mesma contagem de `countPendingAcksForUser`, envolvida em `cache()` (React)
+ * e ja' abrindo a transacao — usada pelo badge de pendencia da navegacao
+ * (INC-008.5) e pela home. `cache()` deduplica por (tenantId, userId) dentro
+ * do mesmo request, entao layout + pagina dividem uma unica consulta.
+ */
+export const getCachedPendingAckCount = cache(async (tenantId: string, userId: string): Promise<number> => {
+  return withTenant({ tenantId }, (tx) => countPendingAcksForUser(tx, tenantId, userId));
+});
