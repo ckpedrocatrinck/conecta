@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PostPeoplePicker, type PickablePerson } from "@/components/admin/post-people-picker";
+import { PostCardPreview } from "@/components/admin/post-card-preview";
+import type { TenantBranding } from "@/lib/repositories/tenant.repository";
 import { updatePostAction } from "./actions";
 
 type PostDetail = {
@@ -20,12 +23,21 @@ export function EditPostForm({
   branches,
   people,
   selectedPersonIds,
+  branding,
 }: {
   post: PostDetail;
   branches: { id: string; name: string }[];
   people: PickablePerson[];
   selectedPersonIds: string[];
+  branding: TenantBranding;
 }) {
+  const [type, setType] = useState(post.type);
+  const [title, setTitle] = useState(post.title);
+  const [body, setBody] = useState(post.body ?? "");
+  const [selectedPeople, setSelectedPeople] = useState<PickablePerson[]>(
+    people.filter((p) => selectedPersonIds.includes(p.id)),
+  );
+
   return (
     <form action={updatePostAction} className="flex flex-col gap-4">
       <input type="hidden" name="id" value={post.id} />
@@ -36,7 +48,8 @@ export function EditPostForm({
           id="type"
           name="type"
           required
-          defaultValue={post.type}
+          value={type}
+          onChange={(e) => setType(e.target.value)}
           className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm dark:bg-input/30"
         >
           <option value="recognition">Reconhecimento</option>
@@ -48,7 +61,7 @@ export function EditPostForm({
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="title">Título</Label>
-        <Input id="title" name="title" required defaultValue={post.title} />
+        <Input id="title" name="title" required value={title} onChange={(e) => setTitle(e.target.value)} />
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -57,7 +70,8 @@ export function EditPostForm({
           id="body"
           name="body"
           rows={4}
-          defaultValue={post.body ?? ""}
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
           className="rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm dark:bg-input/30"
         />
       </div>
@@ -84,7 +98,9 @@ export function EditPostForm({
         </select>
       </div>
 
-      <PostPeoplePicker people={people} defaultSelectedIds={selectedPersonIds} />
+      <PostPeoplePicker people={people} defaultSelectedIds={selectedPersonIds} onSelectionChange={setSelectedPeople} />
+
+      <PostCardPreview type={type} title={title} body={body} selectedPeople={selectedPeople} branding={branding} />
 
       <Button type="submit" className="self-start">
         Salvar

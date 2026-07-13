@@ -3,6 +3,9 @@ import { requireAdmin } from "../../../../../lib/auth/session";
 import { withTenant } from "../../../../../lib/db/with-tenant";
 import { findBranchesByTenant } from "../../../../../lib/repositories/branch.repository";
 import { findPostWithDetails, findUsersForPersonPicker } from "../../../../../lib/repositories/post.repository";
+import { findTenantBranding } from "../../../../../lib/repositories/tenant.repository";
+import { resolvePickablePeoplePhotos } from "../../../../../lib/posts/resolve-pickable-people";
+import { isPostCardKind } from "../../../../../lib/cards/card-model";
 import { mediaStorage } from "../../../../../lib/storage/media-storage";
 import { EditPostForm } from "./form";
 import { PostPhotoUpload } from "./photo-upload";
@@ -29,18 +32,22 @@ export default async function PostDetailPage({
   const { id } = await params;
   const { erro, salvo } = await searchParams;
 
-  const data = await withTenant({ tenantId: session.tenantId }, async (tx) => {
-    const post = await findPostWithDetails(tx, session.tenantId, id);
-    if (!post) return null;
-    const [branches, people] = await Promise.all([
-      findBranchesByTenant(tx, session.tenantId),
-      findUsersForPersonPicker(tx, session.tenantId),
-    ]);
-    return { post, branches, people };
-  });
+  const [data, branding] = await Promise.all([
+    withTenant({ tenantId: session.tenantId }, async (tx) => {
+      const post = await findPostWithDetails(tx, session.tenantId, id);
+      if (!post) return null;
+      const [branches, rawPeople] = await Promise.all([
+        findBranchesByTenant(tx, session.tenantId),
+        findUsersForPersonPicker(tx, session.tenantId),
+      ]);
+      return { post, branches, rawPeople };
+    }),
+    findTenantBranding(session.tenantId),
+  ]);
 
   if (!data) notFound();
-  const { post, branches, people } = data;
+  const { post, branches, rawPeople } = data;
+  const people = await resolvePickablePeoplePhotos(rawPeople);
 
   const existingMedia = await Promise.all(
     post.media.map(async (m) => ({ id: m.id, viewUrl: await mediaStorage.getViewUrl(m.mediaUrl) })),
@@ -52,12 +59,21 @@ export default async function PostDetailPage({
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           {post.title} <span className="text-sm font-normal text-muted-foreground">({STATUS_LABEL[post.status]})</span>
         </h1>
-        {post.status === "draft" && (
-          <form action={publishPostAction}>
-            <input type="hidden" name="id" value={post.id} />
-            <Button type="submit">Publicar</Button>
-          </form>
-        )}
+        <div className="flex items-center gap-2">
+          {isPostCardKind(post.type) && (
+            <a href={`/api/posts/${post.id}/card-image`} download={`card-${post.id}.png`}>
+              <Button type="button" variant="secondary">
+                Baixar card
+              </Button>
+            </a>
+          )}
+          {post.status === "draft" && (
+            <form action={publishPostAction}>
+              <input type="hidden" name="id" value={post.id} />
+              <Button type="submit">Publicar</Button>
+            </form>
+          )}
+        </div>
       </div>
 
       {erro && ERROR_MESSAGES[erro] && (
@@ -77,6 +93,7 @@ export default async function PostDetailPage({
         branches={branches}
         people={people}
         selectedPersonIds={post.people.map((p) => p.userId)}
+        branding={branding}
       />
     </div>
   );

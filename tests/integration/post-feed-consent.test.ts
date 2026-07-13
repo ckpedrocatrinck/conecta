@@ -11,6 +11,8 @@ import {
   replacePostPeople,
   toPostPersonView,
 } from "../../src/lib/repositories/post.repository";
+import { buildFeedCards } from "../../src/lib/feed/build-feed-view";
+import { buildPostCardData } from "../../src/lib/cards/card-model";
 
 const ownerDb = new PrismaClient();
 
@@ -141,6 +143,36 @@ describe("consentimento de foto e' recalculado em tempo real (nunca snapshot)", 
     );
     const viewAfter = toPostPersonView(detailAfter!.people[0]);
     expect(viewAfter.photoUrl).toBe(`avatars/${tenantA.tenant.id}/${person.id}`);
+  });
+});
+
+describe("card gerado (INC-009): nunca exibe foto de quem não consente", () => {
+  it("pessoa com photoVisible=false chega ao CardData do template com photoUrl null, mesmo com User.photoUrl preenchido", async () => {
+    const person = tenantA.users[3];
+    await ownerDb.user.update({
+      where: { id: person.id },
+      data: { photoUrl: `avatars/${tenantA.tenant.id}/${person.id}`, photoVisible: false },
+    });
+
+    const post = await withTenant({ tenantId: tenantA.tenant.id }, async (tx) => {
+      const created = await createPostDraft(tx, {
+        tenantId: tenantA.tenant.id,
+        type: "recognition",
+        title: "Reconhecimento sem consentimento de foto",
+        eventDate: new Date("2026-07-05"),
+        createdBy: tenantA.users[0].id,
+      });
+      await replacePostPeople(tx, tenantA.tenant.id, created.id, [{ userId: person.id }]);
+      return created;
+    });
+
+    const detail = await withTenant({ tenantId: tenantA.tenant.id }, (tx) =>
+      findPostWithDetails(tx, tenantA.tenant.id, post.id),
+    );
+    const [feedCard] = await buildFeedCards([detail!]);
+    const cardData = buildPostCardData(feedCard, { logoUrl: null, accentColor: null });
+
+    expect(cardData?.people[0].photoUrl).toBeNull();
   });
 });
 

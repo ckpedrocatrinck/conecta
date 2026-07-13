@@ -13,6 +13,7 @@ import { findUserById } from "../../lib/repositories/user.repository";
 import { getCachedPendingAckCount } from "../../lib/announcements/list-for-user";
 import { findUnreadNotificationsForUser, markNotificationRead } from "../../lib/repositories/notification.repository";
 import { findPostsForFeed } from "../../lib/repositories/post.repository";
+import { findTenantBranding } from "../../lib/repositories/tenant.repository";
 import { buildFeedCards, FEED_PAGE_SIZE } from "../../lib/feed/build-feed-view";
 
 export default async function Home() {
@@ -21,14 +22,14 @@ export default async function Home() {
   // (badge do item Comunicados) — cache() do React dedupe as duas chamadas
   // em uma unica consulta por request (INC-008.5).
   const pendingCount = await getCachedPendingAckCount(session.tenantId, session.userId);
-  const { user, notifications, feedPosts } = await withTenant(
-    { tenantId: session.tenantId },
-    async (tx) => ({
+  const [{ user, notifications, feedPosts }, branding] = await Promise.all([
+    withTenant({ tenantId: session.tenantId }, async (tx) => ({
       user: await findUserById(tx, session.tenantId, session.userId),
       notifications: await findUnreadNotificationsForUser(tx, session.tenantId, session.userId),
       feedPosts: await findPostsForFeed(tx, session.tenantId, { limit: FEED_PAGE_SIZE }),
-    }),
-  );
+    })),
+    findTenantBranding(session.tenantId),
+  ]);
 
   const feedCards = await buildFeedCards(feedPosts);
   const lastFeedCard = feedCards.at(-1);
@@ -88,9 +89,9 @@ export default async function Home() {
         ) : (
           <>
             {feedCards.map((post) => (
-              <PostCard key={post.id} post={post} />
+              <PostCard key={post.id} post={post} branding={branding} />
             ))}
-            <FeedLoadMore initialCursor={feedInitialCursor} pageSize={FEED_PAGE_SIZE} />
+            <FeedLoadMore initialCursor={feedInitialCursor} pageSize={FEED_PAGE_SIZE} branding={branding} />
           </>
         )}
       </div>

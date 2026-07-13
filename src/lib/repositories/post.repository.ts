@@ -85,11 +85,13 @@ export function publishPost(tx: Prisma.TransactionClient, tenantId: string, id: 
 }
 
 /** Usuarios ativos do tenant para o picker de pessoas do admin — inclui
- * `photoVisible` para o aviso de consentimento no momento da marcacao (LGPD). */
+ * `photoVisible` para o aviso de consentimento no momento da marcacao (LGPD)
+ * e `photoUrl` (chave crua, ainda sem assinar) para o preview de card do
+ * INC-009 poder mostrar a foto real de quem consente. */
 export function findUsersForPersonPicker(tx: Prisma.TransactionClient, tenantId: string) {
   return tx.user.findMany({
     where: { tenantId, status: "active" },
-    select: { id: true, fullName: true, registrationCode: true, branchId: true, photoVisible: true },
+    select: { id: true, fullName: true, registrationCode: true, branchId: true, photoVisible: true, photoUrl: true },
     orderBy: { fullName: "asc" },
   });
 }
