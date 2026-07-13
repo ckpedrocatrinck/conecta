@@ -288,6 +288,10 @@ model AnnouncementVersion {
   body             String
   contentHash      String                   @map("content_hash") @db.VarChar(64)
   isMaterialChange Boolean                  @default(false) @map("is_material_change")
+  // Coluna GENERATED (ver migration rls_and_triggers) — so' a existencia e'
+  // representavel aqui (Unsupported), a expressao gerada nao. Por isso
+  // qualquer migracao que crie/altere tabela precisa ser ajustada a mao e
+  // aplicada com `prisma migrate deploy`, nunca `prisma migrate dev` — ver ADR-008.
   searchVector     Unsupported("tsvector")? @map("search_vector")
   createdBy        String                   @map("created_by") @db.Uuid
   createdAt        DateTime                 @default(now()) @map("created_at") @db.Timestamptz
