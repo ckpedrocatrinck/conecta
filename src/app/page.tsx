@@ -1,21 +1,38 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { MessageSquareHeart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PendingBanner } from "@/components/ui/pending-banner";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PostCard } from "@/components/feed/post-card";
+import { FeedLoadMore } from "@/components/feed/load-more";
 import { signOut } from "../lib/auth/config";
 import { requireOnboardedSession } from "../lib/auth/session";
 import { withTenant } from "../lib/db/with-tenant";
 import { findUserById } from "../lib/repositories/user.repository";
 import { countPendingAcksForUser } from "../lib/announcements/list-for-user";
 import { findUnreadNotificationsForUser, markNotificationRead } from "../lib/repositories/notification.repository";
+import { findPostsForFeed } from "../lib/repositories/post.repository";
+import { buildFeedCards, FEED_PAGE_SIZE } from "../lib/feed/build-feed-view";
 
 export default async function Home() {
   const session = await requireOnboardedSession();
-  const { user, pendingCount, notifications } = await withTenant({ tenantId: session.tenantId }, async (tx) => ({
-    user: await findUserById(tx, session.tenantId, session.userId),
-    pendingCount: await countPendingAcksForUser(tx, session.tenantId, session.userId),
-    notifications: await findUnreadNotificationsForUser(tx, session.tenantId, session.userId),
-  }));
+  const { user, pendingCount, notifications, feedPosts } = await withTenant(
+    { tenantId: session.tenantId },
+    async (tx) => ({
+      user: await findUserById(tx, session.tenantId, session.userId),
+      pendingCount: await countPendingAcksForUser(tx, session.tenantId, session.userId),
+      notifications: await findUnreadNotificationsForUser(tx, session.tenantId, session.userId),
+      feedPosts: await findPostsForFeed(tx, session.tenantId, { limit: FEED_PAGE_SIZE }),
+    }),
+  );
+
+  const feedCards = await buildFeedCards(feedPosts);
+  const lastFeedCard = feedCards.at(-1);
+  const feedInitialCursor =
+    feedCards.length === FEED_PAGE_SIZE && lastFeedCard
+      ? { eventDate: lastFeedCard.eventDate, createdAt: lastFeedCard.createdAt, id: lastFeedCard.id }
+      : null;
 
   return (
     <div className="flex flex-1 flex-col gap-4 bg-zinc-50 px-4 py-6 dark:bg-black">
@@ -66,6 +83,24 @@ export default async function Home() {
           Painel de pendências
         </Link>
       )}
+
+      <div className="flex flex-col gap-3">
+        <h2 className="text-lg font-bold text-foreground">Feed</h2>
+        {feedCards.length === 0 ? (
+          <EmptyState
+            icon={MessageSquareHeart}
+            title="Nenhuma novidade por aqui ainda"
+            description="Reconhecimentos, tempo de casa e promoções vão aparecer aqui assim que forem publicados."
+          />
+        ) : (
+          <>
+            {feedCards.map((post) => (
+              <PostCard key={post.id} post={post} />
+            ))}
+            <FeedLoadMore initialCursor={feedInitialCursor} pageSize={FEED_PAGE_SIZE} />
+          </>
+        )}
+      </div>
 
       <form
         action={async () => {

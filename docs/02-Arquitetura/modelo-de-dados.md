@@ -50,7 +50,7 @@ Regras de domínio:
 
 ```
 Post          id, tenant_id, type(recognition|tenure|promotion|general),
-              title, body?, event_date,
+              title, body?, event_date, branch_id?,           -- filial associada, null = geral
               status(draft|published), created_by
 PostPerson    post_id, user_id, label?                      -- pessoas homenageadas
 PostMedia     post_id, media_url, sort_order

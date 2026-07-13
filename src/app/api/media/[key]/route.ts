@@ -1,13 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getActiveSession } from "../../../../lib/auth/session";
+import { getActiveSession, type ActiveSession } from "../../../../lib/auth/session";
 import { verifyMediaToken } from "../../../../lib/storage/media-storage";
 import { readMediaFile, writeMediaFile } from "../../../../lib/storage/local-media-fs";
+import { ALLOWED_MEDIA_CONTENT_TYPES, MAX_MEDIA_UPLOAD_BYTES } from "../../../../lib/storage/media-constraints";
 
-const ALLOWED_CONTENT_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+/**
+ * Autorizacao por namespace de chave — cada prefixo tem sua propria regra de
+ * quem pode ler/escrever:
+ * - `avatars/{tenantId}/{userId}`: so' o proprio dono, ver/enviar (INC-003).
+ * - `posts/{tenantId}/{postId}/...`: ver e' liberado para qualquer sessao
+ *   ativa do tenant (colaborador precisa ver a foto no feed); enviar so'
+ *   para admin do mesmo tenant (INC-008).
+ */
+function authorizeMediaKey(key: string, mode: "view" | "upload", session: ActiveSession): boolean {
+  const avatarMatch = key.match(/^avatars\/([^/]+)\/([^/]+)$/);
+  if (avatarMatch) {
+    const [, tenantId, userId] = avatarMatch;
+    return tenantId === session.tenantId && userId === session.userId;
+  }
 
-function ownsKey(key: string, tenantId: string, userId: string): boolean {
-  return key === `avatars/${tenantId}/${userId}`;
+  const postMediaMatch = key.match(/^posts\/([^/]+)\/([^/]+)\/[^/]+$/);
+  if (postMediaMatch) {
+    const [, tenantId] = postMediaMatch;
+    if (tenantId !== session.tenantId) return false;
+    return mode === "view" || session.role === "admin";
+  }
+
+  return false;
 }
 
 export async function GET(request: NextRequest, context: { params: Promise<{ key: string }> }) {
@@ -16,7 +35,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ key
 
   const session = await getActiveSession();
   if (!session) return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
-  if (!ownsKey(decodedKey, session.tenantId, session.userId)) {
+  if (!authorizeMediaKey(decodedKey, "view", session)) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
@@ -41,7 +60,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ key
 
   const session = await getActiveSession();
   if (!session) return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
-  if (!ownsKey(decodedKey, session.tenantId, session.userId)) {
+  if (!authorizeMediaKey(decodedKey, "upload", session)) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
@@ -53,12 +72,12 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ key
   }
 
   const contentType = request.headers.get("content-type") ?? "";
-  if (!ALLOWED_CONTENT_TYPES.has(contentType)) {
+  if (!ALLOWED_MEDIA_CONTENT_TYPES.has(contentType)) {
     return NextResponse.json({ error: "tipo de arquivo não permitido" }, { status: 415 });
   }
 
   const body = Buffer.from(await request.arrayBuffer());
-  if (body.byteLength === 0 || body.byteLength > MAX_UPLOAD_BYTES) {
+  if (body.byteLength === 0 || body.byteLength > MAX_MEDIA_UPLOAD_BYTES) {
     return NextResponse.json({ error: "tamanho de arquivo inválido" }, { status: 413 });
   }
 
