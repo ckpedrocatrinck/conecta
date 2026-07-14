@@ -5,6 +5,7 @@ import type { UserRole } from "@prisma/client"
 const ADMIN_LINKS = [
   { href: "/admin/comunicados", label: "Comunicados" },
   { href: "/admin/posts", label: "Posts" },
+  { href: "/admin/vagas", label: "Vagas" },
   { href: "/admin/colaboradores", label: "Colaboradores" },
   { href: "/admin/filiais", label: "Filiais" },
   { href: "/pendencias", label: "Pendências" },
@@ -18,7 +19,7 @@ interface AdminHeaderNavProps {
 }
 
 /**
- * Menu administrativo do header (ADR-009): so' admin ve' as 6 telas; manager
+ * Menu administrativo do header (ADR-009): so' admin ve' as 7 telas; manager
  * ve' so' o acesso a Pendencias; employee nao ve' header nenhum. Colapso em
  * telas estreitas via <details> semantico (sem JS/estado client) — evita
  * reproduzir o hamburguer-de-tudo, ja' que e' so' o conjunto administrativo.

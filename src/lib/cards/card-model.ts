@@ -95,6 +95,24 @@ export function buildBirthdayCardData(
   };
 }
 
+/** Vaga (INC-011) — mesmo padrao de buildBirthdayCardData, so' que a fonte
+ * e' JobOpening (+ nome da filial ja resolvido por quem chama, mesmo
+ * formato de FeedPostCard.branchName). */
+export function buildJobOpeningCardData(
+  job: { title: string; description: string; shift: string | null; deadline: string; branchName: string | null },
+  branding: TenantBranding,
+): JobOpeningCardData {
+  return {
+    kind: "job_opening",
+    title: job.title,
+    description: job.description,
+    shift: job.shift,
+    deadline: job.deadline,
+    branchName: job.branchName,
+    branding: toCardBranding(branding),
+  };
+}
+
 /** Retorna null para tipos sem template dedicado (ex.: "general") — quem
  * chama decide o fallback (layout basico do INC-008). */
 export function buildPostCardData(post: FeedPostCard, branding: TenantBranding): PostCardData | null {
