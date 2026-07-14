@@ -42,16 +42,22 @@ self.addEventListener("activate", (event) => {
 });
 
 async function handleNavigation(request) {
-  const cache = await caches.open(SHELL_CACHE);
+  // O fetch tem que comecar JA, sem esperar nada de Cache Storage antes —
+  // regressao real de QA (lentidao geral, desktop e mobile): a versao
+  // anterior fazia `await caches.open(...)` ANTES do fetch, serializando a
+  // abertura do banco de cache na frente de toda navegacao. Abrir/gravar
+  // cache so' acontece depois, fora do caminho critico da resposta.
   try {
     const response = await fetch(request);
-    // So' cacheia resposta cacheavel de verdade (200 direto, sem redirect) —
-    // nunca deixa um cache.put() malformado gerar unhandled rejection.
     if (response.ok && !response.redirected) {
-      cache.put(request, response.clone()).catch(() => {});
+      caches
+        .open(SHELL_CACHE)
+        .then((cache) => cache.put(request, response.clone()))
+        .catch(() => {});
     }
     return response;
   } catch {
+    const cache = await caches.open(SHELL_CACHE);
     const cached = await cache.match(request);
     return cached ?? cache.match(OFFLINE_URL);
   }
