@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -6,9 +7,16 @@ import { Label } from "@/components/ui/label";
 import { requireOnboardedSession } from "../../../lib/auth/session";
 import { withTenant } from "../../../lib/db/with-tenant";
 import { findUserById } from "../../../lib/repositories/user.repository";
+import { findMyJobApplications } from "../../../lib/repositories/job-opening.repository";
 import { mediaStorage } from "../../../lib/storage/media-storage";
+import { formatDateTimeSaoPaulo } from "../../../lib/dates/format-datetime";
 import { changePasswordFromProfileAction, updateConsentAction } from "./actions";
 import { PhotoUploader } from "./photo-uploader";
+
+const JOB_STATUS_LABEL: Record<string, string> = {
+  open: "Aberta",
+  closed: "Fechada",
+};
 
 const PASSWORD_ERROR_MESSAGES: Record<string, string> = {
   atual: "Senha atual incorreta.",
@@ -24,9 +32,10 @@ export default async function PerfilPage({
   const session = await requireOnboardedSession();
   const { erro, senha } = await searchParams;
 
-  const user = await withTenant({ tenantId: session.tenantId }, (tx) =>
-    findUserById(tx, session.tenantId, session.userId),
-  );
+  const { user, myApplications } = await withTenant({ tenantId: session.tenantId }, async (tx) => ({
+    user: await findUserById(tx, session.tenantId, session.userId),
+    myApplications: await findMyJobApplications(tx, session.tenantId, session.userId),
+  }));
   if (!user) return null;
 
   const photoViewUrl = user.photoUrl ? await mediaStorage.getViewUrl(user.photoUrl) : null;
@@ -49,6 +58,29 @@ export default async function PerfilPage({
           {user.phone && <p><span className="font-medium">Telefone:</span> {user.phone}</p>}
           {user.email && <p><span className="font-medium">E-mail:</span> {user.email}</p>}
         </div>
+      </Card>
+
+      <Card>
+        <h2 className="text-sm font-semibold text-muted-foreground">Minhas candidaturas</h2>
+        {myApplications.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Você ainda não se candidatou a nenhuma vaga.</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {myApplications.map((application) => (
+              <Link
+                key={application.jobOpeningId}
+                href={`/vagas/${application.jobOpeningId}`}
+                className="flex items-center justify-between rounded-lg border border-border p-2.5 text-sm hover:bg-muted"
+              >
+                <span className="font-medium text-foreground">{application.jobOpening.title}</span>
+                <span className="text-muted-foreground">
+                  {formatDateTimeSaoPaulo(application.createdAt)} ·{" "}
+                  {JOB_STATUS_LABEL[application.jobOpening.status] ?? application.jobOpening.status}
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
       </Card>
 
       <Card>

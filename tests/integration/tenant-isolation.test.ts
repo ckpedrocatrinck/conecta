@@ -159,6 +159,12 @@ describe("adversarial — query SEM filtro dentro do contexto de tenant A (prova
     expect(jobs.length).toBeGreaterThan(0);
     expect(jobs.every((j) => j.tenantId === tenantA.tenant.id)).toBe(true);
   });
+
+  it("jobApplication.findMany() sem where ainda retorna so tenant A [INC-011]", async () => {
+    const applications = await withTenant({ tenantId: tenantA.tenant.id }, (tx) => tx.jobApplication.findMany());
+    expect(applications.length).toBeGreaterThan(0);
+    expect(applications.every((a) => a.tenantId === tenantA.tenant.id)).toBe(true);
+  });
 });
 
 describe("adversarial — acesso direto por ID que pertence ao outro tenant", () => {

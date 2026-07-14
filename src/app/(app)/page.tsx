@@ -14,10 +14,14 @@ import { findUserById, findUpcomingBirthdays } from "../../lib/repositories/user
 import { getCachedPendingAckCount } from "../../lib/announcements/list-for-user";
 import { findUnreadNotificationsForUser, markNotificationRead } from "../../lib/repositories/notification.repository";
 import { findPostsForFeed } from "../../lib/repositories/post.repository";
+import { findOpenJobOpeningsForEmployee } from "../../lib/repositories/job-opening.repository";
 import { findTenantBranding } from "../../lib/repositories/tenant.repository";
 import { buildFeedCards, FEED_PAGE_SIZE } from "../../lib/feed/build-feed-view";
 import { birthdayWindowMonthDays } from "../../lib/dates/birthday-window";
 import { buildBirthdayListView, buildTodaysBirthdayCards } from "../../lib/birthdays/build-birthday-view";
+import { jobOpeningToCardData } from "../../lib/jobs/build-job-opening-view";
+
+const HOME_JOB_OPENINGS_LIMIT = 3;
 
 export default async function Home() {
   const session = await requireOnboardedSession();
@@ -27,12 +31,13 @@ export default async function Home() {
   const pendingCount = await getCachedPendingAckCount(session.tenantId, session.userId);
   const now = new Date();
   const todayMonthDay = birthdayWindowMonthDays(now, 0);
-  const [{ user, notifications, feedPosts, birthdayRows }, branding] = await Promise.all([
+  const [{ user, notifications, feedPosts, birthdayRows, openJobs }, branding] = await Promise.all([
     withTenant({ tenantId: session.tenantId }, async (tx) => ({
       user: await findUserById(tx, session.tenantId, session.userId),
       notifications: await findUnreadNotificationsForUser(tx, session.tenantId, session.userId),
       feedPosts: await findPostsForFeed(tx, session.tenantId, { limit: FEED_PAGE_SIZE }),
       birthdayRows: await findUpcomingBirthdays(tx, session.tenantId, todayMonthDay),
+      openJobs: await findOpenJobOpeningsForEmployee(tx, session.tenantId, { now }),
     })),
     findTenantBranding(session.tenantId),
   ]);
@@ -97,6 +102,22 @@ export default async function Home() {
           </div>
           {todaysBirthdayCards.map(({ userId, card }) => (
             <CardTemplate key={userId} data={card} />
+          ))}
+        </div>
+      )}
+
+      {openJobs.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-foreground">Vagas abertas</h2>
+            <Link href="/vagas" className="text-sm font-semibold text-primary underline-offset-4 hover:underline">
+              Ver todas
+            </Link>
+          </div>
+          {openJobs.slice(0, HOME_JOB_OPENINGS_LIMIT).map((job) => (
+            <Link key={job.id} href={`/vagas/${job.id}`}>
+              <CardTemplate data={jobOpeningToCardData(job, branding)} />
+            </Link>
           ))}
         </div>
       )}
