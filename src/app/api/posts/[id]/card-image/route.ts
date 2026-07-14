@@ -29,7 +29,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
     if (!post) return null;
     if (post.status !== "published" && session.role !== "admin") return "forbidden" as const;
 
-    const [feedCard] = await buildFeedCards([post]);
+    const [feedCard] = await buildFeedCards([post], session.userId);
     const branding = await findTenantBranding(session.tenantId);
     return { feedCard, branding };
   });

@@ -9,6 +9,7 @@ type FeedPostWithRelations = Prisma.PostGetPayload<{
     branch: { select: { id: true; name: true } };
     people: { include: { user: { select: { id: true; fullName: true; photoUrl: true; photoVisible: true } } } };
     media: true;
+    reactions: { select: { userId: true } };
   };
 }>;
 
@@ -22,12 +23,16 @@ export type FeedPostCard = {
   branchName: string | null;
   people: { userId: string; fullName: string; label: string | null; photoUrl: string | null }[];
   media: { id: string; viewUrl: string }[];
+  reactionCount: number;
+  reactedByMe: boolean;
 };
 
 /** Resolve as chaves de midia (foto de pessoa + fotos do post) para URLs
  * assinadas de curta duracao — nunca expor a chave crua nem uma URL publica
- * (contrato de storage do INC-003). Roda so' no servidor (usa mediaStorage). */
-export async function buildFeedCards(posts: FeedPostWithRelations[]): Promise<FeedPostCard[]> {
+ * (contrato de storage do INC-003). Roda so' no servidor (usa mediaStorage).
+ * `currentUserId` so' decide `reactedByMe` (INC-010) — a lista completa de
+ * `reactions` ja veio do banco (POST_DETAIL_INCLUDE), sem query extra. */
+export async function buildFeedCards(posts: FeedPostWithRelations[], currentUserId: string): Promise<FeedPostCard[]> {
   return Promise.all(
     posts.map(async (post) => {
       const people = await Promise.all(
@@ -50,6 +55,8 @@ export async function buildFeedCards(posts: FeedPostWithRelations[]): Promise<Fe
         branchName: post.branch?.name ?? null,
         people,
         media,
+        reactionCount: post.reactions.length,
+        reactedByMe: post.reactions.some((r) => r.userId === currentUserId),
       };
     }),
   );

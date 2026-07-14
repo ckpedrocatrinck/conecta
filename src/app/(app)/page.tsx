@@ -6,15 +6,18 @@ import { PendingBanner } from "@/components/ui/pending-banner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PostCard } from "@/components/feed/post-card";
 import { FeedLoadMore } from "@/components/feed/load-more";
+import { CardTemplate } from "@/components/cards/templates";
 import { signOut } from "../../lib/auth/config";
 import { requireOnboardedSession } from "../../lib/auth/session";
 import { withTenant } from "../../lib/db/with-tenant";
-import { findUserById } from "../../lib/repositories/user.repository";
+import { findUserById, findUpcomingBirthdays } from "../../lib/repositories/user.repository";
 import { getCachedPendingAckCount } from "../../lib/announcements/list-for-user";
 import { findUnreadNotificationsForUser, markNotificationRead } from "../../lib/repositories/notification.repository";
 import { findPostsForFeed } from "../../lib/repositories/post.repository";
 import { findTenantBranding } from "../../lib/repositories/tenant.repository";
 import { buildFeedCards, FEED_PAGE_SIZE } from "../../lib/feed/build-feed-view";
+import { birthdayWindowMonthDays } from "../../lib/dates/birthday-window";
+import { buildBirthdayListView, buildTodaysBirthdayCards } from "../../lib/birthdays/build-birthday-view";
 
 export default async function Home() {
   const session = await requireOnboardedSession();
@@ -22,21 +25,27 @@ export default async function Home() {
   // (badge do item Comunicados) — cache() do React dedupe as duas chamadas
   // em uma unica consulta por request (INC-008.5).
   const pendingCount = await getCachedPendingAckCount(session.tenantId, session.userId);
-  const [{ user, notifications, feedPosts }, branding] = await Promise.all([
+  const now = new Date();
+  const todayMonthDay = birthdayWindowMonthDays(now, 0);
+  const [{ user, notifications, feedPosts, birthdayRows }, branding] = await Promise.all([
     withTenant({ tenantId: session.tenantId }, async (tx) => ({
       user: await findUserById(tx, session.tenantId, session.userId),
       notifications: await findUnreadNotificationsForUser(tx, session.tenantId, session.userId),
       feedPosts: await findPostsForFeed(tx, session.tenantId, { limit: FEED_PAGE_SIZE }),
+      birthdayRows: await findUpcomingBirthdays(tx, session.tenantId, todayMonthDay),
     })),
     findTenantBranding(session.tenantId),
   ]);
 
-  const feedCards = await buildFeedCards(feedPosts);
+  const feedCards = await buildFeedCards(feedPosts, session.userId);
   const lastFeedCard = feedCards.at(-1);
   const feedInitialCursor =
     feedCards.length === FEED_PAGE_SIZE && lastFeedCard
       ? { eventDate: lastFeedCard.eventDate, createdAt: lastFeedCard.createdAt, id: lastFeedCard.id }
       : null;
+
+  const todaysBirthdayEntries = await buildBirthdayListView(birthdayRows, todayMonthDay);
+  const todaysBirthdayCards = buildTodaysBirthdayCards(todaysBirthdayEntries, now.toISOString(), branding);
 
   return (
     <div className="flex flex-1 flex-col gap-4 bg-zinc-50 px-4 py-6 dark:bg-black">
@@ -74,6 +83,20 @@ export default async function Home() {
                 {n.message}
               </button>
             </form>
+          ))}
+        </div>
+      )}
+
+      {todaysBirthdayCards.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-foreground">Aniversariantes de hoje</h2>
+            <Link href="/aniversariantes" className="text-sm font-semibold text-primary underline-offset-4 hover:underline">
+              Ver todos
+            </Link>
+          </div>
+          {todaysBirthdayCards.map(({ userId, card }) => (
+            <CardTemplate key={userId} data={card} />
           ))}
         </div>
       )}

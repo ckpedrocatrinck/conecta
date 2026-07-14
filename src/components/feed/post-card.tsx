@@ -6,6 +6,7 @@ import type { TenantBranding } from "@/lib/repositories/tenant.repository";
 import { POST_TYPE_LABEL } from "../../lib/posts/labels";
 import { formatCalendarDate } from "../../lib/dates/format-date";
 import type { FeedPostCard } from "../../lib/feed/build-feed-view";
+import { ReactionButton } from "./reaction-button";
 
 /** Layout basico pre-INC-009, mantido so' para o tipo "general" (sem
  * template dedicado no escopo do INC-009/ADR-004). Nunca confia num
@@ -45,6 +46,8 @@ function GeneralPostCard({ post }: { post: FeedPostCard }) {
           ))}
         </div>
       )}
+
+      <ReactionButton postId={post.id} initialReacted={post.reactedByMe} initialCount={post.reactionCount} />
     </Card>
   );
 }
@@ -64,6 +67,7 @@ export function PostCard({ post, branding }: { post: FeedPostCard; branding: Ten
           ))}
         </div>
       )}
+      <ReactionButton postId={post.id} initialReacted={post.reactedByMe} initialCount={post.reactionCount} />
     </div>
   );
 }

@@ -24,6 +24,11 @@ const POST_DETAIL_INCLUDE = {
     include: { user: { select: { id: true, fullName: true, photoUrl: true, photoVisible: true } } },
   },
   media: { orderBy: { sortOrder: "asc" as const } },
+  // Sem `where` (todas as reacoes, nao so' as do usuario atual) — estatico de
+  // proposito, entao independe de quem esta chamando (admin ou feed do
+  // colaborador). `reactedByMe`/`reactionCount` (INC-010) sao calculados em
+  // `buildFeedCards` a partir desta lista + o userId da sessao de quem le.
+  reactions: { select: { userId: true } },
 } satisfies Prisma.PostInclude;
 
 /** Post com pessoas/midia/filial para tela de edicao e para o card do feed.
@@ -187,4 +192,23 @@ export function toPostPersonView(person: {
     label: person.label,
     photoUrl: person.user.photoVisible ? person.user.photoUrl : null,
   };
+}
+
+/** Reacao unica (👏) por usuario em post (INC-010) — PK composta
+ * (post_id, user_id) e' a propria garantia de idempotencia no banco: nao ha
+ * como um usuario ter 2 linhas pro mesmo post. */
+export function findPostReaction(tx: Prisma.TransactionClient, tenantId: string, postId: string, userId: string) {
+  return tx.postReaction.findFirst({ where: { postId, userId, tenantId } });
+}
+
+export function addPostReaction(tx: Prisma.TransactionClient, tenantId: string, postId: string, userId: string) {
+  return tx.postReaction.create({ data: { postId, userId, tenantId } });
+}
+
+export function removePostReaction(tx: Prisma.TransactionClient, tenantId: string, postId: string, userId: string) {
+  return tx.postReaction.deleteMany({ where: { postId, userId, tenantId } });
+}
+
+export function countPostReactions(tx: Prisma.TransactionClient, tenantId: string, postId: string) {
+  return tx.postReaction.count({ where: { postId, tenantId } });
 }
