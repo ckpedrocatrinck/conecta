@@ -5,9 +5,16 @@ import { requireAdminOrManager } from "../../../../lib/auth/session";
 import { withTenant } from "../../../../lib/db/with-tenant";
 import { remindPendingUsers } from "../../../../lib/announcements/remind-pending";
 import { InAppNotificationChannel } from "../../../../lib/notifications/in-app-channel";
+import { PushNotificationChannel } from "../../../../lib/notifications/push-channel";
+import { CompositeNotificationChannel } from "../../../../lib/notifications/composite-channel";
 import { recordAuditLog } from "../../../../lib/repositories/audit-log.repository";
 
-const inAppChannel = new InAppNotificationChannel();
+// Push (INC-012) se combina ao canal in-app existente (INC-007) sem alterar
+// remindPendingUsers/pending-panel.ts — o unico ponto de integracao e' este.
+const notificationChannel = new CompositeNotificationChannel([
+  new InAppNotificationChannel(),
+  new PushNotificationChannel(),
+]);
 
 export async function remindPendingAction(formData: FormData) {
   const session = await requireAdminOrManager();
@@ -21,7 +28,7 @@ export async function remindPendingAction(formData: FormData) {
       session.tenantId,
       announcementId,
       { branchId: isManager ? session.branchId : undefined },
-      inAppChannel,
+      notificationChannel,
     );
     if (!result) return null;
 

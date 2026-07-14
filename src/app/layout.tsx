@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Figtree } from "next/font/google";
+import { BRAND_TOKENS } from "@/lib/cards/brand-tokens";
+import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
 import "./globals.css";
 
 const figtree = Figtree({
@@ -14,9 +16,11 @@ export const metadata: Metadata = {
 };
 
 // viewportFit "cover" habilita env(safe-area-inset-*) no iOS — exigido pela
-// bottom nav fixa (INC-008.5 / ADR-002 mobile-first).
+// bottom nav fixa (INC-008.5 / ADR-002 mobile-first). themeColor pinta a
+// barra de status/chrome do navegador com a cor de marca (INC-012).
 export const viewport: Viewport = {
   viewportFit: "cover",
+  themeColor: BRAND_TOKENS.primary,
 };
 
 export default function RootLayout({
@@ -29,7 +33,10 @@ export default function RootLayout({
       lang="pt-BR"
       className={`${figtree.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <ServiceWorkerRegister />
+        {children}
+      </body>
     </html>
   );
 }

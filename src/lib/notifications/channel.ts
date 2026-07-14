@@ -9,10 +9,10 @@ export type NotificationInput = {
 };
 
 /**
- * Ponto de extensao para o INC-012: o push real implementa esta mesma
- * interface (`PushNotificationChannel`, usando `PushSubscription`, hoje
- * dormente) e passa a ser combinado com `InAppNotificationChannel` por quem
- * chama `remindPendingUsers` — nenhum codigo de dominio muda, so' o canal
+ * Ponto de extensao usado pelo INC-012: `PushNotificationChannel` implementa
+ * esta mesma interface e e' combinado com `InAppNotificationChannel` (ver
+ * `CompositeNotificationChannel`) no unico call site de
+ * `remindPendingUsers` — nenhum codigo de dominio mudou, so' o canal
  * injetado.
  */
 export interface NotificationChannel {

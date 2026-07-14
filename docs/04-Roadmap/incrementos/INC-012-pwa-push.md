@@ -5,6 +5,16 @@
 **Depende de:** INC-005 (cobranças), INC-007 (canal de notificação)
 **ADRs relevantes:** 002
 
+> **Nota de escopo (2026-07-14, decisão de Pedro):** o escopo original do item
+> 4 previa push para três eventos, mas só "cobrança de pendência" já tem
+> gatilho de notificação hoje (`NotificationChannel`, INC-007) — "comunicado
+> crítico publicado" e "post em que fui marcado" não disparam nenhuma
+> notificação (nem in-app) no código atual, e construir isso envolve decisões
+> de arquitetura não tomadas (fan-out do publish, momento exato do disparo).
+> Escopo reduzido para isolar a variável central do INC (push funciona no
+> iPhone?). Os dois eventos removidos ficam registrados como **DP-16** em
+> `docs/05-Decisoes-Pendentes.md`, para virar INC próprio depois.
+
 ## Objetivo
 App instalável na home do celular com push funcionando — o mecanismo de retorno diário.
 
@@ -12,7 +22,7 @@ App instalável na home do celular com push funcionando — o mecanismo de retor
 1. Manifest completo (ícones, cores do tenant se viável, standalone) + prompt de instalação contextual (não intrusivo, após primeiro uso bem-sucedido).
 2. Service worker: cache de shell + leitura offline das últimas telas visitadas (feed, comunicados já abertos); banner de "sem conexão" honesto.
 3. Web Push (VAPID): opt-in claro em pt-BR, gerenciamento de subscriptions por dispositivo, revogação no perfil.
-4. Eventos que disparam push: comunicado crítico publicado, cobrança de pendência, post em que fui marcado. Preferências simples por usuário.
+4. Evento que dispara push: cobrança de pendência (único gatilho de notificação que já existe hoje, via `NotificationChannel`/INC-007) — o `PushNotificationChannel` novo se combina ao `InAppNotificationChannel` existente em `remindPendingUsers`, sem alterar lógica de domínio. Preferências simples por usuário. Os gatilhos de "comunicado crítico publicado" e "post em que fui marcado" saem do escopo deste INC (ver nota acima / DP-16).
 5. Documentar limitações iOS no vault (`02-Arquitetura/`) com o que foi medido em teste real.
 
 ## Critérios de aceite

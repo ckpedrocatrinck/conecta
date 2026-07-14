@@ -8,10 +8,12 @@ import { requireOnboardedSession } from "../../../lib/auth/session";
 import { withTenant } from "../../../lib/db/with-tenant";
 import { findUserById } from "../../../lib/repositories/user.repository";
 import { findMyJobApplications } from "../../../lib/repositories/job-opening.repository";
+import { findPushSubscriptionsForUser } from "../../../lib/repositories/push-subscription.repository";
 import { mediaStorage } from "../../../lib/storage/media-storage";
 import { formatDateTimeSaoPaulo } from "../../../lib/dates/format-datetime";
 import { changePasswordFromProfileAction, updateConsentAction } from "./actions";
 import { PhotoUploader } from "./photo-uploader";
+import { PushOptIn } from "@/components/pwa/push-opt-in";
 
 const JOB_STATUS_LABEL: Record<string, string> = {
   open: "Aberta",
@@ -32,9 +34,10 @@ export default async function PerfilPage({
   const session = await requireOnboardedSession();
   const { erro, senha } = await searchParams;
 
-  const { user, myApplications } = await withTenant({ tenantId: session.tenantId }, async (tx) => ({
+  const { user, myApplications, pushSubscriptions } = await withTenant({ tenantId: session.tenantId }, async (tx) => ({
     user: await findUserById(tx, session.tenantId, session.userId),
     myApplications: await findMyJobApplications(tx, session.tenantId, session.userId),
+    pushSubscriptions: await findPushSubscriptionsForUser(tx, session.tenantId, session.userId),
   }));
   if (!user) return null;
 
@@ -81,6 +84,11 @@ export default async function PerfilPage({
             ))}
           </div>
         )}
+      </Card>
+
+      <Card>
+        <h2 className="text-sm font-semibold text-muted-foreground">Notificações push</h2>
+        <PushOptIn subscriptions={pushSubscriptions} />
       </Card>
 
       <Card>
