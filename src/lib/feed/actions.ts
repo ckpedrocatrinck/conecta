@@ -15,5 +15,5 @@ export async function loadMoreFeedPostsAction(cursor: { eventDate: string; creat
     }),
   );
 
-  return buildFeedCards(posts);
+  return buildFeedCards(posts, session.userId);
 }

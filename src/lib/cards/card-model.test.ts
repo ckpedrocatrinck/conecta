@@ -15,6 +15,8 @@ function makePost(overrides: Partial<FeedPostCard> = {}): FeedPostCard {
     branchName: null,
     people: [],
     media: [],
+    reactionCount: 0,
+    reactedByMe: false,
     ...overrides,
   };
 }

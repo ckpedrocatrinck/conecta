@@ -1,4 +1,5 @@
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
+import type { MonthDay } from "../dates/birthday-window";
 
 const LOGIN_LOCKOUT_THRESHOLD = 5;
 const LOGIN_LOCKOUT_DURATION_MS = 15 * 60 * 1000;
@@ -161,4 +162,57 @@ export function resetEmployeePassword(
     where: { id: userId, tenantId },
     data: { passwordHash, mustChangePassword: true, failedLoginAttempts: 0, lockedUntil: null },
   });
+}
+
+export type UpcomingBirthdayRow = {
+  id: string;
+  fullName: string;
+  photoUrl: string | null;
+  photoVisible: boolean;
+  branchId: string;
+  month: number;
+  day: number;
+};
+
+/**
+ * Aniversariantes da janela `monthDays` (INC-010) — filtro de opt-out
+ * (`birthday_visible = true`) e' parte do WHERE, nao um filtro em memoria
+ * depois: quem tem `birthday_visible=false` NUNCA sai do banco, entao nenhum
+ * consumidor (tela, card, busca por nome) tem a chance de vazar a existencia
+ * dessa pessoa. `monthDays` vem de `birthdayWindowMonthDays` (ja' calculado em
+ * America/Sao_Paulo) — esta funcao so' compara (mes,dia), sem conhecer fuso.
+ * Raw query porque o Prisma nao modela `EXTRACT(MONTH/DAY FROM birth_date)`
+ * de forma tipada; parametros sempre via tagged template (nunca concatenacao
+ * de string), RLS + tenant_id explicito como em todo repositorio do projeto.
+ */
+export async function findUpcomingBirthdays(
+  tx: Prisma.TransactionClient,
+  tenantId: string,
+  monthDays: MonthDay[],
+  branchId?: string,
+): Promise<UpcomingBirthdayRow[]> {
+  const monthDayPairs = Prisma.join(
+    monthDays.map((md) => Prisma.sql`(${md.month}, ${md.day})`),
+    ", ",
+  );
+  const branchFilter = branchId ? Prisma.sql`AND branch_id = ${branchId}::uuid` : Prisma.empty;
+
+  return tx.$queryRaw<UpcomingBirthdayRow[]>`
+    SELECT
+      id,
+      full_name AS "fullName",
+      photo_url AS "photoUrl",
+      photo_visible AS "photoVisible",
+      branch_id AS "branchId",
+      EXTRACT(MONTH FROM birth_date)::int AS month,
+      EXTRACT(DAY FROM birth_date)::int AS day
+    FROM users
+    WHERE tenant_id = ${tenantId}::uuid
+      AND status = 'active'
+      AND birthday_visible = true
+      AND birth_date IS NOT NULL
+      AND (EXTRACT(MONTH FROM birth_date)::int, EXTRACT(DAY FROM birth_date)::int) IN (${monthDayPairs})
+      ${branchFilter}
+    ORDER BY full_name ASC
+  `;
 }

@@ -76,6 +76,25 @@ export function isPostCardKind(type: string): type is PostCardKind {
   return POST_CARD_KINDS.has(type);
 }
 
+/** Aniversariante (INC-010) — mesmo padrao de buildPostCardData, so' que a
+ * fonte e' a query de aniversariantes (build-birthday-view.ts), nao um Post:
+ * aniversario nao e' uma linha de `posts` (ver modelo-de-dados.md). `person`
+ * ja chega com o consentimento de foto aplicado (resolvido em
+ * buildBirthdayListView a partir do `photoVisible` ATUAL, mesma regra de
+ * toPostPersonView) — esta funcao nunca decide consentimento. */
+export function buildBirthdayCardData(
+  person: { fullName: string; photoUrl: string | null },
+  eventDate: string,
+  branding: TenantBranding,
+): BirthdayCardData {
+  return {
+    kind: "birthday",
+    person: toCardPerson(person),
+    eventDate,
+    branding: toCardBranding(branding),
+  };
+}
+
 /** Retorna null para tipos sem template dedicado (ex.: "general") — quem
  * chama decide o fallback (layout basico do INC-008). */
 export function buildPostCardData(post: FeedPostCard, branding: TenantBranding): PostCardData | null {

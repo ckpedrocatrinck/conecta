@@ -4,10 +4,12 @@ import { buildBirthdayPreviewFixture, buildJobOpeningPreviewFixture } from "../.
 import { CardTemplate } from "@/components/cards/templates";
 
 /**
- * Preview interno dos templates de aniversariante e vaga (INC-009) — tipos
- * sem dado real ainda (aniversariantes é INC-010; vagas/candidatura é
- * INC-011, fase 4). Alimentado só por fixtures — quando esses INCs
- * chegarem, os templates aqui já estão prontos, só troca a fonte do dado.
+ * Preview interno dos templates de aniversariante e vaga (INC-009), alimentado
+ * por fixtures fixas (não pelo dado real) — útil pra QA visual do template
+ * isolado (ex.: nome de 40+ caracteres), sem depender de existir alguém
+ * fazendo aniversário hoje no banco. Aniversariante já tem dado real desde o
+ * INC-010 (ver bloco "Aniversariantes de hoje" na home e a tela
+ * `/aniversariantes`) — vaga/candidatura ainda não (INC-011, fase 4).
  */
 export default async function CardsPreviewPage() {
   const session = await requireAdmin();
@@ -18,8 +20,9 @@ export default async function CardsPreviewPage() {
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Preview de templates (mock)</h1>
         <p className="text-sm text-muted-foreground">
-          Aniversariante e vaga ainda não têm dado real (INC-010/INC-011) — os cards abaixo usam dados fictícios
-          só para validar o template visual.
+          Os cards abaixo usam dados fictícios (nomes longos, textos de teste) só para validar o template
+          visual isolado — não são o card real que aparece na home/feed. Vaga ainda não tem dado real
+          (candidatura é INC-011).
         </p>
       </div>
 

@@ -169,7 +169,7 @@ describe("card gerado (INC-009): nunca exibe foto de quem não consente", () => 
     const detail = await withTenant({ tenantId: tenantA.tenant.id }, (tx) =>
       findPostWithDetails(tx, tenantA.tenant.id, post.id),
     );
-    const [feedCard] = await buildFeedCards([detail!]);
+    const [feedCard] = await buildFeedCards([detail!], tenantA.users[0].id);
     const cardData = buildPostCardData(feedCard, { logoUrl: null, accentColor: null });
 
     expect(cardData?.people[0].photoUrl).toBeNull();
