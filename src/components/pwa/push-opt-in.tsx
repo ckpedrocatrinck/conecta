@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Bell, BellOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatDateTimeSaoPaulo } from "@/lib/dates/format-datetime";
-import { isIos, isStandalone } from "@/lib/pwa/platform";
+import { useIosNonStandalone } from "@/lib/pwa/platform";
 import { urlBase64ToUint8Array } from "@/lib/pwa/vapid-key";
 import { revokeOwnPushSubscriptionAction, saveOwnPushSubscriptionAction } from "@/app/(app)/perfil/push-actions";
 
@@ -23,8 +23,9 @@ type Status = "idle" | "pending" | "denied" | "unsupported" | "error";
 export function PushOptIn({ subscriptions }: { subscriptions: PushSubscriptionRow[] }) {
   const router = useRouter();
   const [status, setStatus] = useState<Status>("idle");
+  const iosNonStandalone = useIosNonStandalone();
 
-  if (isIos() && !isStandalone()) {
+  if (iosNonStandalone) {
     return (
       <p className="text-sm text-muted-foreground">
         Para receber notificações no iPhone, primeiro instale o Conecta na tela inicial (toque em{" "}

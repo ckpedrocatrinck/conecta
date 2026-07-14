@@ -4,7 +4,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { Download, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { isIos, isStandalone } from "@/lib/pwa/platform";
+import { useIosNonStandalone, useIsStandalone } from "@/lib/pwa/platform";
 
 const DISMISSED_KEY = "conecta:install-prompt-dismissed-at";
 const DISMISS_COOLDOWN_MS = 14 * 24 * 60 * 60 * 1000;
@@ -20,20 +20,10 @@ function wasDismissedRecently(): boolean {
 const noSubscription = () => () => {};
 const alwaysFalse = () => false;
 
-/**
- * Leituras hydration-safe de APIs so' do navegador (UA, display-mode,
- * localStorage) — nenhuma muda depois do mount nesta tela, entao
- * `useSyncExternalStore` com subscribe no-op: sem efeito, sem `setState`
- * sincrono a sincronizar, sem risco de mismatch SSR x cliente (o servidor
- * usa sempre o snapshot `false`; o cliente atualiza para o valor real so'
- * depois da hidratacao, sem warning).
- */
-function useIosNonStandalone(): boolean {
-  return useSyncExternalStore(noSubscription, () => isIos() && !isStandalone(), alwaysFalse);
-}
-function useIsStandalone(): boolean {
-  return useSyncExternalStore(noSubscription, isStandalone, alwaysFalse);
-}
+/** Ver useIosNonStandalone/useIsStandalone (src/lib/pwa/platform.ts) para o
+ * porque de nunca ler os detectores de plataforma crus direto no corpo do
+ * componente — mesmo motivo aqui para o dismissal em localStorage, que
+ * tambem so' existe no cliente. */
 function useWasDismissedRecently(): boolean {
   return useSyncExternalStore(noSubscription, wasDismissedRecently, alwaysFalse);
 }
