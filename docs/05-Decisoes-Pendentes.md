@@ -2,6 +2,8 @@
 
 > Nada aqui é detalhe. Cada item ou bloqueia uma fase ou muda o desenho do produto. Resolver → registrar → promover a ADR/spec → remover daqui.
 
+> **Nota sobre a numeração (reconciliação de vault, 2026-07-16, achado A6-7 da auditoria):** a numeração salta de DP-03 para DP-05 de propósito — não existe DP-04 pendente nem a registrar; o número foi descartado/consolidado antes de virar um registro formal neste arquivo. Não é uma lacuna a preencher.
+
 ## ✅ Resolvidas em 2026-07-09
 
 - **DP-01 — Acordo de IP com o Rede Vale Verde.** ✅ **100% aprovado pela diretoria** (produto é do Pedro; empresa é cliente-piloto). Recomendação: guardar o registro escrito dessa aprovação (e-mail/termo) junto ao projeto.

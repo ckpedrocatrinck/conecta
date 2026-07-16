@@ -5,7 +5,8 @@
 ## Fundação
 
 ```
-Tenant        id, name, slug, status, plan
+Tenant        id, name, slug, status, plan,
+              logo_url?, accent_color?                       -- identidade visual dos cards (INC-009); sem UI de edição no piloto (DP-15)
 Branch        id, tenant_id, name, code                     -- filial
 User          id, tenant_id, branch_id, role(admin|manager|employee),
               full_name, registration_code,                 -- matrícula: identificador interno, NÃO login
@@ -16,16 +17,20 @@ User          id, tenant_id, branch_id, role(admin|manager|employee),
               status(active|inactive),                      -- desligado ≠ deletado (ADR-006 / LGPD)
               anonymized_at?,                               -- preenchido quando dados pessoais são anonimizados
               password_hash, must_change_password(bool)
-PushSubscription  id, user_id, endpoint, keys, created_at
+PushSubscription  id, tenant_id, user_id, endpoint, keys, created_at
 Session       id, tenant_id, user_id, expires_at, revoked_at?,
               created_at                                    -- ponteiro do JWT (ADR-007)
 AuditLog      id, tenant_id, actor_user_id, action, entity, entity_id,
               metadata(jsonb), created_at                   -- ações administrativas
+Notification  id, tenant_id, user_id, type, message,
+              announcement_id?, channel(default in_app),    -- canal de notificação (INC-007), base do push (INC-012)
+              created_at, read_at?
 ```
 
 ## Núcleo — Comunicados
 
 ```
+AnnouncementSequence  tenant_id, year, last_number           -- contador de CI por tenant+ano (INC-004); year em America/Sao_Paulo, não UTC
 Announcement          id, tenant_id, seq_number, year,      -- "CI 25/2026" derivado
                       category, criticality(info|requires_ack),
                       status(draft|scheduled|published|archived),

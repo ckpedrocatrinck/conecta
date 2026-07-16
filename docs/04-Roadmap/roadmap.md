@@ -25,13 +25,15 @@
 | 007 | Cobrança, exportação CSV e AuditLog | 2 | ✅ | 006 |
 | 008 | Feed: posts estruturados (CRUD + timeline) | 3 | ✅ | 003 |
 | 008.5 | Navegação global (bottom nav + header admin) | transversal (3/4) | ✅ | 008 |
-| 009 | Templates visuais de cards | 3 | ⬜ | 008 |
-| 010 | Aniversariantes + reações + opt-outs de perfil | 3 | ⬜ | 008 |
-| 011 | Vagas internas + candidatura | 4 | ⬜ | 003 |
-| 012 | PWA completo: manifest, offline, Web Push | 4 | ⬜ | 005 (push de cobrança) |
+| 009 | Templates visuais de cards | 3 | ✅ | 008 |
+| 010 | Aniversariantes + reações + opt-outs de perfil | 3 | ✅ | 008 |
+| 011 | Vagas internas + candidatura | 4 | ✅ | 003 |
+| 012 | PWA completo: manifest, offline, Web Push | 4 | 🟡 código completo (branch `inc-012-pwa-push`, não mergeada) — aguarda medição real de push em iPhone antes de fechar | 005 (push de cobrança) |
+| 012.5 | Correções pré-piloto (Balde 1 das auditorias) | transversal (entre 4 e 5) | 🟡 código completo (branch `inc-012.5-correcoes-auditoria`, não mergeada) — aguarda roteiro de teste manual do Pedro | 012 |
 | 013 | Hardening pré-piloto: LGPD checklist, backup/restore, seeds reais | 5 | ⬜ | todos |
 
 Observações:
 - 008-011 podem rodar após a fase 2 em qualquer ordem; a ordem acima é a recomendada (engajamento antes de vagas para o go-live ter feed vivo).
 - Cada INC tem arquivo próprio em `incrementos/` com escopo e critérios de aceite — o arquivo é o contrato com o Claude Code.
 - Fase 1.5/2 do produto (ouvidoria, benefícios, IA, quiz) está em `01-Produto/fora-do-escopo-fase2.md` e ganhará INCs próprios quando especificada.
+- INC-012.5 é transversal de correção (triagem das auditorias de 2026-07-16, "Balde 1") — não é uma feature nova de fase, roda entre o INC-012 e o polimento visual (DP-13/DP-14)/INC-013.
