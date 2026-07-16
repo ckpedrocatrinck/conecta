@@ -29,8 +29,13 @@
               └─ Aprovado → segue ao 5.
 
 5. FECHAR     Pedro: commit na branch do INC → push → merge.
-              Pedro: marca o INC como ✅ no Obsidian e preenche
-              a seção "Registro de conclusão" do INC.
+              Marcar o INC como ✅ no roadmap (`04-Roadmap/roadmap.md`) e
+              preencher a seção "Registro de conclusão" do INC (data,
+              branch, commit de merge) fazem parte do MESMO commit de
+              fechamento — nunca um passo separado "para depois". É a
+              causa raiz de INCs mergeados ficando com doc desatualizada
+              (aconteceu com 007, 008, 009, 010, 011 — reconciliado em
+              2026-07-16, achado A6-1 da auditoria).
 
 6. PRÓXIMO    Claude (chat) confirma qual é o próximo INC e o ciclo
               reinicia.

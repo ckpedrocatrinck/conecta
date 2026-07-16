@@ -1,6 +1,6 @@
 # INC-012 — PWA completo: manifest, offline, Web Push
 
-**Status:** ⬜ Não iniciado
+**Status:** 🟡 Código completo (branch `inc-012-pwa-push`, não mergeada) — **não concluído**: falta a medição real de push em iPhone (ver critério de aceite abaixo e `docs/02-Arquitetura/pwa-push-ios.md`)
 **Fase:** 4
 **Depende de:** INC-005 (cobranças), INC-007 (canal de notificação)
 **ADRs relevantes:** 002
@@ -23,4 +23,6 @@ App instalável na home do celular com push funcionando — o mecanismo de retor
 - [ ] Revogar push no perfil interrompe envios de verdade.
 
 ## Registro de conclusão
-_(preencher)_
+_(preencher — só ao fechar. Este INC não fecha com a medição de push em iPhone pendente, mesmo que o resto do código esteja completo. Ver `docs/02-Arquitetura/pwa-push-ios.md`.)_
+
+**Situação em 2026-07-16 (reconciliação de vault, achado A6-4 da auditoria):** código implementado na branch `inc-012-pwa-push` (commits `94e69cd`, `43085b9`, `b2302a1`, `46a0122`), ainda não mergeada na main. A tabela de medição real de push em iPhone (`docs/02-Arquitetura/pwa-push-ios.md`) não existia no vault até esta reconciliação — foi criada agora, vazia, para não perder o requisito. Seja honesto: este INC só fecha quando essa tabela estiver preenchida com dados reais.

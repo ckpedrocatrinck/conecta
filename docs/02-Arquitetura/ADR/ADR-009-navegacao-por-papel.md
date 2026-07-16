@@ -5,6 +5,7 @@
 **Data:** 2026-07-13
 **Decisores:** Pedro Catrinck
 **Relaciona-se com:** ADR-002 (PWA mobile-first), papéis definidos no schema (`UserRole`) e aplicados via guards `requireAdmin`/`requireAdminOrManager`, design-system (§4 bottom nav), resolve o DP-10.
+**Nota de manutenção:** este ADR descreve a decisão de arquitetura (dois sistemas de navegação por papel), não o inventário exato de telas do header — a lista de itens administrativos muda conforme novos INCs adicionam telas (ex. Vagas no INC-011) sem que isso mude a decisão em si.
 
 ## Contexto
 Até o INC-008, cada tela nasceu acessível só por link direto ou URL digitada à mão — não existe navegação global. O painel admin, por exemplo, só aparece digitando `/admin`. Isso foi adiado de propósito (DP-10): definir os itens de navegação exigia saber quais telas existiriam, o que só agora está claro (comunicados, feed, pendências, posts, perfil, admin). O produto tem dois perfis de uso com necessidades opostas: o colaborador (maioria, celular modesto, pressa, precisa de pouquíssimas opções grandes) e o admin/RH (desktop majoritariamente, precisa de muitas opções organizadas). Misturar os dois num menu só foi exatamente o erro da portal legado (hambúrguer de 18 itens misturando "Foi show" com "Sair").
@@ -21,7 +22,7 @@ Dois sistemas de navegação distintos, selecionados por papel.
 
 ### Admin — bottom nav + menu administrativo no header
 - O admin **também** vê o bottom nav de colaborador (ele é uma pessoa que quer ver o feed e os comunicados como qualquer um, inclusive para conferir o que publica).
-- **Adicionalmente**, um menu administrativo no **header (topo)**, visível só para admin: Comunicados · Posts · Colaboradores · Filiais · Pendências · Auditoria.
+- **Adicionalmente**, um menu administrativo no **header (topo)**, visível só para admin: Comunicados · Posts · Vagas · Colaboradores · Filiais · Pendências · Auditoria. (Vagas entrou com o INC-011, depois deste ADR ter sido Aceito — registrado aqui na reconciliação de vault de 2026-07-16, achado A6-5 da auditoria.)
 - Por que header e não bottom nav: o RH trabalha majoritariamente em desktop (cadastro, redação de comunicado, export CSV — tarefas de escritório). Bottom nav é padrão mobile; num desktop fica deslocado. Header é o padrão natural de app administrativo e funciona nos dois tamanhos.
 
 ### Manager — bottom nav + acesso a Pendências
