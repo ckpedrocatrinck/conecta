@@ -19,3 +19,11 @@ Vale igualmente em dev e CI (ver `prisma/migrations/*_rls_and_triggers/migration
 ## Variáveis de ambiente novas (INC-002)
 
 `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` (compose), `DATABASE_URL` (role owner), `APP_DB_PASSWORD` + `APP_DATABASE_URL` (role `conecta_app`), `CPF_HASH_PEPPER` (ADR-006). Documentadas com comentário em `.env.example`; valores reais nunca commitados.
+
+## Auth.js `trustHost` em produção (achado de QA pós-INC-012.5, 2026-07-16)
+
+O Auth.js (`next-auth` 5.0.0-beta.31) só confia automaticamente no host da requisição em dois casos: **dev** (`NODE_ENV !== "production"`) ou quando detecta uma plataforma conhecida via env var (`VERCEL`, `CF_PAGES`). Fora disso — ou seja, em produção rodando fora dessas plataformas (`next start` on-premise/local) — `trustHost` resolve para `false`, e **todo** login (com credencial válida ou não) falha com um JSON genérico em inglês ("There was a problem with the server configuration...") antes mesmo de chamar o `authorize()` do Credentials provider. Não é um bug do código de auth do Conecta (`src/lib/auth/config.ts`) — é o Auth.js recusando operar sem saber se pode confiar no `Host` da requisição.
+
+- **Na Vercel** (hospedagem-alvo do piloto, ver `stack.md`): resolve sozinho, `VERCEL=1` já vem definido pela plataforma. Nenhuma ação necessária.
+- **On-premise/local em modo produção** (`next build && next start`, ex. para testar antes de subir): definir `AUTH_TRUST_HOST=true` (ou `AUTH_URL` com a URL pública real) no ambiente antes de iniciar.
+- **Rede de segurança:** `src/lib/auth/assert-trust-host.ts` (`assertAuthTrustHostConfigured`, chamada em `instrumentation.ts` junto do `assertRuntimeAppRole` do A4-3) falha o boot com uma mensagem clara caso nenhuma das quatro env vars conhecidas (`VERCEL`, `CF_PAGES`, `AUTH_TRUST_HOST`, `AUTH_URL`) esteja presente **em produção** — não roda em dev, para não travar o fluxo local. Não reimplementa a lógica interna do Auth.js (que pode mudar entre versões); só confere a presença dessas quatro variáveis.
