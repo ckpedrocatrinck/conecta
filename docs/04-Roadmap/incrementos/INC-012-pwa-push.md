@@ -1,6 +1,6 @@
 # INC-012 — PWA completo: manifest, offline, Web Push
 
-**Status:** 🟡 Código completo (branch `inc-012-pwa-push`, não mergeada) — **não concluído**: falta a medição real de push em iPhone (ver critério de aceite abaixo e `docs/02-Arquitetura/pwa-push-ios.md`)
+**Status:** 🟡 Código completo e mergeado na main — **não concluído**: falta a medição real de push em iPhone (ver critério de aceite abaixo e `docs/02-Arquitetura/pwa-push-ios.md`)
 **Fase:** 4
 **Depende de:** INC-005 (cobranças), INC-007 (canal de notificação)
 **ADRs relevantes:** 002
@@ -33,6 +33,10 @@ App instalável na home do celular com push funcionando — o mecanismo de retor
 - [ ] Revogar push no perfil interrompe envios de verdade.
 
 ## Registro de conclusão
-_(preencher — só ao fechar. Este INC não fecha com a medição de push em iPhone pendente, mesmo que o resto do código esteja completo. Ver `docs/02-Arquitetura/pwa-push-ios.md`.)_
+**Data do merge:** 2026-07-16
+**Branch:** inc-012-pwa-push
+**Merge em main:** `e01df13` (`--no-ff`)
 
-**Situação em 2026-07-16 (reconciliação de vault, achado A6-4 da auditoria):** código implementado na branch `inc-012-pwa-push` (commits `94e69cd`, `43085b9`, `b2302a1`, `46a0122`), ainda não mergeada na main. A tabela de medição real de push em iPhone (`docs/02-Arquitetura/pwa-push-ios.md`) não existia no vault até esta reconciliação — foi criada agora, vazia, para não perder o requisito. Seja honesto: este INC só fecha quando essa tabela estiver preenchida com dados reais.
+**Ressalva explícita — este INC NÃO está concluído:** o código está completo e mergeado (manifest, service worker, Web Push VAPID, opt-in/revogação, limitações iOS documentadas abaixo), mas o critério de aceite "push testado em iPhone real, taxa de entrega registrada no vault" continua pendente. A tabela de medição real (`docs/02-Arquitetura/pwa-push-ios.md`) existe e está vazia. Só marcar ✅ no roadmap quando essa tabela tiver dados reais de teste em iPhone — código completo não é o mesmo que concluído aqui (ADR-002/ADR-006: base tem parcela relevante de iOS, não presumir).
+
+Histórico: código implementado nos commits `94e69cd`, `43085b9`, `b2302a1`, `46a0122`. A tabela de medição não existia no vault até a reconciliação de 2026-07-16 (achado A6-4 da auditoria) — foi criada vazia para não perder o requisito.
