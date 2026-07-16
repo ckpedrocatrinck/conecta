@@ -21,33 +21,43 @@ export function JobApplyButton({
 }) {
   const [applied, setApplied] = useState(initialApplied);
   const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   function handleClick() {
     if (isPending) return;
     const previous = applied;
+    setError(null);
     setApplied(!applied);
 
     startTransition(async () => {
       const result = previous
         ? await cancelJobApplicationAction(jobOpeningId)
         : await applyToJobOpeningAction(jobOpeningId, null);
-      if (!result.ok) setApplied(previous);
+      if (!result.ok) {
+        setApplied(previous);
+        setError(result.reason === "closed" || result.reason === "not_found"
+          ? "Esta vaga não aceita mais candidaturas."
+          : "Não foi possível concluir. Tente novamente.");
+      }
     });
   }
 
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      disabled={isPending}
-      aria-pressed={applied}
-      className={
-        applied
-          ? "w-fit rounded-lg border border-border px-3 py-1.5 text-sm font-semibold text-muted-foreground hover:bg-muted disabled:opacity-70"
-          : "w-fit rounded-lg bg-action px-3 py-1.5 text-sm font-semibold text-action-foreground hover:bg-action-hover disabled:opacity-70"
-      }
-    >
-      {applied ? "Candidatura enviada · Cancelar" : "Candidatar-se"}
-    </button>
+    <span className="flex flex-col items-start gap-1">
+      <button
+        type="button"
+        onClick={handleClick}
+        disabled={isPending}
+        aria-pressed={applied}
+        className={
+          applied
+            ? "w-fit rounded-lg border border-border px-3 py-1.5 text-sm font-semibold text-muted-foreground hover:bg-muted disabled:opacity-70"
+            : "w-fit rounded-lg bg-action px-3 py-1.5 text-sm font-semibold text-action-foreground hover:bg-action-hover disabled:opacity-70"
+        }
+      >
+        {applied ? "Candidatura enviada · Cancelar" : "Candidatar-se"}
+      </button>
+      {error && <span className="text-xs text-destructive">{error}</span>}
+    </span>
   );
 }

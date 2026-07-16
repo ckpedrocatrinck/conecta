@@ -11,9 +11,14 @@ import { EditPostForm } from "./form";
 import { PostPhotoUpload } from "./photo-upload";
 import { publishPostAction } from "./actions";
 import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 const ERROR_MESSAGES: Record<string, string> = {
   obrigatorio: "Preencha tipo, título e data do evento.",
+};
+
+const SUCCESS_MESSAGES: Record<string, string> = {
+  publicado: "Post publicado.",
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -26,11 +31,11 @@ export default async function PostDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ erro?: string; salvo?: string }>;
+  searchParams: Promise<{ erro?: string; salvo?: string; ok?: string }>;
 }) {
   const session = await requireAdmin();
   const { id } = await params;
-  const { erro, salvo } = await searchParams;
+  const { erro, salvo, ok } = await searchParams;
 
   const [data, branding] = await Promise.all([
     withTenant({ tenantId: session.tenantId }, async (tx) => {
@@ -70,7 +75,7 @@ export default async function PostDetailPage({
           {post.status === "draft" && (
             <form action={publishPostAction}>
               <input type="hidden" name="id" value={post.id} />
-              <Button type="submit">Publicar</Button>
+              <SubmitButton pendingLabel="Publicando…">Publicar</SubmitButton>
             </form>
           )}
         </div>
@@ -82,6 +87,7 @@ export default async function PostDetailPage({
         </p>
       )}
       {salvo === "ok" && <p className="text-sm text-success">Alterações salvas.</p>}
+      {ok && SUCCESS_MESSAGES[ok] && <p className="text-sm text-success">{SUCCESS_MESSAGES[ok]}</p>}
 
       <section className="flex flex-col gap-3">
         <h2 className="text-sm font-semibold text-muted-foreground">Fotos</h2>

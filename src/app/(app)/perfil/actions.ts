@@ -17,7 +17,7 @@ export async function updateConsentAction(formData: FormData) {
     }),
   );
 
-  redirect("/perfil");
+  redirect("/perfil?consentimentos=ok");
 }
 
 export async function changePasswordFromProfileAction(formData: FormData) {

@@ -3,8 +3,10 @@
 import type { Announcement, AnnouncementVersion } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { RichTextContent } from "@/components/announcements/rich-text-content";
 import { RichTextEditor } from "@/components/announcements/rich-text-editor";
 import {
@@ -105,7 +107,7 @@ export function EditAnnouncementForm({
         {(announcement.status === "draft" || announcement.status === "scheduled") && (
           <form action={publishAnnouncementNowAction}>
             <input type="hidden" name="id" value={announcement.id} />
-            <Button type="submit">Publicar agora</Button>
+            <SubmitButton pendingLabel="Publicando…">Publicar agora</SubmitButton>
           </form>
         )}
 
@@ -116,9 +118,9 @@ export function EditAnnouncementForm({
               <Label htmlFor="publishAt">Agendar para</Label>
               <Input id="publishAt" name="publishAt" type="datetime-local" required />
             </div>
-            <Button type="submit" variant="secondary">
+            <SubmitButton variant="secondary" pendingLabel="Agendando…">
               Agendar
-            </Button>
+            </SubmitButton>
           </form>
         )}
 
@@ -129,19 +131,21 @@ export function EditAnnouncementForm({
             </p>
             <form action={unscheduleAnnouncementAction}>
               <input type="hidden" name="id" value={announcement.id} />
-              <Button type="submit" variant="secondary">
+              <SubmitButton variant="secondary" pendingLabel="Cancelando…">
                 Cancelar agendamento
-              </Button>
+              </SubmitButton>
             </form>
           </>
         )}
 
-        <form action={archiveAnnouncementAction}>
-          <input type="hidden" name="id" value={announcement.id} />
-          <Button type="submit" variant="destructive">
-            Arquivar
-          </Button>
-        </form>
+        <ConfirmDialog
+          triggerLabel="Arquivar"
+          title="Arquivar este comunicado?"
+          description="O comunicado deixa de aparecer para os colaboradores. Pendências de confirmação de leitura ainda não resolvidas continuam sinalizadas na auditoria."
+          confirmLabel="Arquivar"
+          action={archiveAnnouncementAction}
+          hiddenFields={{ id: announcement.id }}
+        />
       </div>
     </div>
   );

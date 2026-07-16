@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { PostPeoplePicker, type PickablePerson } from "@/components/admin/post-people-picker";
 import { PostCardPreview } from "@/components/admin/post-card-preview";
 import type { TenantBranding } from "@/lib/repositories/tenant.repository";
@@ -102,9 +102,9 @@ export function EditPostForm({
 
       <PostCardPreview type={type} title={title} body={body} selectedPeople={selectedPeople} branding={branding} />
 
-      <Button type="submit" className="self-start">
+      <SubmitButton className="self-start" pendingLabel="Salvando…">
         Salvar
-      </Button>
+      </SubmitButton>
     </form>
   );
 }

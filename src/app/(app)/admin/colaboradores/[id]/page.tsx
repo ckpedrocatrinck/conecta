@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { requireAdmin } from "../../../../../lib/auth/session";
 import { withTenant } from "../../../../../lib/db/with-tenant";
 import { findBranchesByTenant } from "../../../../../lib/repositories/branch.repository";
@@ -23,11 +25,11 @@ export default async function EditarColaboradorPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ erro?: string; sucesso?: string }>;
+  searchParams: Promise<{ erro?: string; sucesso?: string; status?: string }>;
 }) {
   const session = await requireAdmin();
   const { id } = await params;
-  const { erro, sucesso } = await searchParams;
+  const { erro, sucesso, status } = await searchParams;
 
   const { user, branches } = await withTenant({ tenantId: session.tenantId }, async (tx) => ({
     user: await findUserById(tx, session.tenantId, id),
@@ -106,16 +108,31 @@ export default async function EditarColaboradorPage({
         <Button type="submit">Salvar alterações</Button>
       </form>
 
+      {status === "desligado" && <p className="text-sm text-success">Colaborador desligado.</p>}
+      {status === "reativado" && <p className="text-sm text-success">Colaborador reativado.</p>}
+
       <div className="flex flex-col gap-3 border-t border-zinc-200 pt-4 dark:border-zinc-800">
         <h2 className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Ações</h2>
         <ResetPasswordButton userId={user.id} />
-        <form action={toggleEmployeeStatusAction}>
-          <input type="hidden" name="id" value={user.id} />
-          <input type="hidden" name="nextStatus" value={user.status === "active" ? "inactive" : "active"} />
-          <Button type="submit" variant={user.status === "active" ? "destructive" : "secondary"} size="sm">
-            {user.status === "active" ? "Desligar colaborador" : "Reativar colaborador"}
-          </Button>
-        </form>
+        {user.status === "active" ? (
+          <ConfirmDialog
+            triggerLabel="Desligar colaborador"
+            triggerSize="sm"
+            title="Desligar este colaborador?"
+            description="O acesso é revogado imediatamente (sessões ativas encerradas). O histórico de confirmações de leitura é preservado."
+            confirmLabel="Desligar"
+            action={toggleEmployeeStatusAction}
+            hiddenFields={{ id: user.id, nextStatus: "inactive" }}
+          />
+        ) : (
+          <form action={toggleEmployeeStatusAction}>
+            <input type="hidden" name="id" value={user.id} />
+            <input type="hidden" name="nextStatus" value="active" />
+            <SubmitButton variant="secondary" size="sm" pendingLabel="Reativando…">
+              Reativar colaborador
+            </SubmitButton>
+          </form>
+        )}
       </div>
     </div>
   );

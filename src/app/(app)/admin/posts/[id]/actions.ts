@@ -78,7 +78,7 @@ export async function publishPostAction(formData: FormData) {
     });
   });
 
-  redirect(`/admin/posts/${id}`);
+  redirect(`/admin/posts/${id}?ok=publicado`);
 }
 
 function postMediaKey(tenantId: string, postId: string): string {

@@ -28,10 +28,12 @@ export function ReactionButton({
   const [reacted, setReacted] = useState(initialReacted);
   const [count, setCount] = useState(initialCount);
   const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState(false);
 
   function handleClick() {
     if (isPending) return;
     const previous = { reacted, count };
+    setError(false);
     setReacted(!reacted);
     setCount(reacted ? count - 1 : count + 1);
 
@@ -43,24 +45,28 @@ export function ReactionButton({
       } catch {
         setReacted(previous.reacted);
         setCount(previous.count);
+        setError(true);
       }
     });
   }
 
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      disabled={isPending}
-      aria-pressed={reacted}
-      className={
-        reacted
-          ? "flex w-fit items-center gap-1.5 rounded-full bg-primary-subtle px-3 py-1.5 text-sm font-semibold text-primary disabled:opacity-70"
-          : "flex w-fit items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm font-semibold text-muted-foreground hover:bg-muted disabled:opacity-70"
-      }
-    >
-      <span aria-hidden="true">👏</span>
-      <span>{count > 0 ? count : "Aplaudir"}</span>
-    </button>
+    <span className="flex flex-col items-start gap-1">
+      <button
+        type="button"
+        onClick={handleClick}
+        disabled={isPending}
+        aria-pressed={reacted}
+        className={
+          reacted
+            ? "flex w-fit items-center gap-1.5 rounded-full bg-primary-subtle px-3 py-1.5 text-sm font-semibold text-primary disabled:opacity-70"
+            : "flex w-fit items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm font-semibold text-muted-foreground hover:bg-muted disabled:opacity-70"
+        }
+      >
+        <span aria-hidden="true">👏</span>
+        <span>{count > 0 ? count : "Aplaudir"}</span>
+      </button>
+      {error && <span className="text-xs text-destructive">Não foi possível aplaudir agora.</span>}
+    </span>
   );
 }

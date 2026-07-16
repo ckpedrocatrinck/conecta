@@ -26,15 +26,19 @@ export function FeedLoadMore({
   const [posts, setPosts] = useState<FeedPostCard[]>([]);
   const [cursor, setCursor] = useState<Cursor | null>(initialCursor);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
 
   async function handleLoadMore() {
     if (!cursor) return;
     setLoading(true);
+    setError(false);
     try {
       const next = await loadMoreFeedPostsAction(cursor);
       setPosts((prev) => [...prev, ...next]);
       const last = next.at(-1);
       setCursor(next.length < pageSize || !last ? null : { eventDate: last.eventDate, createdAt: last.createdAt, id: last.id });
+    } catch {
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -49,6 +53,9 @@ export function FeedLoadMore({
         <Button type="button" variant="outline" onClick={handleLoadMore} disabled={loading} className="self-center">
           {loading ? "Carregando…" : "Carregar mais"}
         </Button>
+      )}
+      {error && (
+        <p className="self-center text-sm text-destructive">Não foi possível carregar mais. Tente novamente.</p>
       )}
     </>
   );

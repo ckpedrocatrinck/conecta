@@ -61,5 +61,5 @@ export async function closeJobOpeningAction(formData: FormData) {
     });
   });
 
-  redirect(`/admin/vagas/${id}`);
+  redirect(`/admin/vagas/${id}?ok=fechada`);
 }
