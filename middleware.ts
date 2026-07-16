@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 import { authConfig } from "./src/lib/auth/edge-config";
-import { isPublicPath, MIDDLEWARE_MATCHER } from "./src/lib/auth/middleware-paths";
+import { isPublicPath } from "./src/lib/auth/middleware-paths";
 
 // Usa SO' a config edge-safe (sem providers) — importar ./src/lib/auth/config
 // aqui puxaria o Credentials provider (hashCpf/withTenant), que dependem de
@@ -34,6 +34,11 @@ export default auth((req) => {
   return NextResponse.next();
 });
 
+// O Next analisa este export de forma estatica em build-time (Turbopack) —
+// nao aceita referencia a uma constante importada, so' string literal. Por
+// isso o padrao fica duplicado aqui e em MIDDLEWARE_MATCHER
+// (src/lib/auth/middleware-paths.ts, usado pelo teste em middleware.test.ts)
+// — manter os dois em sincronia se este padrao mudar.
 export const config = {
-  matcher: [MIDDLEWARE_MATCHER],
+  matcher: ["/((?!api/auth|api/cron|_next/static|_next/image|favicon.ico).*)"],
 };

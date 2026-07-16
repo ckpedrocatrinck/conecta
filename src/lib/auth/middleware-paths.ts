@@ -15,6 +15,10 @@ export const PUBLIC_PATHS = [
   "/icon-512-maskable.png",
 ];
 
+// Precisa ser IDENTICO ao literal em `config.matcher` de middleware.ts — o
+// Next exige que aquele export seja uma string literal estatica (nao aceita
+// importar esta constante ali), entao o padrao fica duplicado nos dois
+// lugares de proposito. Mudou um, muda o outro.
 export const MIDDLEWARE_MATCHER = "/((?!api/auth|api/cron|_next/static|_next/image|favicon.ico).*)";
 
 export function isPublicPath(pathname: string): boolean {
