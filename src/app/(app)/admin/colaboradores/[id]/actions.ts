@@ -84,7 +84,7 @@ export async function toggleEmployeeStatusAction(formData: FormData) {
     });
   });
 
-  redirect(`/admin/colaboradores/${id}?sucesso=1`);
+  redirect(`/admin/colaboradores/${id}?status=${nextStatus === "active" ? "reativado" : "desligado"}`);
 }
 
 export type ResetPasswordState = { status: "idle" } | { status: "ok"; provisionalPassword: string };

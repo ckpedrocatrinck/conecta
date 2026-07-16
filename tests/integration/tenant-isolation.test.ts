@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildTenantFixtures } from "../../prisma/seed-data";
+import { cleanupTenant } from "../helpers/cleanup-tenant";
 import { withTenant } from "../../src/lib/db/with-tenant";
 import { createAnnouncementAck, findAnnouncementAcksByTenant } from "../../src/lib/repositories/announcement-ack.repository";
 import { findAnnouncementById, findAnnouncementsByTenant } from "../../src/lib/repositories/announcement.repository";
@@ -40,24 +41,14 @@ beforeAll(async () => {
 }, 60_000);
 
 afterAll(async () => {
-  const tenantIds = [tenantA.tenant.id, tenantB.tenant.id];
-  // announcement_acks e' imutavel por trigger mesmo para a role owner —
-  // inclusive contra DELETE em cascata (por desenho, ver migration
-  // rls_and_triggers). Para limpar dados de TESTE, desabilitamos so' os
-  // triggers de usuario (nao os de FK/sistema) durante a limpeza.
-  await ownerDb.$executeRawUnsafe("ALTER TABLE announcement_acks DISABLE TRIGGER USER");
-  try {
-    // Ordem explicita: announcement/post/jobOpening carregam um createdBy
-    // (onDelete: Restrict) apontando para User — precisam sair ANTES do
-    // usuario, senao o cascade de Tenant->User colide com esse Restrict.
-    await ownerDb.announcement.deleteMany({ where: { tenantId: { in: tenantIds } } });
-    await ownerDb.post.deleteMany({ where: { tenantId: { in: tenantIds } } });
-    await ownerDb.jobOpening.deleteMany({ where: { tenantId: { in: tenantIds } } });
-    await ownerDb.user.deleteMany({ where: { tenantId: { in: tenantIds } } });
-    await ownerDb.tenant.deleteMany({ where: { id: { in: tenantIds } } });
-  } finally {
-    await ownerDb.$executeRawUnsafe("ALTER TABLE announcement_acks ENABLE TRIGGER USER");
-  }
+  // cleanupTenant roda sob SET LOCAL session_replication_role='replica'
+  // (A7-1) — desativa tambem os triggers de FK/cascade, entao a ordem entre
+  // tabelas deixa de importar (nada e' verificado dentro da transacao); por
+  // isso nao ha' mais necessidade da ordem explicita que existia aqui antes
+  // (announcement/post/jobOpening antes de user, por causa do
+  // onDelete: Restrict em createdBy).
+  await cleanupTenant(ownerDb, tenantA.tenant.id);
+  await cleanupTenant(ownerDb, tenantB.tenant.id);
   await ownerDb.$disconnect();
 });
 
@@ -235,7 +226,12 @@ describe("AnnouncementAck e' imutavel — garantia estrutural (nao so' convencao
   });
 
   it("o trigger recusa TRUNCATE mesmo para a role owner, sem perda de dados (rollback forcado)", async () => {
-    const before = await ownerDb.announcementAck.count();
+    // Contagem escopada ao tenant A (nao count() global, INC-012.5/A7-1) —
+    // a suite roda arquivos em paralelo e outros tenants gravam acks
+    // concorrentemente; um count() sem where oscilava por causa dessa
+    // atividade legitima de OUTROS testes, sem relacao com o trigger
+    // (flakiness observada e corrigida durante o INC-012.5).
+    const before = await ownerDb.announcementAck.count({ where: { tenantId: tenantA.tenant.id } });
 
     const attempt = ownerDb.$transaction(async (tx) => {
       await tx.$executeRawUnsafe("TRUNCATE announcement_acks");
@@ -247,7 +243,7 @@ describe("AnnouncementAck e' imutavel — garantia estrutural (nao so' convencao
 
     await expect(attempt).rejects.toThrow(/imutavel/i);
 
-    const after = await ownerDb.announcementAck.count();
+    const after = await ownerDb.announcementAck.count({ where: { tenantId: tenantA.tenant.id } });
     expect(after).toBe(before);
   });
 });

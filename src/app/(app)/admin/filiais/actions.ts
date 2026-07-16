@@ -35,7 +35,7 @@ export async function createBranchAction(formData: FormData) {
   });
 
   if (outcome === "duplicado") redirect("/admin/filiais?erro=duplicado");
-  redirect("/admin/filiais");
+  redirect("/admin/filiais?ok=criada");
 }
 
 export async function updateBranchAction(formData: FormData) {
@@ -57,7 +57,7 @@ export async function updateBranchAction(formData: FormData) {
     });
   });
 
-  redirect("/admin/filiais");
+  redirect("/admin/filiais?ok=atualizada");
 }
 
 export async function deleteBranchAction(formData: FormData) {
@@ -81,5 +81,5 @@ export async function deleteBranchAction(formData: FormData) {
   });
 
   if (outcome === "em-uso") redirect("/admin/filiais?erro=em-uso");
-  redirect("/admin/filiais");
+  redirect("/admin/filiais?ok=removida");
 }

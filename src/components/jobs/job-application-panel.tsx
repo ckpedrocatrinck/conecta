@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { formatDateTimeSaoPaulo } from "@/lib/dates/format-datetime";
-import { applyToJobOpeningAction, cancelJobApplicationAction } from "../../lib/jobs/actions";
+import { applyToJobOpeningAction, cancelJobApplicationAction, type ApplyResult } from "../../lib/jobs/actions";
 
 export type MyApplication = { note: string | null; createdAt: string };
 
@@ -24,35 +25,46 @@ export function JobApplicationPanel({
   initialApplication: MyApplication | null;
   canApply: boolean;
 }) {
+  const router = useRouter();
   const [application, setApplication] = useState(initialApplication);
   const [note, setNote] = useState("");
   const [isPending, startTransition] = useTransition();
-  const [error, setError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // "closed"/"not_found" = a tela ficou aberta desde antes da vaga
+  // fechar/vencer (R11): recarrega os dados do servidor em vez de deixar o
+  // usuario tentar de novo contra um estado que nunca vai funcionar.
+  function handleOutcome(result: ApplyResult, onOk: () => void) {
+    if (result.ok) {
+      onOk();
+      return;
+    }
+    if (result.reason === "closed" || result.reason === "not_found") {
+      setErrorMessage("Esta vaga não aceita mais candidaturas.");
+      router.refresh();
+      return;
+    }
+    setErrorMessage("Não foi possível concluir. Tente novamente.");
+  }
 
   function handleApply() {
     if (isPending) return;
-    setError(false);
+    setErrorMessage(null);
     startTransition(async () => {
       const result = await applyToJobOpeningAction(jobOpeningId, note || null);
-      if (!result.ok) {
-        setError(true);
-        return;
-      }
-      setApplication({ note: note || null, createdAt: new Date().toISOString() });
+      handleOutcome(result, () => setApplication({ note: note || null, createdAt: new Date().toISOString() }));
     });
   }
 
   function handleCancel() {
     if (isPending) return;
-    setError(false);
+    setErrorMessage(null);
     startTransition(async () => {
       const result = await cancelJobApplicationAction(jobOpeningId);
-      if (!result.ok) {
-        setError(true);
-        return;
-      }
-      setApplication(null);
-      setNote("");
+      handleOutcome(result, () => {
+        setApplication(null);
+        setNote("");
+      });
     });
   }
 
@@ -72,7 +84,7 @@ export function JobApplicationPanel({
             Cancelar candidatura
           </Button>
         )}
-        {error && <p className="text-sm text-destructive">Não foi possível atualizar sua candidatura. Tente novamente.</p>}
+        {errorMessage && <p className="text-sm text-destructive">{errorMessage}</p>}
       </div>
     );
   }
@@ -94,7 +106,7 @@ export function JobApplicationPanel({
       <Button type="button" variant="action" size="lg" className="self-start" onClick={handleApply} disabled={isPending}>
         Candidatar-se
       </Button>
-      {error && <p className="text-sm text-destructive">Não foi possível enviar sua candidatura. Tente novamente.</p>}
+      {errorMessage && <p className="text-sm text-destructive">{errorMessage}</p>}
     </div>
   );
 }

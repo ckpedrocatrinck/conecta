@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { requireAdminOrManager } from "../../../../lib/auth/session";
 import { withTenant } from "../../../../lib/db/with-tenant";
 import { getAnnouncementPendencyDetail } from "../../../../lib/announcements/pending-panel";
@@ -75,9 +75,9 @@ export default async function PendenciaDetalhePage({
       {detail.pending.length > 0 && (
         <form action={remindPendingAction}>
           <input type="hidden" name="announcementId" value={announcementId} />
-          <Button type="submit" variant="action" className="w-full">
+          <SubmitButton variant="action" className="w-full" pendingLabel="Cobrando…">
             Cobrar pendentes
-          </Button>
+          </SubmitButton>
         </form>
       )}
 

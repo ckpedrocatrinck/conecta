@@ -85,7 +85,7 @@ export async function publishAnnouncementNowAction(formData: FormData) {
     return result;
   });
 
-  redirect(`/admin/comunicados/${id}${outcome.status === "skipped" ? "?erro=ja-publicado" : ""}`);
+  redirect(`/admin/comunicados/${id}${outcome.status === "skipped" ? "?erro=ja-publicado" : "?ok=publicado"}`);
 }
 
 export async function scheduleAnnouncementAction(formData: FormData) {
@@ -109,7 +109,7 @@ export async function scheduleAnnouncementAction(formData: FormData) {
     });
   });
 
-  redirect(`/admin/comunicados/${id}`);
+  redirect(`/admin/comunicados/${id}?ok=agendado`);
 }
 
 export async function unscheduleAnnouncementAction(formData: FormData) {
@@ -128,7 +128,7 @@ export async function unscheduleAnnouncementAction(formData: FormData) {
     });
   });
 
-  redirect(`/admin/comunicados/${id}`);
+  redirect(`/admin/comunicados/${id}?ok=cancelado`);
 }
 
 export async function archiveAnnouncementAction(formData: FormData) {
@@ -147,5 +147,5 @@ export async function archiveAnnouncementAction(formData: FormData) {
     });
   });
 
-  redirect(`/admin/comunicados/${id}`);
+  redirect(`/admin/comunicados/${id}?ok=arquivado`);
 }

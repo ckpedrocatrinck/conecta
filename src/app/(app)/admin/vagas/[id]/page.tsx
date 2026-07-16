@@ -9,11 +9,16 @@ import {
 import { toApplicantView } from "../../../../../lib/jobs/build-job-opening-view";
 import { formatDateTimeSaoPaulo } from "../../../../../lib/dates/format-datetime";
 import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { EditJobOpeningForm } from "./form";
 import { closeJobOpeningAction } from "./actions";
 
 const ERROR_MESSAGES: Record<string, string> = {
   obrigatorio: "Preencha cargo, descrição e prazo.",
+};
+
+const SUCCESS_MESSAGES: Record<string, string> = {
+  fechada: "Vaga fechada.",
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -26,11 +31,11 @@ export default async function JobOpeningDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ erro?: string; salvo?: string }>;
+  searchParams: Promise<{ erro?: string; salvo?: string; ok?: string }>;
 }) {
   const session = await requireAdmin();
   const { id } = await params;
-  const { erro, salvo } = await searchParams;
+  const { erro, salvo, ok } = await searchParams;
 
   const data = await withTenant({ tenantId: session.tenantId }, async (tx) => {
     const job = await findJobOpeningWithDetails(tx, session.tenantId, id);
@@ -56,9 +61,9 @@ export default async function JobOpeningDetailPage({
         {job.status === "open" && (
           <form action={closeJobOpeningAction}>
             <input type="hidden" name="id" value={job.id} />
-            <Button type="submit" variant="secondary">
+            <SubmitButton variant="secondary" pendingLabel="Fechando…">
               Fechar vaga
-            </Button>
+            </SubmitButton>
           </form>
         )}
       </div>
@@ -69,6 +74,7 @@ export default async function JobOpeningDetailPage({
         </p>
       )}
       {salvo === "ok" && <p className="text-sm text-success">Alterações salvas.</p>}
+      {ok && SUCCESS_MESSAGES[ok] && <p className="text-sm text-success">{SUCCESS_MESSAGES[ok]}</p>}
 
       <EditJobOpeningForm job={job} branches={branches} />
 

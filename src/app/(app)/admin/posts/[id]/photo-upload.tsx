@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { confirmPostMediaUploadAction, removePostMediaAction, requestPostMediaUploadUrl } from "./actions";
 
 const MAX_PHOTOS = 5;
@@ -74,17 +75,16 @@ export function PostPhotoUpload({
           <div key={media.id} className="relative">
             {/* eslint-disable-next-line @next/next/no-img-element -- URL assinada, curta duracao */}
             <img src={media.viewUrl} alt="" className="size-20 rounded-lg border border-border object-cover" />
-            <form action={removePostMediaAction}>
-              <input type="hidden" name="id" value={postId} />
-              <input type="hidden" name="mediaId" value={media.id} />
-              <button
-                type="submit"
-                aria-label="Remover foto"
-                className="absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground"
-              >
-                ×
-              </button>
-            </form>
+            <ConfirmDialog
+              triggerLabel="×"
+              triggerAriaLabel="Remover foto"
+              triggerClassName="absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full bg-destructive p-0 text-xs text-destructive-foreground"
+              title="Remover esta foto?"
+              description="A foto deixa de aparecer no post. Esta ação não pode ser desfeita."
+              confirmLabel="Remover"
+              action={removePostMediaAction}
+              hiddenFields={{ id: postId, mediaId: media.id }}
+            />
           </div>
         ))}
       </div>

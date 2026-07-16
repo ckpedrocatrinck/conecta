@@ -3,6 +3,7 @@ import { requireAdmin } from "../../../../lib/auth/session";
 import { withTenant } from "../../../../lib/db/with-tenant";
 import { findBranchesByTenant } from "../../../../lib/repositories/branch.repository";
 import { findUsersByTenant } from "../../../../lib/repositories/user.repository";
+import { USER_ROLE_LABELS } from "../../../../lib/users/role-labels";
 
 export default async function ColaboradoresPage() {
   const session = await requireAdmin();
@@ -39,7 +40,7 @@ export default async function ColaboradoresPage() {
               {user.fullName} <span className="text-zinc-500">({user.registrationCode})</span>
             </span>
             <span className="text-zinc-500">
-              {branchNameById.get(user.branchId) ?? "—"} · {user.role} · {user.status === "active" ? "ativo" : "inativo"}
+              {branchNameById.get(user.branchId) ?? "—"} · {USER_ROLE_LABELS[user.role]} · {user.status === "active" ? "ativo" : "inativo"}
             </span>
           </Link>
         ))}

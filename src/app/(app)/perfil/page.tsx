@@ -29,10 +29,10 @@ const PASSWORD_ERROR_MESSAGES: Record<string, string> = {
 export default async function PerfilPage({
   searchParams,
 }: {
-  searchParams: Promise<{ erro?: string; senha?: string }>;
+  searchParams: Promise<{ erro?: string; senha?: string; consentimentos?: string }>;
 }) {
   const session = await requireOnboardedSession();
-  const { erro, senha } = await searchParams;
+  const { erro, senha, consentimentos } = await searchParams;
 
   const { user, myApplications, pushSubscriptions } = await withTenant({ tenantId: session.tenantId }, async (tx) => ({
     user: await findUserById(tx, session.tenantId, session.userId),
@@ -102,6 +102,8 @@ export default async function PerfilPage({
             <Checkbox name="photoVisible" defaultChecked={user.photoVisible} />
             Exibir minha foto para os demais colaboradores
           </label>
+          {consentimentos === "ok" && <p className="text-sm text-success">Preferências salvas.</p>}
+
           <Button type="submit" variant="secondary" size="lg" className="self-start">
             Salvar consentimentos
           </Button>

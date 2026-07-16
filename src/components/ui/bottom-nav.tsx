@@ -20,7 +20,7 @@ function BottomNav({ items, activeHref, className, ...props }: BottomNavProps) {
     <nav
       data-slot="bottom-nav"
       className={cn(
-        "flex items-stretch justify-around border-t border-border bg-card pb-[env(safe-area-inset-bottom)]",
+        "fixed inset-x-0 bottom-0 z-20 flex items-stretch justify-around border-t border-border bg-card pb-[env(safe-area-inset-bottom)]",
         className
       )}
       {...props}

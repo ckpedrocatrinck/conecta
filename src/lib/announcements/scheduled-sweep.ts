@@ -24,7 +24,7 @@ export async function runScheduledAnnouncementSweep(now: Date = new Date()): Pro
     await withTenant({ tenantId: tenant.id }, async (tx) => {
       const due = await findDueScheduledAnnouncements(tx, tenant.id, now);
       for (const announcement of due) {
-        const result = await publishAnnouncement(tx, { tenantId: tenant.id, announcementId: announcement.id });
+        const result = await publishAnnouncement(tx, { tenantId: tenant.id, announcementId: announcement.id }, now);
         if (result.status === "published") {
           await recordAuditLog(tx, {
             tenantId: tenant.id,

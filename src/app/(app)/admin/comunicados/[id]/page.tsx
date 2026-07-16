@@ -6,6 +6,7 @@ import { findAnnouncementVersionHistory } from "../../../../../lib/repositories/
 import { findAnnouncementAudienceBranchIds } from "../../../../../lib/repositories/announcement-audience.repository";
 import { findBranchesByTenant } from "../../../../../lib/repositories/branch.repository";
 import { formatAnnouncementCode } from "../../../../../lib/announcements/publish";
+import { formatDateTimeSaoPaulo } from "../../../../../lib/dates/format-datetime";
 import { EditAnnouncementForm } from "./form";
 
 const STATUS_LABEL_FALLBACK: Record<string, string> = {
@@ -21,16 +22,23 @@ const ERROR_MESSAGES: Record<string, string> = {
   "ja-publicado": "Este comunicado já havia sido publicado por outra ação.",
 };
 
+const SUCCESS_MESSAGES: Record<string, string> = {
+  publicado: "Comunicado publicado.",
+  agendado: "Publicação agendada.",
+  cancelado: "Agendamento cancelado.",
+  arquivado: "Comunicado arquivado.",
+};
+
 export default async function EditarComunicadoPage({
   params,
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ erro?: string; salvo?: string }>;
+  searchParams: Promise<{ erro?: string; salvo?: string; ok?: string }>;
 }) {
   const session = await requireAdmin();
   const { id } = await params;
-  const { erro, salvo } = await searchParams;
+  const { erro, salvo, ok } = await searchParams;
 
   const data = await withTenant({ tenantId: session.tenantId }, async (tx) => {
     const announcement = await findAnnouncementWithLatestVersion(tx, session.tenantId, id);
@@ -63,6 +71,7 @@ export default async function EditarComunicadoPage({
         </p>
       )}
       {salvo === "ok" && <p className="text-sm text-success">Alterações salvas.</p>}
+      {ok && SUCCESS_MESSAGES[ok] && <p className="text-sm text-success">{SUCCESS_MESSAGES[ok]}</p>}
 
       <EditAnnouncementForm announcement={announcement} latest={latest} audienceBranchIds={audienceBranchIds} branches={branches} />
 
@@ -74,9 +83,7 @@ export default async function EditarComunicadoPage({
               Versão {v.versionNumber} — {v.title}
               {v.isMaterialChange && <span className="ml-2 text-xs font-semibold text-warning">mudança material</span>}
             </p>
-            <p className="text-xs text-muted-foreground">
-              hash {v.contentHash.slice(0, 12)}… · {v.createdAt.toISOString()}
-            </p>
+            <p className="text-xs text-muted-foreground">{formatDateTimeSaoPaulo(v.createdAt)}</p>
           </div>
         ))}
       </div>

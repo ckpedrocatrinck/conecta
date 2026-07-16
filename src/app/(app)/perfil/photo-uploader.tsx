@@ -48,7 +48,7 @@ export function PhotoUploader({ currentPhotoUrl }: { currentPhotoUrl: string | n
       )}
 
       <div className="flex flex-col gap-1">
-        <Button type="button" variant="outline" size="sm" disabled={pending} onClick={() => fileInputRef.current?.click()}>
+        <Button type="button" variant="outline" size="touch" disabled={pending} onClick={() => fileInputRef.current?.click()}>
           {pending ? "Enviando..." : "Trocar foto"}
         </Button>
         <input

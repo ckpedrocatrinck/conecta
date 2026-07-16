@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { buildTenantFixtures } from "../../prisma/seed-data";
+import { cleanupTenant } from "../helpers/cleanup-tenant";
 import { withTenant } from "../../src/lib/db/with-tenant";
 import { publishAnnouncement } from "../../src/lib/announcements/publish";
 import { remindPendingUsers } from "../../src/lib/announcements/remind-pending";
@@ -30,20 +31,7 @@ beforeAll(async () => {
 }, 60_000);
 
 afterAll(async () => {
-  await ownerDb.$executeRawUnsafe("ALTER TABLE announcement_acks DISABLE TRIGGER USER");
-  try {
-    await ownerDb.notification.deleteMany({ where: { tenantId: tenant.tenant.id } });
-    await ownerDb.pushSubscription.deleteMany({ where: { tenantId: tenant.tenant.id } });
-    await ownerDb.announcementAck.deleteMany({ where: { tenantId: tenant.tenant.id } });
-    await ownerDb.announcementSequence.deleteMany({ where: { tenantId: tenant.tenant.id } });
-    await ownerDb.announcement.deleteMany({ where: { tenantId: tenant.tenant.id } });
-    await ownerDb.post.deleteMany({ where: { tenantId: tenant.tenant.id } });
-    await ownerDb.jobOpening.deleteMany({ where: { tenantId: tenant.tenant.id } });
-    await ownerDb.user.deleteMany({ where: { tenantId: tenant.tenant.id } });
-    await ownerDb.tenant.deleteMany({ where: { id: tenant.tenant.id } });
-  } finally {
-    await ownerDb.$executeRawUnsafe("ALTER TABLE announcement_acks ENABLE TRIGGER USER");
-  }
+  await cleanupTenant(ownerDb, tenant.tenant.id);
   await ownerDb.$disconnect();
 });
 
