@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { toDatetimeLocalSaoPaulo } from "@/lib/dates/format-datetime";
 import { updateJobOpeningAction } from "./actions";
 
 type JobOpeningDetail = {
@@ -83,7 +84,7 @@ export function EditJobOpeningForm({
           name="deadline"
           type="datetime-local"
           required
-          defaultValue={job.deadline.toISOString().slice(0, 16)}
+          defaultValue={toDatetimeLocalSaoPaulo(job.deadline)}
         />
       </div>
 

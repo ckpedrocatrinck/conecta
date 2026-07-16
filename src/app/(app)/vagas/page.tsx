@@ -42,8 +42,8 @@ export default async function VagasPage({
             href="/vagas"
             className={
               !filial
-                ? "rounded-lg bg-primary px-2.5 py-1 text-primary-foreground"
-                : "rounded-lg px-2.5 py-1 text-muted-foreground hover:bg-muted"
+                ? "inline-flex min-h-12 items-center rounded-lg bg-primary px-3 text-primary-foreground"
+                : "inline-flex min-h-12 items-center rounded-lg px-3 text-muted-foreground hover:bg-muted"
             }
           >
             Todas as filiais
@@ -54,8 +54,8 @@ export default async function VagasPage({
               href={{ pathname: "/vagas", query: { filial: b.id } }}
               className={
                 filial === b.id
-                  ? "rounded-lg bg-primary px-2.5 py-1 text-primary-foreground"
-                  : "rounded-lg px-2.5 py-1 text-muted-foreground hover:bg-muted"
+                  ? "inline-flex min-h-12 items-center rounded-lg bg-primary px-3 text-primary-foreground"
+                  : "inline-flex min-h-12 items-center rounded-lg px-3 text-muted-foreground hover:bg-muted"
               }
             >
               {b.name}

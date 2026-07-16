@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Button } from "@/components/ui/button";
 import { applyToJobOpeningAction, cancelJobApplicationAction } from "../../lib/jobs/actions";
 
 /**
@@ -44,19 +45,17 @@ export function JobApplyButton({
 
   return (
     <span className="flex flex-col items-start gap-1">
-      <button
+      <Button
         type="button"
+        variant={applied ? "outline" : "action"}
+        size="touch"
         onClick={handleClick}
         disabled={isPending}
         aria-pressed={applied}
-        className={
-          applied
-            ? "w-fit rounded-lg border border-border px-3 py-1.5 text-sm font-semibold text-muted-foreground hover:bg-muted disabled:opacity-70"
-            : "w-fit rounded-lg bg-action px-3 py-1.5 text-sm font-semibold text-action-foreground hover:bg-action-hover disabled:opacity-70"
-        }
+        className="w-fit"
       >
         {applied ? "Candidatura enviada · Cancelar" : "Candidatar-se"}
-      </button>
+      </Button>
       {error && <span className="text-xs text-destructive">{error}</span>}
     </span>
   );

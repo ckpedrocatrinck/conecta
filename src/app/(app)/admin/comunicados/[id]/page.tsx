@@ -6,6 +6,7 @@ import { findAnnouncementVersionHistory } from "../../../../../lib/repositories/
 import { findAnnouncementAudienceBranchIds } from "../../../../../lib/repositories/announcement-audience.repository";
 import { findBranchesByTenant } from "../../../../../lib/repositories/branch.repository";
 import { formatAnnouncementCode } from "../../../../../lib/announcements/publish";
+import { formatDateTimeSaoPaulo } from "../../../../../lib/dates/format-datetime";
 import { EditAnnouncementForm } from "./form";
 
 const STATUS_LABEL_FALLBACK: Record<string, string> = {
@@ -82,9 +83,7 @@ export default async function EditarComunicadoPage({
               Versão {v.versionNumber} — {v.title}
               {v.isMaterialChange && <span className="ml-2 text-xs font-semibold text-warning">mudança material</span>}
             </p>
-            <p className="text-xs text-muted-foreground">
-              hash {v.contentHash.slice(0, 12)}… · {v.createdAt.toISOString()}
-            </p>
+            <p className="text-xs text-muted-foreground">{formatDateTimeSaoPaulo(v.createdAt)}</p>
           </div>
         ))}
       </div>

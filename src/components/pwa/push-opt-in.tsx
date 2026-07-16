@@ -76,7 +76,7 @@ export function PushOptIn({ subscriptions }: { subscriptions: PushSubscriptionRo
 
   return (
     <div className="flex flex-col gap-3">
-      <Button type="button" size="sm" className="self-start" disabled={status === "pending"} onClick={activate}>
+      <Button type="button" size="touch" className="self-start" disabled={status === "pending"} onClick={activate}>
         <Bell className="size-4" aria-hidden="true" />
         Ativar notificações neste dispositivo
       </Button>
@@ -105,7 +105,7 @@ export function PushOptIn({ subscriptions }: { subscriptions: PushSubscriptionRo
               <span className="text-muted-foreground">
                 Dispositivo cadastrado em {formatDateTimeSaoPaulo(subscription.createdAt)}
               </span>
-              <Button type="button" variant="ghost" size="sm" onClick={() => revoke(subscription.id)}>
+              <Button type="button" variant="ghost" size="touch" onClick={() => revoke(subscription.id)}>
                 <BellOff className="size-4" aria-hidden="true" />
                 Revogar
               </Button>

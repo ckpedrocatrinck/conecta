@@ -146,7 +146,7 @@ export default async function Home() {
           await signOut({ redirectTo: "/login" });
         }}
       >
-        <Button type="submit" variant="secondary">
+        <Button type="submit" variant="secondary" size="touch">
           Sair
         </Button>
       </form>

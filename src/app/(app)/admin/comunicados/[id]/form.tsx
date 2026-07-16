@@ -7,6 +7,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { formatDateTimeSaoPaulo } from "@/lib/dates/format-datetime";
 import { RichTextContent } from "@/components/announcements/rich-text-content";
 import { RichTextEditor } from "@/components/announcements/rich-text-editor";
 import {
@@ -127,7 +128,7 @@ export function EditAnnouncementForm({
         {announcement.status === "scheduled" && (
           <>
             <p className="text-sm text-muted-foreground">
-              Agendado para {announcement.publishAt?.toISOString()}
+              Agendado para {announcement.publishAt ? formatDateTimeSaoPaulo(announcement.publishAt) : ""}
             </p>
             <form action={unscheduleAnnouncementAction}>
               <input type="hidden" name="id" value={announcement.id} />

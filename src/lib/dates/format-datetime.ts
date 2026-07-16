@@ -26,3 +26,24 @@ const yearFormatter = new Intl.DateTimeFormat("en-CA", {
 export function getSaoPauloYear(date: Date): number {
   return Number(yearFormatter.format(date));
 }
+
+// R23 (auditoria de usabilidade 2026-07): valor de um <input
+// type="datetime-local"> (formato "YYYY-MM-DDTHH:mm", sem timezone) — usar
+// no `defaultValue`/`value` pra pre-preencher com o horario de Sao Paulo em
+// vez do UTC cru (`date.toISOString().slice(0,16)`), que aparecia deslocado
+// em 3h ao reabrir o formulario de edicao.
+const datetimeLocalFormatter = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "America/Sao_Paulo",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
+
+export function toDatetimeLocalSaoPaulo(date: Date): string {
+  const parts = datetimeLocalFormatter.formatToParts(date);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+  return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
+}

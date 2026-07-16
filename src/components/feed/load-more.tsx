@@ -50,7 +50,7 @@ export function FeedLoadMore({
         <PostCard key={post.id} post={post} branding={branding} />
       ))}
       {cursor && (
-        <Button type="button" variant="outline" onClick={handleLoadMore} disabled={loading} className="self-center">
+        <Button type="button" variant="outline" size="touch" onClick={handleLoadMore} disabled={loading} className="self-center">
           {loading ? "Carregando…" : "Carregar mais"}
         </Button>
       )}
