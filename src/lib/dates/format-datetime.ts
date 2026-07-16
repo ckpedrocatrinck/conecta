@@ -13,3 +13,16 @@ const formatter = new Intl.DateTimeFormat("pt-BR", {
 export function formatDateTimeSaoPaulo(date: Date): string {
   return formatter.format(date);
 }
+
+// A4-4 (auditoria 2026-07): o ano da sequencia CI NN/AAAA precisa ser o ano
+// em America/Sao_Paulo, nao UTC — na janela ~21:00-23:59 BRT de 31/dez, UTC
+// ja esta no ano seguinte (Brasil e' UTC-3), o que produziria "CI 01/AAAA+1"
+// enquanto a organizacao ainda esta no ano anterior.
+const yearFormatter = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "America/Sao_Paulo",
+  year: "numeric",
+});
+
+export function getSaoPauloYear(date: Date): number {
+  return Number(yearFormatter.format(date));
+}

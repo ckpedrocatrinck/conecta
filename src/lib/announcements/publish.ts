@@ -1,6 +1,7 @@
 import type { Prisma } from "@prisma/client";
 import { findAnnouncementById, markAnnouncementPublished } from "../repositories/announcement.repository";
 import { nextAnnouncementSequenceNumber } from "../repositories/announcement-sequence.repository";
+import { getSaoPauloYear } from "../dates/format-datetime";
 
 export type PublishAnnouncementOutcome =
   | { status: "published"; seqNumber: number; year: number }
@@ -22,13 +23,14 @@ export type PublishAnnouncementOutcome =
 export async function publishAnnouncement(
   tx: Prisma.TransactionClient,
   input: { tenantId: string; announcementId: string },
+  now: Date = new Date(),
 ): Promise<PublishAnnouncementOutcome> {
   const current = await findAnnouncementById(tx, input.tenantId, input.announcementId);
   if (!current || (current.status !== "draft" && current.status !== "scheduled")) {
     return { status: "skipped" };
   }
 
-  const year = new Date().getUTCFullYear();
+  const year = getSaoPauloYear(now);
   const seqNumber = await nextAnnouncementSequenceNumber(tx, input.tenantId, year);
   const result = await markAnnouncementPublished(tx, input.tenantId, input.announcementId, { seqNumber, year });
 

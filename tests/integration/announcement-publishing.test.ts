@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildTenantFixtures } from "../../prisma/seed-data";
+import { cleanupTenant } from "../helpers/cleanup-tenant";
 import { withTenant } from "../../src/lib/db/with-tenant";
 import { publishAnnouncement, formatAnnouncementCode } from "../../src/lib/announcements/publish";
 import { runScheduledAnnouncementSweep } from "../../src/lib/announcements/scheduled-sweep";
@@ -39,12 +40,7 @@ beforeAll(async () => {
 }, 60_000);
 
 afterAll(async () => {
-  await ownerDb.announcementSequence.deleteMany({ where: { tenantId: tenant.tenant.id } });
-  await ownerDb.announcement.deleteMany({ where: { tenantId: tenant.tenant.id } });
-  await ownerDb.post.deleteMany({ where: { tenantId: tenant.tenant.id } });
-  await ownerDb.jobOpening.deleteMany({ where: { tenantId: tenant.tenant.id } });
-  await ownerDb.user.deleteMany({ where: { tenantId: tenant.tenant.id } });
-  await ownerDb.tenant.deleteMany({ where: { id: tenant.tenant.id } });
+  await cleanupTenant(ownerDb, tenant.tenant.id);
   await ownerDb.$disconnect();
 });
 
@@ -107,6 +103,21 @@ describe("numeracao CI NN/AAAA — a prova de corrida", () => {
     expect(formatAnnouncementCode(1, 2026)).toBe("CI 01/2026");
     expect(formatAnnouncementCode(23, 2026)).toBe("CI 23/2026");
     expect(formatAnnouncementCode(123, 2026)).toBe("CI 123/2026");
+  });
+});
+
+describe("A4-4 — ano do CI em America/Sao_Paulo, nao UTC", () => {
+  it("publicar na janela ~21h-23h59 BRT de 31/dez usa o ano BRT, mesmo com UTC ja no ano seguinte", async () => {
+    const draftId = await createDraft("Publicado na virada de ano BRT");
+    // 2027-01-01T01:30:00Z (UTC = 2027) = 2026-12-31T22:30:00-03:00 em SP.
+    const virada = new Date("2027-01-01T01:30:00Z");
+
+    const outcome = await withTenant({ tenantId: tenant.tenant.id }, (tx) =>
+      publishAnnouncement(tx, { tenantId: tenant.tenant.id, announcementId: draftId }, virada),
+    );
+
+    expect(outcome.status).toBe("published");
+    expect((outcome as { status: "published"; year: number }).year).toBe(2026);
   });
 });
 
