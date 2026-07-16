@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildTenantFixtures } from "../../prisma/seed-data";
+import { cleanupTenant } from "../helpers/cleanup-tenant";
 import { withTenant } from "../../src/lib/db/with-tenant";
 import { recordAuditLog, findAuditLogsForTenant } from "../../src/lib/repositories/audit-log.repository";
 
@@ -22,11 +23,7 @@ beforeAll(async () => {
 }, 60_000);
 
 afterAll(async () => {
-  await ownerDb.auditLog.deleteMany({ where: { tenantId: tenant.tenant.id } });
-  await ownerDb.post.deleteMany({ where: { tenantId: tenant.tenant.id } });
-  await ownerDb.jobOpening.deleteMany({ where: { tenantId: tenant.tenant.id } });
-  await ownerDb.user.deleteMany({ where: { tenantId: tenant.tenant.id } });
-  await ownerDb.tenant.deleteMany({ where: { id: tenant.tenant.id } });
+  await cleanupTenant(ownerDb, tenant.tenant.id);
   await ownerDb.$disconnect();
 });
 
