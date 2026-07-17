@@ -23,8 +23,10 @@ function ErrorState({
       className={cn("flex flex-col items-center gap-3 py-10 text-center", className)}
       {...props}
     >
-      <AlertTriangle className="size-8 text-destructive" aria-hidden="true" />
-      <p className="text-sm text-muted-foreground">{message}</p>
+      <div className="flex size-14 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+        <AlertTriangle className="size-6" aria-hidden="true" strokeWidth={1.8} />
+      </div>
+      <p className="text-meta font-normal text-muted-foreground">{message}</p>
       {onRetry && (
         <Button variant="default" size="sm" onClick={onRetry}>
           {retryLabel}

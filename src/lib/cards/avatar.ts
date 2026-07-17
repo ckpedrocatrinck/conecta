@@ -4,10 +4,10 @@
 // (verde + neutros) — nunca laranja, que e' exclusivo de acao (design-system
 // §0, regra de ouro).
 const AVATAR_PALETTE = [
-  { bg: "#E7F1EC", fg: "#2F7A5F" }, // primary-subtle / primary
-  { bg: "#DCEAE2", fg: "#22604A" }, // tom mais escuro do verde
-  { bg: "#EDEFEC", fg: "#1F2422" }, // neutro (muted / foreground)
-  { bg: "#D9E6DE", fg: "#2F7A5F" },
+  { bg: "#E7EFE9", fg: "#2F7A5F" }, // primary-subtle / primary
+  { bg: "#DCE8DF", fg: "#275F4C" }, // tom mais escuro do verde (primary-deep)
+  { bg: "#F1F2ED", fg: "#4A5248" }, // neutro (bg / foreground-soft)
+  { bg: "#D5E2D9", fg: "#2F7A5F" },
 ] as const;
 
 export function getInitial(fullName: string): string {
