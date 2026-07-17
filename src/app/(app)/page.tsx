@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { MessageSquareHeart } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { Avatar } from "@/components/ui/avatar";
 import { PendingBanner } from "@/components/ui/pending-banner";
 import { EmptyState } from "@/components/ui/empty-state";
+import { HomeBanner } from "@/components/home/home-banner";
 import { PostCard } from "@/components/feed/post-card";
 import { FeedLoadMore } from "@/components/feed/load-more";
 import { CardTemplate } from "@/components/cards/templates";
-import { signOut } from "../../lib/auth/config";
 import { requireOnboardedSession } from "../../lib/auth/session";
 import { withTenant } from "../../lib/db/with-tenant";
 import { findUserById, findUpcomingBirthdays } from "../../lib/repositories/user.repository";
@@ -53,16 +54,30 @@ export default async function Home() {
   const todaysBirthdayCards = buildTodaysBirthdayCards(todaysBirthdayEntries, now.toISOString(), branding);
 
   return (
-    <div className="flex flex-1 flex-col gap-4 bg-zinc-50 px-4 py-6 dark:bg-black">
-      <h1 className="text-2xl font-extrabold tracking-tight text-black dark:text-zinc-50">Conecta</h1>
-      <p className="text-base text-zinc-600 dark:text-zinc-400">Bem-vindo(a), {user?.fullName ?? "colaborador(a)"}.</p>
+    <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 px-4 py-6">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col gap-0.5">
+          <h1 className="text-display text-foreground">Conecta</h1>
+          <p className="text-meta text-muted-foreground">
+            Bem-vindo(a), {user?.fullName ?? "colaborador(a)"}.
+          </p>
+        </div>
+        <Link href="/perfil" aria-label="Meu perfil" className="shrink-0 rounded-full">
+          <Avatar name={user?.fullName ?? "?"} size="md" />
+        </Link>
+      </div>
+
+      <HomeBanner
+        title="Comunicação que conecta."
+        subtitle="Fique por dentro, participe, faça a diferença."
+      />
 
       {pendingCount > 0 && (
         <PendingBanner
           message={`${pendingCount} comunicado${pendingCount > 1 ? "s" : ""} aguardando sua ciência`}
           action={
-            <Link href="/comunicados" className="shrink-0 text-sm font-semibold text-action underline-offset-4 hover:underline">
-              Ver
+            <Link href="/comunicados" className={buttonVariants({ variant: "action", size: "xl" })}>
+              Ver comunicados
             </Link>
           }
         />
@@ -83,7 +98,7 @@ export default async function Home() {
             >
               <button
                 type="submit"
-                className="w-full rounded-lg bg-action-subtle px-4 py-3 text-left text-sm font-medium text-foreground hover:bg-action-subtle/80"
+                className="w-full rounded-[var(--radius-card)] border border-border bg-card px-4 py-3 text-left text-body font-medium text-foreground shadow-[var(--shadow-card)] transition-colors hover:bg-muted"
               >
                 {n.message}
               </button>
@@ -95,8 +110,8 @@ export default async function Home() {
       {todaysBirthdayCards.length > 0 && (
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-foreground">Aniversariantes de hoje</h2>
-            <Link href="/aniversariantes" className="text-sm font-semibold text-primary underline-offset-4 hover:underline">
+            <h2 className="text-card-title font-bold text-foreground">Aniversariantes de hoje</h2>
+            <Link href="/aniversariantes" className="text-meta font-semibold text-primary underline-offset-4 hover:underline">
               Ver todos
             </Link>
           </div>
@@ -106,24 +121,8 @@ export default async function Home() {
         </div>
       )}
 
-      {openJobs.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-foreground">Vagas abertas</h2>
-            <Link href="/vagas" className="text-sm font-semibold text-primary underline-offset-4 hover:underline">
-              Ver todas
-            </Link>
-          </div>
-          {openJobs.slice(0, HOME_JOB_OPENINGS_LIMIT).map((job) => (
-            <Link key={job.id} href={`/vagas/${job.id}`}>
-              <CardTemplate data={jobOpeningToCardData(job, branding)} />
-            </Link>
-          ))}
-        </div>
-      )}
-
       <div className="flex flex-col gap-3">
-        <h2 className="text-lg font-bold text-foreground">Feed</h2>
+        <h2 className="text-card-title font-bold text-foreground">Feed</h2>
         {feedCards.length === 0 ? (
           <EmptyState
             icon={MessageSquareHeart}
@@ -140,16 +139,21 @@ export default async function Home() {
         )}
       </div>
 
-      <form
-        action={async () => {
-          "use server";
-          await signOut({ redirectTo: "/login" });
-        }}
-      >
-        <Button type="submit" variant="secondary" size="touch">
-          Sair
-        </Button>
-      </form>
+      {openJobs.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <h2 className="text-card-title font-bold text-foreground">Vagas abertas</h2>
+            <Link href="/vagas" className="text-meta font-semibold text-primary underline-offset-4 hover:underline">
+              Ver todas
+            </Link>
+          </div>
+          {openJobs.slice(0, HOME_JOB_OPENINGS_LIMIT).map((job) => (
+            <Link key={job.id} href={`/vagas/${job.id}`}>
+              <CardTemplate data={jobOpeningToCardData(job, branding)} />
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

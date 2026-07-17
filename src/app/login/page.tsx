@@ -14,9 +14,7 @@ export default async function LoginPage({
   return (
     <div className="flex flex-1 flex-col items-center justify-center bg-background px-6 py-16">
       <div className="w-full max-w-sm">
-        <h1 className="mb-6 text-center text-2xl font-extrabold tracking-tight text-foreground">
-          Conecta
-        </h1>
+        <h1 className="mb-6 text-center text-display text-foreground">Conecta</h1>
 
         <form action={loginAction} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
@@ -26,7 +24,7 @@ export default async function LoginPage({
               name="tenantSlug"
               required
               defaultValue=""
-              className="h-12 w-full min-w-0 rounded-lg border border-input bg-transparent px-3.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
+              className="h-12 w-full min-w-0 rounded-lg border-[1.5px] border-input bg-card px-3.5 text-base outline-none transition-colors focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-primary-subtle dark:bg-input/30"
             >
               <option value="" disabled>
                 Selecione sua empresa

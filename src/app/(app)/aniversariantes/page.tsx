@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Cake } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { filterChipVariants } from "@/components/ui/filter-chip";
 import { BirthdaySearch } from "@/components/birthdays/birthday-search";
 import { requireOnboardedSession } from "../../../lib/auth/session";
 import { withTenant } from "../../../lib/db/with-tenant";
@@ -29,33 +30,22 @@ export default async function AniversariantesPage({
   const branchNameById = new Map(branches.map((b) => [b.id, b.name]));
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-5 px-4 py-6">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Aniversariantes</h1>
-        <p className="text-sm text-muted-foreground">Hoje e nos próximos {WINDOW_DAYS} dias.</p>
+        <h1 className="text-display text-foreground">Aniversariantes</h1>
+        <p className="text-meta text-muted-foreground">Hoje e nos próximos {WINDOW_DAYS} dias.</p>
       </div>
 
       {branches.length > 1 && (
-        <div className="flex flex-wrap gap-1.5 text-sm">
-          <Link
-            href="/aniversariantes"
-            className={
-              !filial
-                ? "inline-flex min-h-12 items-center rounded-lg bg-primary px-3 text-primary-foreground"
-                : "inline-flex min-h-12 items-center rounded-lg px-3 text-muted-foreground hover:bg-muted"
-            }
-          >
+        <div className="flex flex-wrap gap-2">
+          <Link href="/aniversariantes" className={filterChipVariants({ active: !filial })}>
             Todas as filiais
           </Link>
           {branches.map((b) => (
             <Link
               key={b.id}
               href={{ pathname: "/aniversariantes", query: { filial: b.id } }}
-              className={
-                filial === b.id
-                  ? "inline-flex min-h-12 items-center rounded-lg bg-primary px-3 text-primary-foreground"
-                  : "inline-flex min-h-12 items-center rounded-lg px-3 text-muted-foreground hover:bg-muted"
-              }
+              className={filterChipVariants({ active: filial === b.id })}
             >
               {b.name}
             </Link>
