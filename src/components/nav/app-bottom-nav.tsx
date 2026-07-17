@@ -2,11 +2,13 @@
 
 import { usePathname } from "next/navigation"
 import { Briefcase, Home, Megaphone, User } from "lucide-react"
+import type { UserRole } from "@prisma/client"
 
 import { BottomNav, type BottomNavItem } from "@/components/ui/bottom-nav"
 
 interface AppBottomNavProps {
   pendingCount: number
+  role: UserRole
 }
 
 /**
@@ -24,7 +26,18 @@ function buildItems(pendingCount: number): BottomNavItem[] {
   ]
 }
 
-export function AppBottomNav({ pendingCount }: AppBottomNavProps) {
+export function AppBottomNav({ pendingCount, role }: AppBottomNavProps) {
   const pathname = usePathname()
-  return <BottomNav items={buildItems(pendingCount)} activeHref={pathname} />
+  // DP-13: admin/manager navegam pelo header B no desktop (≥640px); a bottom
+  // nav some pra eles nessa largura. O colaborador (mobile-first) mantém a
+  // bottom nav em qualquer largura — nunca fica sem navegação (ele não vê o
+  // header admin).
+  const hideOnDesktop = role !== "employee"
+  return (
+    <BottomNav
+      items={buildItems(pendingCount)}
+      activeHref={pathname}
+      className={hideOnDesktop ? "sm:hidden" : undefined}
+    />
+  )
 }
