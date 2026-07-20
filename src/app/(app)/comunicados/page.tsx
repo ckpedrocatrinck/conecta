@@ -1,25 +1,14 @@
 import Link from "next/link";
-import { Megaphone, Search } from "lucide-react";
+import { Check, Megaphone, Search } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { filterChipVariants } from "@/components/ui/filter-chip";
 import { requireOnboardedSession } from "../../../lib/auth/session";
 import { withTenant } from "../../../lib/db/with-tenant";
 import { listAnnouncementsForUser } from "../../../lib/announcements/list-for-user";
 import { formatAnnouncementCode } from "../../../lib/announcements/publish";
 import type { AnnouncementReaderBadge } from "../../../lib/announcements/reader-state";
-
-const BADGE_LABEL: Record<AnnouncementReaderBadge, string> = {
-  novo: "Novo",
-  confirmar_leitura: "Confirmar leitura",
-  confirmado: "Confirmado",
-  lido: "Lido",
-};
-
-const BADGE_CLASS: Record<AnnouncementReaderBadge, string> = {
-  novo: "bg-primary-subtle text-primary",
-  confirmar_leitura: "bg-action text-action-foreground",
-  confirmado: "bg-transparent text-success",
-  lido: "bg-transparent text-muted-foreground",
-};
 
 const TITLE_CLASS: Record<AnnouncementReaderBadge, string> = {
   novo: "font-bold text-foreground",
@@ -27,6 +16,36 @@ const TITLE_CLASS: Record<AnnouncementReaderBadge, string> = {
   confirmado: "font-normal text-muted-foreground",
   lido: "font-normal text-muted-foreground",
 };
+
+/** Estado do comunicado (design-system §2, "três estados inequívocos") — cor
+ * E rótulo, via componente Badge. `pending` usa --action-deep (AA com texto
+ * branco pequeno), único badge laranja. */
+function StateBadge({ badge }: { badge: AnnouncementReaderBadge }) {
+  switch (badge) {
+    case "novo":
+      return (
+        <Badge variant="new" dot>
+          Novo
+        </Badge>
+      );
+    case "confirmar_leitura":
+      return <Badge variant="pending">Confirmar leitura</Badge>;
+    case "confirmado":
+      return (
+        <Badge variant="quiet">
+          <Check aria-hidden="true" />
+          Confirmado
+        </Badge>
+      );
+    case "lido":
+      return (
+        <Badge variant="quiet">
+          <Check aria-hidden="true" />
+          Lido
+        </Badge>
+      );
+  }
+}
 
 export default async function ComunicadosColaboradorPage({
   searchParams,
@@ -41,30 +60,30 @@ export default async function ComunicadosColaboradorPage({
   );
 
   return (
-    <div className="flex flex-col gap-6 px-4 py-6">
-      <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Comunicados</h1>
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-5 px-4 py-6">
+      <h1 className="text-display text-foreground">Comunicados</h1>
 
       <form className="flex flex-col gap-3" action="/comunicados">
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-          <input
+          <Search
+            className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-subtle-foreground"
+            aria-hidden="true"
+          />
+          <Input
             type="search"
             name="q"
+            size="lg"
             defaultValue={q}
             placeholder="Buscar comunicados..."
-            className="h-12 w-full rounded-lg border border-input bg-transparent pl-9 pr-3 text-base"
+            className="pl-10"
           />
         </div>
 
         {categories.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 text-sm">
+          <div className="flex flex-wrap gap-2">
             <Link
               href={{ pathname: "/comunicados", query: q ? { q } : {} }}
-              className={
-                !categoria
-                  ? "inline-flex min-h-12 items-center rounded-lg bg-primary px-3 text-primary-foreground"
-                  : "inline-flex min-h-12 items-center rounded-lg px-3 text-muted-foreground hover:bg-muted"
-              }
+              className={filterChipVariants({ active: !categoria })}
             >
               Todas
             </Link>
@@ -72,11 +91,7 @@ export default async function ComunicadosColaboradorPage({
               <Link
                 key={c}
                 href={{ pathname: "/comunicados", query: { ...(q ? { q } : {}), categoria: c } }}
-                className={
-                  categoria === c
-                    ? "inline-flex min-h-12 items-center rounded-lg bg-primary px-3 text-primary-foreground"
-                    : "inline-flex min-h-12 items-center rounded-lg px-3 text-muted-foreground hover:bg-muted"
-                }
+                className={filterChipVariants({ active: categoria === c })}
               >
                 {c}
               </Link>
@@ -92,27 +107,32 @@ export default async function ComunicadosColaboradorPage({
           description="Quando houver comunicados para você, eles aparecem aqui."
         />
       ) : (
-        <div className="flex flex-col gap-2">
-          {items.map(({ announcement, latestVersion, state }) => (
-            <Link
-              key={announcement.id}
-              href={`/comunicados/${announcement.id}`}
-              className="flex flex-col gap-1 rounded-[var(--radius-card)] border border-border bg-card p-3 shadow-[var(--shadow-card)] hover:bg-muted"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className={TITLE_CLASS[state.badge]}>{latestVersion.title}</span>
-                <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${BADGE_CLASS[state.badge]}`}>
-                  {BADGE_LABEL[state.badge]}
+        <div className="flex flex-col gap-2.5">
+          {items.map(({ announcement, latestVersion, state }) => {
+            const isRead = state.badge === "confirmado" || state.badge === "lido";
+            return (
+              <Link
+                key={announcement.id}
+                href={`/comunicados/${announcement.id}`}
+                className={`flex flex-col gap-2 rounded-[var(--radius-card)] border p-4 transition-colors ${
+                  isRead
+                    ? "border-border bg-muted hover:bg-muted/70"
+                    : "border-border bg-card shadow-[var(--shadow-card)] hover:bg-muted"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <span className={`text-card-title ${TITLE_CLASS[state.badge]}`}>{latestVersion.title}</span>
+                  <StateBadge badge={state.badge} />
+                </div>
+                <span className="text-meta text-muted-foreground">
+                  {announcement.seqNumber != null && announcement.year != null
+                    ? `${formatAnnouncementCode(announcement.seqNumber, announcement.year)} · `
+                    : ""}
+                  {announcement.category}
                 </span>
-              </div>
-              <span className="text-xs text-muted-foreground">
-                {announcement.seqNumber != null && announcement.year != null
-                  ? `${formatAnnouncementCode(announcement.seqNumber, announcement.year)} · `
-                  : ""}
-                {announcement.category}
-              </span>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>

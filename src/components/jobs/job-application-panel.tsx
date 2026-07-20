@@ -74,17 +74,17 @@ export function JobApplicationPanel({
 
   if (application) {
     return (
-      <div className="flex flex-col gap-2 rounded-lg bg-primary-subtle p-3">
-        <p className="text-sm font-semibold text-foreground">
+      <div className="flex flex-col gap-2 rounded-[var(--radius-card)] border border-border bg-primary-subtle p-4">
+        <p className="text-body font-semibold text-foreground">
           Candidatura enviada em {formatDateTimeSaoPaulo(new Date(application.createdAt))}
         </p>
-        {application.note && <p className="text-sm text-foreground">{application.note}</p>}
+        {application.note && <p className="text-meta text-foreground">{application.note}</p>}
         {canApply && (
-          <Button type="button" variant="secondary" size="sm" className="self-start" onClick={handleCancel} disabled={isPending}>
+          <Button type="button" variant="secondary" size="touch" className="self-start" onClick={handleCancel} disabled={isPending}>
             Cancelar candidatura
           </Button>
         )}
-        {errorMessage && <p className="text-sm text-destructive">{errorMessage}</p>}
+        {errorMessage && <p className="text-meta text-destructive">{errorMessage}</p>}
       </div>
     );
   }
@@ -92,7 +92,7 @@ export function JobApplicationPanel({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="note" className="text-sm font-medium text-foreground">
+        <label htmlFor="note" className="text-meta font-medium text-foreground">
           Observação (opcional)
         </label>
         <textarea
@@ -100,13 +100,13 @@ export function JobApplicationPanel({
           rows={3}
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          className="rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm dark:bg-input/30"
+          className="w-full rounded-lg border-[1.5px] border-input bg-card px-3.5 py-2 text-body outline-none transition-colors placeholder:text-subtle-foreground focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-primary-subtle"
         />
       </div>
-      <Button type="button" variant="action" size="lg" className="self-start" onClick={handleApply} disabled={isPending}>
+      <Button type="button" variant="action" size="xl" className="w-full" onClick={handleApply} disabled={isPending}>
         Candidatar-se
       </Button>
-      {errorMessage && <p className="text-sm text-destructive">{errorMessage}</p>}
+      {errorMessage && <p className="text-meta text-destructive">{errorMessage}</p>}
     </div>
   );
 }

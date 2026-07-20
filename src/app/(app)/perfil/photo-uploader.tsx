@@ -1,11 +1,25 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { getAvatarColors, getInitial } from "@/lib/cards/avatar";
 import { confirmPhotoUploadAction, requestPhotoUploadUrl } from "./actions";
 
-export function PhotoUploader({ currentPhotoUrl }: { currentPhotoUrl: string | null }) {
+/** Herói do perfil (INC-013.5): avatar grande (foto com recorte central ou
+ * iniciais sobre cor determinística — mesma paleta do Avatar/card), a
+ * identidade (children, vinda do servidor) e o botão "Trocar foto". `photoUrl`
+ * já chega filtrado por consentimento a montante. */
+export function PhotoUploader({
+  currentPhotoUrl,
+  name,
+  children,
+}: {
+  currentPhotoUrl: string | null;
+  name: string;
+  children?: ReactNode;
+}) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState(false);
@@ -36,31 +50,47 @@ export function PhotoUploader({ currentPhotoUrl }: { currentPhotoUrl: string | n
     }
   }
 
+  const colors = getAvatarColors(name);
+
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex flex-col items-center gap-3 text-center">
       {currentPhotoUrl ? (
         // eslint-disable-next-line @next/next/no-img-element -- URL assinada, curta duracao; nao cacheavel pelo otimizador de imagem do Next.
-        <img src={currentPhotoUrl} alt="Foto de perfil" className="size-16 rounded-full object-cover" />
+        <img
+          src={currentPhotoUrl}
+          alt="Foto de perfil"
+          className="size-24 rounded-full object-cover object-center"
+        />
       ) : (
-        <div className="flex size-16 items-center justify-center rounded-full bg-zinc-200 text-xs text-zinc-500 dark:bg-zinc-800">
-          Sem foto
-        </div>
+        <span
+          aria-hidden="true"
+          className="flex size-24 items-center justify-center rounded-full border-[1.5px] border-primary-deep/15 text-2xl font-extrabold"
+          style={{ backgroundColor: colors.bg, color: colors.fg }}
+        >
+          {getInitial(name)}
+        </span>
       )}
 
-      <div className="flex flex-col gap-1">
-        <Button type="button" variant="outline" size="touch" disabled={pending} onClick={() => fileInputRef.current?.click()}>
-          {pending ? "Enviando..." : "Trocar foto"}
-        </Button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          onChange={handleFileChange}
-          disabled={pending}
-          className="sr-only"
-        />
-        {error && <p className="text-xs text-destructive">{error}</p>}
-      </div>
+      {children}
+
+      <Button
+        type="button"
+        variant="outline"
+        size="touch"
+        disabled={pending}
+        onClick={() => fileInputRef.current?.click()}
+      >
+        {pending ? "Enviando..." : "Trocar foto"}
+      </Button>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        onChange={handleFileChange}
+        disabled={pending}
+        className="sr-only"
+      />
+      {error && <p className="text-meta text-destructive">{error}</p>}
     </div>
   );
 }

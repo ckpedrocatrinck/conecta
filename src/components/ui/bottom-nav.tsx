@@ -41,7 +41,7 @@ function BottomNav({ items, activeHref, className, ...props }: BottomNavProps) {
               <Icon className="size-5" aria-hidden="true" />
               {Boolean(badge) && badge! > 0 && (
                 <span
-                  className="absolute -top-1.5 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[0.625rem] font-bold leading-none text-primary-foreground"
+                  className="absolute -top-1.5 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-action-deep px-1 text-[0.625rem] font-bold leading-none text-action-foreground"
                   aria-hidden="true"
                 >
                   {badge! > 9 ? "9+" : badge}

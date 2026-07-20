@@ -60,14 +60,14 @@ export default async function PostDetailPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          {post.title} <span className="text-sm font-normal text-muted-foreground">({STATUS_LABEL[post.status]})</span>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-display text-foreground">
+          {post.title} <span className="text-body font-normal text-muted-foreground">({STATUS_LABEL[post.status]})</span>
         </h1>
         <div className="flex items-center gap-2">
           {isPostCardKind(post.type) && (
             <a href={`/api/posts/${post.id}/card-image`} download={`card-${post.id}.png`}>
-              <Button type="button" variant="secondary">
+              <Button type="button" variant="secondary" size="touch">
                 Baixar card
               </Button>
             </a>
@@ -75,22 +75,22 @@ export default async function PostDetailPage({
           {post.status === "draft" && (
             <form action={publishPostAction}>
               <input type="hidden" name="id" value={post.id} />
-              <SubmitButton pendingLabel="Publicando…">Publicar</SubmitButton>
+              <SubmitButton size="touch" pendingLabel="Publicando…">Publicar</SubmitButton>
             </form>
           )}
         </div>
       </div>
 
       {erro && ERROR_MESSAGES[erro] && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-meta text-destructive">
           {ERROR_MESSAGES[erro]}
         </p>
       )}
-      {salvo === "ok" && <p className="text-sm text-success">Alterações salvas.</p>}
-      {ok && SUCCESS_MESSAGES[ok] && <p className="text-sm text-success">{SUCCESS_MESSAGES[ok]}</p>}
+      {salvo === "ok" && <p className="text-meta font-medium text-success">Alterações salvas.</p>}
+      {ok && SUCCESS_MESSAGES[ok] && <p className="text-meta font-medium text-success">{SUCCESS_MESSAGES[ok]}</p>}
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-sm font-semibold text-muted-foreground">Fotos</h2>
+        <h2 className="text-label uppercase text-subtle-foreground">Fotos</h2>
         <PostPhotoUpload postId={post.id} existingMedia={existingMedia} />
       </section>
 

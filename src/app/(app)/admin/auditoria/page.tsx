@@ -12,7 +12,10 @@ export default async function AuditoriaPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Auditoria</h1>
+      <div className="flex flex-col gap-0.5">
+        <h1 className="text-display text-foreground">Auditoria</h1>
+        <p className="text-meta text-muted-foreground">Registro imutável das ações administrativas.</p>
+      </div>
 
       {logs.length === 0 ? (
         <EmptyState
@@ -25,13 +28,15 @@ export default async function AuditoriaPage() {
           {logs.map((log) => (
             <div
               key={log.id}
-              className="flex flex-col gap-1 rounded-[var(--radius-card)] border border-border bg-card p-3 text-sm shadow-[var(--shadow-card)]"
+              className="flex flex-col gap-1.5 rounded-[var(--radius-card)] border border-border bg-card p-4 text-body shadow-[var(--shadow-card)]"
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="font-bold text-foreground">{log.action}</span>
-                <span className="text-muted-foreground">{formatDateTimeSaoPaulo(log.createdAt)}</span>
+                <span className="rounded-md bg-muted px-2 py-0.5 font-mono text-[11px] text-foreground-soft">
+                  {log.action}
+                </span>
+                <span className="text-meta text-subtle-foreground">{formatDateTimeSaoPaulo(log.createdAt)}</span>
               </div>
-              <span className="text-muted-foreground">
+              <span className="text-meta text-muted-foreground">
                 {log.actorUser?.fullName ?? "Sistema"} · {log.entity} · {log.entityId}
               </span>
               {log.metadata != null && typeof log.metadata === "object" && Object.keys(log.metadata).length > 0 && (

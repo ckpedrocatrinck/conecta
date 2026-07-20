@@ -22,24 +22,24 @@ export default async function VagaDetailPage({ params }: { params: Promise<{ id:
   const canApply = isJobOpeningAcceptingApplications(job);
 
   return (
-    <div className="flex flex-col gap-6 px-4 py-6">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-5 px-4 py-6">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-extrabold tracking-tight text-foreground">{job.title}</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-display text-foreground">{job.title}</h1>
+        <p className="text-meta text-muted-foreground">
           {job.branch?.name ?? "Geral"}
           {job.shift ? ` · Turno ${job.shift}` : ""} · Prazo {formatDateTimeSaoPaulo(job.deadline)}
         </p>
       </div>
 
       <div className="flex flex-col gap-2">
-        <h2 className="text-sm font-semibold text-muted-foreground">Descrição</h2>
-        <p className="whitespace-pre-line text-sm text-foreground">{job.description}</p>
+        <h2 className="text-label uppercase text-subtle-foreground">Descrição</h2>
+        <p className="whitespace-pre-line text-body text-foreground">{job.description}</p>
       </div>
 
       {job.requirements && (
         <div className="flex flex-col gap-2">
-          <h2 className="text-sm font-semibold text-muted-foreground">Requisitos</h2>
-          <p className="whitespace-pre-line text-sm text-foreground">{job.requirements}</p>
+          <h2 className="text-label uppercase text-subtle-foreground">Requisitos</h2>
+          <p className="whitespace-pre-line text-body text-foreground">{job.requirements}</p>
         </div>
       )}
 

@@ -23,31 +23,31 @@ export default async function PendenciaColaboradorPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-extrabold tracking-tight text-foreground">{history.user.fullName}</h1>
+      <h1 className="text-display text-foreground">{history.user.fullName}</h1>
 
       {history.items.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Nenhum comunicado com exigência de ciência para este colaborador.</p>
+        <p className="text-meta text-muted-foreground">Nenhum comunicado com exigência de ciência para este colaborador.</p>
       ) : (
         <div className="flex flex-col gap-2">
           {history.items.map((item) => (
             <Link
               key={item.announcement.id}
               href={`/pendencias/${item.announcement.id}`}
-              className="flex flex-col gap-1 rounded-[var(--radius-card)] border border-border bg-card p-3 text-sm shadow-[var(--shadow-card)] hover:bg-muted"
+              className="flex flex-col gap-1 rounded-[var(--radius-card)] border border-border bg-card p-4 text-body shadow-[var(--shadow-card)] transition-colors hover:bg-muted"
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="font-medium text-foreground">
+                <span className="font-semibold text-foreground">
                   {item.announcement.seqNumber != null && item.announcement.year != null
                     ? formatAnnouncementCode(item.announcement.seqNumber, item.announcement.year)
                     : "sem número"}
                   {" · "}
                   {item.announcement.category}
                 </span>
-                <span className={item.ackSatisfied ? "font-semibold text-success" : "font-semibold text-action"}>
+                <span className={`text-meta font-bold ${item.ackSatisfied ? "text-success" : "text-action"}`}>
                   {item.ackSatisfied ? "Confirmado" : "Pendente"}
                 </span>
               </div>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-meta text-muted-foreground">
                 {item.ackSatisfied && item.lastAckedAt
                   ? `Confirmado em ${formatDateTimeSaoPaulo(item.lastAckedAt)}`
                   : item.wasReopened

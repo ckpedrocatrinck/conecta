@@ -1,6 +1,6 @@
 import { formatCalendarDate } from "../../dates/format-date";
 import { cardTitleFontSize, heroNameFontSize, personNameFontSize } from "../text-fit";
-import { BRAND_TOKENS } from "../brand-tokens";
+import { CARD_EXPORT_TOKENS } from "../brand-tokens";
 import type { BirthdayCardData, CardData, JobOpeningCardData, PostCardData } from "../card-model";
 import { CardImageShell } from "./card-image-shell";
 import { AvatarNode } from "./avatar-node";
@@ -15,17 +15,17 @@ function PostKindImage({ data }: { data: PostCardData }) {
 
   return (
     <CardImageShell kind={data.kind} branding={data.branding} meta={meta}>
-      <span style={{ fontSize: cardTitleFontSize(data.title), fontWeight: 700, color: BRAND_TOKENS.foreground }}>
+      <span style={{ fontSize: cardTitleFontSize(data.title), fontWeight: 800, color: CARD_EXPORT_TOKENS.onSurface }}>
         {data.title}
       </span>
-      {data.body && <span style={{ fontSize: 18, color: BRAND_TOKENS.foreground }}>{data.body}</span>}
+      {data.body && <span style={{ fontSize: 20, color: CARD_EXPORT_TOKENS.onSurfaceMuted }}>{data.body}</span>}
       {data.people.length > 0 && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 24 }}>
           {data.people.map((person) => (
             <div key={person.fullName} style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <AvatarNode fullName={person.fullName} photoUrl={person.photoUrl} size={64} />
               <span
-                style={{ fontSize: personNameFontSize(person.fullName), color: BRAND_TOKENS.foreground, maxWidth: 320 }}
+                style={{ fontSize: personNameFontSize(person.fullName), fontWeight: 600, color: CARD_EXPORT_TOKENS.onSurface, maxWidth: 320 }}
               >
                 {person.fullName}
               </span>
@@ -46,14 +46,14 @@ function BirthdayImage({ data }: { data: BirthdayCardData }) {
           <span
             style={{
               fontSize: heroNameFontSize(data.person.fullName),
-              fontWeight: 700,
-              color: BRAND_TOKENS.foreground,
+              fontWeight: 800,
+              color: CARD_EXPORT_TOKENS.onSurface,
               maxWidth: 700,
             }}
           >
             {data.person.fullName}
           </span>
-          <span style={{ fontSize: 20, color: BRAND_TOKENS.mutedForeground }}>Parabéns pelo seu dia!</span>
+          <span style={{ fontSize: 22, color: CARD_EXPORT_TOKENS.onSurfaceMuted }}>Parabéns pelo seu dia!</span>
         </div>
       </div>
     </CardImageShell>
@@ -65,10 +65,10 @@ function JobOpeningImage({ data }: { data: JobOpeningCardData }) {
 
   return (
     <CardImageShell kind="job_opening" branding={data.branding} meta={meta}>
-      <span style={{ fontSize: cardTitleFontSize(data.title), fontWeight: 700, color: BRAND_TOKENS.foreground }}>
+      <span style={{ fontSize: cardTitleFontSize(data.title), fontWeight: 800, color: CARD_EXPORT_TOKENS.onSurface }}>
         {data.title}
       </span>
-      <span style={{ fontSize: 18, color: BRAND_TOKENS.foreground }}>{data.description}</span>
+      <span style={{ fontSize: 20, color: CARD_EXPORT_TOKENS.onSurfaceMuted }}>{data.description}</span>
     </CardImageShell>
   );
 }

@@ -21,10 +21,8 @@ export default async function TrocarSenhaPage({
   return (
     <div className="flex flex-1 flex-col items-center justify-center bg-background px-6 py-16">
       <div className="w-full max-w-sm">
-        <h1 className="mb-2 text-center text-2xl font-extrabold tracking-tight text-foreground">
-          Troque sua senha
-        </h1>
-        <p className="mb-6 text-center text-sm text-muted-foreground">
+        <h1 className="mb-2 text-center text-display text-foreground">Troque sua senha</h1>
+        <p className="mb-6 text-center text-meta text-muted-foreground">
           Este é o seu primeiro acesso (ou sua senha foi redefinida). Defina uma senha nova antes de continuar.
         </p>
 

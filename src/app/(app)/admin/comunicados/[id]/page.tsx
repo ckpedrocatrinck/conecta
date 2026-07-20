@@ -57,33 +57,35 @@ export default async function EditarComunicadoPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
-          {announcement.seqNumber != null && announcement.year != null
-            ? formatAnnouncementCode(announcement.seqNumber, announcement.year)
-            : STATUS_LABEL_FALLBACK[announcement.status]}
-        </h1>
-      </div>
+      <h1 className="text-display text-foreground">
+        {announcement.seqNumber != null && announcement.year != null
+          ? formatAnnouncementCode(announcement.seqNumber, announcement.year)
+          : STATUS_LABEL_FALLBACK[announcement.status]}
+      </h1>
 
       {erro && ERROR_MESSAGES[erro] && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-meta text-destructive">
           {ERROR_MESSAGES[erro]}
         </p>
       )}
-      {salvo === "ok" && <p className="text-sm text-success">Alterações salvas.</p>}
-      {ok && SUCCESS_MESSAGES[ok] && <p className="text-sm text-success">{SUCCESS_MESSAGES[ok]}</p>}
+      {salvo === "ok" && <p className="text-meta font-medium text-success">Alterações salvas.</p>}
+      {ok && SUCCESS_MESSAGES[ok] && <p className="text-meta font-medium text-success">{SUCCESS_MESSAGES[ok]}</p>}
 
       <EditAnnouncementForm announcement={announcement} latest={latest} audienceBranchIds={audienceBranchIds} branches={branches} />
 
       <div className="flex flex-col gap-2">
-        <h2 className="text-sm font-semibold text-muted-foreground">Histórico de versões</h2>
+        <h2 className="text-label uppercase text-subtle-foreground">Histórico de versões</h2>
         {history.map((v) => (
-          <div key={v.id} className="rounded-[var(--radius-card)] border border-border bg-card p-3 text-sm shadow-[var(--shadow-card)]">
-            <p className="font-medium text-foreground">
+          <div key={v.id} className="rounded-[var(--radius-card)] border border-border bg-card p-4 text-body shadow-[var(--shadow-card)]">
+            <p className="flex flex-wrap items-center gap-2 font-medium text-foreground">
               Versão {v.versionNumber} — {v.title}
-              {v.isMaterialChange && <span className="ml-2 text-xs font-semibold text-warning">mudança material</span>}
+              {v.isMaterialChange && (
+                <span className="rounded-full bg-action-subtle px-2 py-0.5 text-label text-action-deep">
+                  mudança material
+                </span>
+              )}
             </p>
-            <p className="text-xs text-muted-foreground">{formatDateTimeSaoPaulo(v.createdAt)}</p>
+            <p className="text-meta text-muted-foreground">{formatDateTimeSaoPaulo(v.createdAt)}</p>
           </div>
         ))}
       </div>

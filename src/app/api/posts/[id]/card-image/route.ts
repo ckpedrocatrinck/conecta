@@ -9,6 +9,7 @@ import { buildPostCardData } from "@/lib/cards/card-model";
 import { withAbsoluteMediaUrls } from "@/lib/cards/absolute-urls";
 import { renderCardImage } from "@/lib/cards/render";
 import { CARD_IMAGE_HEIGHT, CARD_IMAGE_WIDTH } from "@/lib/cards/render/card-image-shell";
+import { CARD_FONTS } from "@/lib/cards/render/fonts";
 
 /**
  * Imagem compartilhável do card (botão "baixar card", INC-009) — server-side
@@ -47,6 +48,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
   return new ImageResponse(renderCardImage(absoluteCardData), {
     width: CARD_IMAGE_WIDTH,
     height: CARD_IMAGE_HEIGHT,
+    fonts: CARD_FONTS,
     headers: { "Cache-Control": "private, max-age=60" },
   });
 }

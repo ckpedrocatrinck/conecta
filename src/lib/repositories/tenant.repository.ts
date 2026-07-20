@@ -18,6 +18,16 @@ export function findActiveTenantBySlug(slug: string) {
   });
 }
 
+/** Nome de exibicao do tenant, para a marca do header (INC-013.5, DP-13):
+ * "Conecta / {nome do tenant}". Leitura direta (tenants nao tem RLS). */
+export async function findTenantName(tenantId: string): Promise<string | null> {
+  const tenant = await appDb.tenant.findUnique({
+    where: { id: tenantId },
+    select: { name: true },
+  });
+  return tenant?.name ?? null;
+}
+
 export type TenantBranding = { logoUrl: string | null; accentColor: string | null };
 
 /** Identidade injetada nos cards gerados (INC-009). `logoUrl` e' asset

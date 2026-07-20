@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { createEmployeeAction, type CreateEmployeeState } from "./actions";
 
@@ -14,15 +15,15 @@ export function NewEmployeeForm({ branches }: { branches: { id: string; name: st
 
   if (state.status === "ok") {
     return (
-      <div className="flex flex-col gap-3 rounded-lg border border-emerald-300 bg-emerald-50 p-4 text-sm dark:border-emerald-800 dark:bg-emerald-950">
+      <div className="flex max-w-xl flex-col gap-3 rounded-[var(--radius-card)] border border-border bg-primary-subtle p-4 text-body text-foreground">
         <p>
           Colaborador <strong>{state.fullName}</strong> cadastrado. Senha provisória (repasse ao colaborador — não fica
           salva em nenhum lugar além desta tela):
         </p>
-        <p className="rounded bg-white px-3 py-2 font-mono text-base tracking-wider dark:bg-black">
+        <p className="rounded-lg border border-border bg-card px-3 py-2 font-mono text-base tracking-wider text-foreground">
           {state.provisionalPassword}
         </p>
-        <Link href="/admin/colaboradores" className="text-primary underline-offset-4 hover:underline">
+        <Link href="/admin/colaboradores" className="text-meta font-semibold text-primary underline-offset-4 hover:underline">
           Voltar para colaboradores
         </Link>
       </div>
@@ -30,7 +31,7 @@ export function NewEmployeeForm({ branches }: { branches: { id: string; name: st
   }
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form action={formAction} className="flex w-full max-w-xl flex-col gap-4">
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="fullName">Nome completo</Label>
         <Input id="fullName" name="fullName" required />
@@ -45,7 +46,7 @@ export function NewEmployeeForm({ branches }: { branches: { id: string; name: st
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="branchId">Filial</Label>
-        <select id="branchId" name="branchId" required defaultValue="" className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm dark:bg-input/30">
+        <Select id="branchId" name="branchId" required defaultValue="">
           <option value="" disabled>
             Selecione
           </option>
@@ -54,15 +55,15 @@ export function NewEmployeeForm({ branches }: { branches: { id: string; name: st
               {b.name}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="role">Papel</Label>
-        <select id="role" name="role" required defaultValue="employee" className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm dark:bg-input/30">
+        <Select id="role" name="role" required defaultValue="employee">
           <option value="employee">Colaborador</option>
           <option value="manager">Gestor</option>
           <option value="admin">Admin</option>
-        </select>
+        </Select>
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="birthDate">Data de nascimento</Label>
@@ -82,12 +83,12 @@ export function NewEmployeeForm({ branches }: { branches: { id: string; name: st
       </div>
 
       {state.status === "error" && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-meta text-destructive">
           {state.message}
         </p>
       )}
 
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" size="touch" className="self-start" disabled={pending}>
         {pending ? "Salvando..." : "Cadastrar"}
       </Button>
     </form>

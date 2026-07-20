@@ -7,6 +7,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-foreground-soft: var(--foreground-soft);
   --font-sans: var(--font-figtree);
   --font-heading: var(--font-figtree);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -25,8 +26,10 @@
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-border: var(--destructive-border);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -36,11 +39,14 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary-hover: var(--primary-hover);
+  --color-primary-deep: var(--primary-deep);
   --color-primary-subtle: var(--primary-subtle);
   --color-primary: var(--primary);
   --color-action-foreground: var(--action-foreground);
   --color-action-hover: var(--action-hover);
+  --color-action-deep: var(--action-deep);
   --color-action-subtle: var(--action-subtle);
+  --color-action-border: var(--action-border);
   --color-action: var(--action);
   --color-success: var(--success);
   --color-warning: var(--warning);
@@ -49,8 +55,9 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --shadow-card: 0 1px 2px 0 rgb(31 36 34 / 0.06), 0 1px 3px 0 rgb(31 36 34 / 0.08);
-  --radius-card: 12px;
+  /* Sombra em duas camadas discretas (redesenho 1a, "Superficie") */
+  --shadow-card: 0 1px 2px rgb(32 38 31 / 0.05), 0 4px 14px rgb(32 38 31 / 0.05);
+  --radius-card: 16px;
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -58,82 +65,127 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Escala tipografica do redesenho 1a ("Tipo — Figtree unica").
+     Gera utilitarios text-display / text-card-title / text-body /
+     text-meta / text-label. */
+  --text-display: 26px;
+  --text-display--line-height: 1.2;
+  --text-display--letter-spacing: -0.01em;
+  --text-display--font-weight: 800;
+  --text-card-title: 17px;
+  --text-card-title--line-height: 1.3;
+  --text-card-title--font-weight: 700;
+  --text-body: 15px;
+  --text-body--line-height: 1.5;
+  --text-meta: 13px;
+  --text-meta--line-height: 1.4;
+  --text-meta--font-weight: 500;
+  --text-label: 12px;
+  --text-label--line-height: 1.3;
+  --text-label--font-weight: 700;
+  --text-label--letter-spacing: 0.02em;
 }
 
 :root {
-  /* Design system: docs/06-Design/design-system.md, secao 2 (direcao Balcao) */
-  --background: #f4f5f3;
-  --foreground: #1f2422;
+  /* Redesenho "Conecta Elevacao" (docs/06-Design/redesenho-referencia.html,
+     secao 1a) sobre a direcao Balcao (design-system.md §2). */
+  --background: #f1f2ed;
+  --foreground: #20261f;
+  /* Texto intermediario do redesenho (chips inativos, corpo de banner) */
+  --foreground-soft: #4a5248;
   --card: #ffffff;
-  --card-foreground: #1f2422;
+  --card-foreground: #20261f;
   --popover: #ffffff;
-  --popover-foreground: #1f2422;
+  --popover-foreground: #20261f;
 
   --primary: #2f7a5f;
-  --primary-hover: #22604a;
-  --primary-subtle: #e7f1ec;
+  /* Verde-profundo do redesenho: hover do primario e superficie de marca
+     (faixa do header admin, card PNG). */
+  --primary-hover: #275f4c;
+  --primary-deep: #275f4c;
+  --primary-subtle: #e7efe9;
   --primary-foreground: #ffffff;
 
   --action: #d96e30;
-  --action-hover: #b25419;
-  --action-subtle: #fcf3ec;
+  --action-hover: #c05e24;
+  /* Laranja profundo (titulo de pendencia do redesenho 1c). Tambem e' o
+     unico laranja que passa AA com texto branco pequeno (4.99:1) — usado
+     em badges solidos de pendencia; #d96e30 puro so' passa AA em texto
+     >=19px bold (ver guia-de-uso-tokens.md). */
+  --action-deep: #b3541e;
+  --action-subtle: #fbede3;
+  /* Borda dos cards que carregam pendencia (redesenho 1c/1g) */
+  --action-border: #f0d8c8;
   --action-foreground: #ffffff;
 
-  --secondary: #edefec;
-  --secondary-foreground: #1f2422;
-  --muted: #edefec;
-  --muted-foreground: #6b736e;
-  --subtle-foreground: #828a85;
-  --accent: #e7f1ec;
-  --accent-foreground: #1f2422;
+  --secondary: #f7f8f3;
+  --secondary-foreground: #20261f;
+  /* Superficie recuada (card "lido" do redesenho 1c) */
+  --muted: #f7f8f3;
+  --muted-foreground: #6b7469;
+  --subtle-foreground: #8a9187;
+  --accent: #e7efe9;
+  --accent-foreground: #20261f;
 
   --success: #2f7a5f;
   --warning: #d96e30;
   --info: #2f7a5f;
-  --destructive: #c0392b;
+  --destructive: #b3432b;
   --destructive-foreground: #ffffff;
+  /* Borda do botao destrutivo-outline (redesenho 1b, "Remover") */
+  --destructive-border: #e5c8bd;
 
-  --border: #e3e6e2;
-  --input: #e3e6e2;
+  --border: #e3e6de;
+  /* Borda mais firme de botoes outline e vazios tracejados (1b/1c) */
+  --border-strong: #cbd2c8;
+  --input: #e3e6de;
   --ring: #2f7a5f;
 
   --chart-1: #2f7a5f;
   --chart-2: #d96e30;
-  --chart-3: #6b736e;
-  --chart-4: #22604a;
-  --chart-5: #b25419;
+  --chart-3: #6b7469;
+  --chart-4: #275f4c;
+  --chart-5: #c05e24;
 
-  --radius: 8px;
+  /* Raio base 12px (campo/botao); cards usam --radius-card 16px;
+     chips sao pilula (rounded-full). Redesenho 1a. */
+  --radius: 12px;
 
   --sidebar: #ffffff;
-  --sidebar-foreground: #1f2422;
+  --sidebar-foreground: #20261f;
   --sidebar-primary: #2f7a5f;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e7f1ec;
-  --sidebar-accent-foreground: #1f2422;
-  --sidebar-border: #e3e6e2;
+  --sidebar-accent: #e7efe9;
+  --sidebar-accent-foreground: #20261f;
+  --sidebar-border: #e3e6de;
   --sidebar-ring: #2f7a5f;
 }
 
 .dark {
   /* Design system, secao 8: so fundo/superficie/texto tem hex definido.
      --primary/--action reaproveitam o hex do modo claro sem ajuste de
-     luminancia (nao documentado) - ver pendencia no Relatorio de Entrega. */
+     luminancia (nao documentado) - pendencia mantida do INC-003.5.
+     Dark mode segue fora do escopo do INC-013.5. */
   --background: #17191c;
   --foreground: #e9edea;
+  --foreground-soft: #c4cbc6;
   --card: #1f2422;
   --card-foreground: #e9edea;
   --popover: #1f2422;
   --popover-foreground: #e9edea;
 
   --primary: #2f7a5f;
-  --primary-hover: #22604a;
+  --primary-hover: #275f4c;
+  --primary-deep: #275f4c;
   --primary-subtle: #1f2422;
   --primary-foreground: #ffffff;
 
   --action: #d96e30;
-  --action-hover: #b25419;
+  --action-hover: #c05e24;
+  --action-deep: #b3541e;
   --action-subtle: #1f2422;
+  --action-border: #2a2f2c;
   --action-foreground: #ffffff;
 
   --secondary: #1f2422;
@@ -149,16 +201,18 @@
   --info: #2f7a5f;
   --destructive: #e05c4a;
   --destructive-foreground: #17191c;
+  --destructive-border: #2a2f2c;
 
   --border: #2a2f2c;
+  --border-strong: #3a403c;
   --input: #2a2f2c;
   --ring: #2f7a5f;
 
   --chart-1: #2f7a5f;
   --chart-2: #d96e30;
   --chart-3: #9aa19c;
-  --chart-4: #22604a;
-  --chart-5: #b25419;
+  --chart-4: #275f4c;
+  --chart-5: #c05e24;
 
   --sidebar: #1f2422;
   --sidebar-foreground: #e9edea;

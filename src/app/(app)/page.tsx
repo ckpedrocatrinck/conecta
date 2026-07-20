@@ -1,17 +1,18 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { MessageSquareHeart } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { PendingBanner } from "@/components/ui/pending-banner";
+import { AlertTriangle, Check, MessageSquareHeart } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
+import { Avatar } from "@/components/ui/avatar";
 import { EmptyState } from "@/components/ui/empty-state";
+import { HomeBanner } from "@/components/home/home-banner";
 import { PostCard } from "@/components/feed/post-card";
 import { FeedLoadMore } from "@/components/feed/load-more";
 import { CardTemplate } from "@/components/cards/templates";
-import { signOut } from "../../lib/auth/config";
 import { requireOnboardedSession } from "../../lib/auth/session";
 import { withTenant } from "../../lib/db/with-tenant";
 import { findUserById, findUpcomingBirthdays } from "../../lib/repositories/user.repository";
-import { getCachedPendingAckCount } from "../../lib/announcements/list-for-user";
+import { listAnnouncementsForUser } from "../../lib/announcements/list-for-user";
+import { formatAnnouncementCode } from "../../lib/announcements/publish";
 import { findUnreadNotificationsForUser, markNotificationRead } from "../../lib/repositories/notification.repository";
 import { findPostsForFeed } from "../../lib/repositories/post.repository";
 import { findOpenJobOpeningsForEmployee } from "../../lib/repositories/job-opening.repository";
@@ -25,19 +26,22 @@ const HOME_JOB_OPENINGS_LIMIT = 3;
 
 export default async function Home() {
   const session = await requireOnboardedSession();
-  // getCachedPendingAckCount tambem e' chamada pelo layout de navegacao
-  // (badge do item Comunicados) — cache() do React dedupe as duas chamadas
-  // em uma unica consulta por request (INC-008.5).
-  const pendingCount = await getCachedPendingAckCount(session.tenantId, session.userId);
   const now = new Date();
   const todayMonthDay = birthdayWindowMonthDays(now, 0);
-  const [{ user, notifications, feedPosts, birthdayRows, openJobs }, branding] = await Promise.all([
+  const [{ user, notifications, feedPosts, birthdayRows, openJobs, pendingAnnouncements }, branding] = await Promise.all([
     withTenant({ tenantId: session.tenantId }, async (tx) => ({
       user: await findUserById(tx, session.tenantId, session.userId),
       notifications: await findUnreadNotificationsForUser(tx, session.tenantId, session.userId),
       feedPosts: await findPostsForFeed(tx, session.tenantId, { limit: FEED_PAGE_SIZE }),
       birthdayRows: await findUpcomingBirthdays(tx, session.tenantId, todayMonthDay),
       openJobs: await findOpenJobOpeningsForEmployee(tx, session.tenantId, { now }),
+      // Itens que exigem ciencia do usuario (mesmo estado do badge de navegacao,
+      // aqui com o comunicado em si para o card acionavel da home — protótipo
+      // "Ler e confirmar"). So' apresentacao: a lista reusa o mesmo calculo de
+      // reader-state, sem tocar em nenhum fluxo.
+      pendingAnnouncements: (
+        await listAnnouncementsForUser(tx, session.tenantId, session.userId)
+      ).items.filter((i) => i.state.awaitingAck),
     })),
     findTenantBranding(session.tenantId),
   ]);
@@ -53,19 +57,66 @@ export default async function Home() {
   const todaysBirthdayCards = buildTodaysBirthdayCards(todaysBirthdayEntries, now.toISOString(), branding);
 
   return (
-    <div className="flex flex-1 flex-col gap-4 bg-zinc-50 px-4 py-6 dark:bg-black">
-      <h1 className="text-2xl font-extrabold tracking-tight text-black dark:text-zinc-50">Conecta</h1>
-      <p className="text-base text-zinc-600 dark:text-zinc-400">Bem-vindo(a), {user?.fullName ?? "colaborador(a)"}.</p>
+    <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 px-4 py-6">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col gap-0.5">
+          <h1 className="text-card-title font-extrabold tracking-tight text-primary-deep">Conecta</h1>
+          <p className="text-meta text-muted-foreground">
+            Bem-vindo(a), {user?.fullName ?? "colaborador(a)"}.
+          </p>
+        </div>
+        <Link href="/perfil" aria-label="Meu perfil" className="shrink-0 rounded-full">
+          <Avatar name={user?.fullName ?? "?"} size="md" />
+        </Link>
+      </div>
 
-      {pendingCount > 0 && (
-        <PendingBanner
-          message={`${pendingCount} comunicado${pendingCount > 1 ? "s" : ""} aguardando sua ciência`}
-          action={
-            <Link href="/comunicados" className="shrink-0 text-sm font-semibold text-action underline-offset-4 hover:underline">
-              Ver
-            </Link>
-          }
-        />
+      <HomeBanner
+        imageSrc="/banners/home.png"
+        imageAlt="Comunicação que conecta. Informação que transforma. Aqui a informação chega, a equipe se engaja e todos crescem juntos."
+        title="Comunicação que conecta."
+        subtitle="Informação que transforma."
+      />
+
+      {pendingAnnouncements.length > 0 && (
+        <div className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-action-border bg-action-subtle p-4 shadow-[var(--shadow-card)]">
+          <div className="flex items-center gap-2 text-body font-semibold text-action-deep">
+            <AlertTriangle className="size-5 shrink-0" aria-hidden="true" />
+            <span>
+              {pendingAnnouncements.length} comunicado{pendingAnnouncements.length > 1 ? "s" : ""} aguarda
+              {pendingAnnouncements.length > 1 ? "m" : ""} sua ciência
+            </span>
+          </div>
+          {(() => {
+            const [{ announcement, latestVersion }] = pendingAnnouncements;
+            const code =
+              announcement.seqNumber != null && announcement.year != null
+                ? `${formatAnnouncementCode(announcement.seqNumber, announcement.year)} · `
+                : "";
+            return (
+              <>
+                <p className="text-card-title font-bold text-foreground">
+                  {code}
+                  {latestVersion.title}
+                </p>
+                <Link
+                  href={`/comunicados/${announcement.id}`}
+                  className={`${buttonVariants({ variant: "action", size: "xl" })} w-full`}
+                >
+                  <Check aria-hidden="true" />
+                  Ler e confirmar
+                </Link>
+                {pendingAnnouncements.length > 1 && (
+                  <Link
+                    href="/comunicados"
+                    className="text-meta font-semibold text-action-deep underline-offset-4 hover:underline"
+                  >
+                    Ver todos os {pendingAnnouncements.length} pendentes
+                  </Link>
+                )}
+              </>
+            );
+          })()}
+        </div>
       )}
 
       {notifications.length > 0 && (
@@ -83,7 +134,7 @@ export default async function Home() {
             >
               <button
                 type="submit"
-                className="w-full rounded-lg bg-action-subtle px-4 py-3 text-left text-sm font-medium text-foreground hover:bg-action-subtle/80"
+                className="w-full rounded-[var(--radius-card)] border border-border bg-card px-4 py-3 text-left text-body font-medium text-foreground shadow-[var(--shadow-card)] transition-colors hover:bg-muted"
               >
                 {n.message}
               </button>
@@ -95,8 +146,8 @@ export default async function Home() {
       {todaysBirthdayCards.length > 0 && (
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-foreground">Aniversariantes de hoje</h2>
-            <Link href="/aniversariantes" className="text-sm font-semibold text-primary underline-offset-4 hover:underline">
+            <h2 className="text-card-title font-bold text-foreground">Aniversariantes de hoje</h2>
+            <Link href="/aniversariantes" className="text-meta font-semibold text-primary underline-offset-4 hover:underline">
               Ver todos
             </Link>
           </div>
@@ -106,24 +157,8 @@ export default async function Home() {
         </div>
       )}
 
-      {openJobs.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-foreground">Vagas abertas</h2>
-            <Link href="/vagas" className="text-sm font-semibold text-primary underline-offset-4 hover:underline">
-              Ver todas
-            </Link>
-          </div>
-          {openJobs.slice(0, HOME_JOB_OPENINGS_LIMIT).map((job) => (
-            <Link key={job.id} href={`/vagas/${job.id}`}>
-              <CardTemplate data={jobOpeningToCardData(job, branding)} />
-            </Link>
-          ))}
-        </div>
-      )}
-
       <div className="flex flex-col gap-3">
-        <h2 className="text-lg font-bold text-foreground">Feed</h2>
+        <h2 className="text-card-title font-bold text-foreground">Feed</h2>
         {feedCards.length === 0 ? (
           <EmptyState
             icon={MessageSquareHeart}
@@ -140,16 +175,21 @@ export default async function Home() {
         )}
       </div>
 
-      <form
-        action={async () => {
-          "use server";
-          await signOut({ redirectTo: "/login" });
-        }}
-      >
-        <Button type="submit" variant="secondary" size="touch">
-          Sair
-        </Button>
-      </form>
+      {openJobs.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <h2 className="text-card-title font-bold text-foreground">Vagas abertas</h2>
+            <Link href="/vagas" className="text-meta font-semibold text-primary underline-offset-4 hover:underline">
+              Ver todas
+            </Link>
+          </div>
+          {openJobs.slice(0, HOME_JOB_OPENINGS_LIMIT).map((job) => (
+            <Link key={job.id} href={`/vagas/${job.id}`}>
+              <CardTemplate data={jobOpeningToCardData(job, branding)} />
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

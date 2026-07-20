@@ -18,10 +18,10 @@ export default async function NovoComunicadoPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Novo comunicado</h1>
+      <h1 className="text-display text-foreground">Novo comunicado</h1>
 
       {erro && ERROR_MESSAGES[erro] && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-meta text-destructive">
           {ERROR_MESSAGES[erro]}
         </p>
       )}
