@@ -31,7 +31,8 @@
 | 012 | PWA completo: manifest, offline, Web Push | 4 | 🟡 código completo e mergeado na main (`e01df13`, 2026-07-16) — aguarda medição real de push em iPhone antes de fechar ✅ | 005 (push de cobrança) |
 | 012.5 | Correções pré-piloto (Balde 1 das auditorias) | transversal (entre 4 e 5) | ✅ | 012 |
 | 013.5 | Redesenho visual (DP-13 navegação + DP-14 visual) | polimento (entre 4 e 5) | ✅ | 012.5 |
-| 013 | Hardening pré-piloto: LGPD checklist, backup/restore, seeds reais | 5 | ⬜ | todos |
+| 014 | Resolução de tenant por path (`/{slug}`) | fundação (antes do hardening) | ✅ | ADR-010 |
+| 013 | Hardening pré-piloto: LGPD checklist, backup/restore, seeds reais | 5 | ⬜ | todos, 014 |
 
 Observações:
 - 008-011 podem rodar após a fase 2 em qualquer ordem; a ordem acima é a recomendada (engajamento antes de vagas para o go-live ter feed vivo).

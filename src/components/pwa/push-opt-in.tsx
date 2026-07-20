@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { formatDateTimeSaoPaulo } from "@/lib/dates/format-datetime";
 import { useIosNonStandalone } from "@/lib/pwa/platform";
 import { urlBase64ToUint8Array } from "@/lib/pwa/vapid-key";
-import { revokeOwnPushSubscriptionAction, saveOwnPushSubscriptionAction } from "@/app/(app)/perfil/push-actions";
+import { revokeOwnPushSubscriptionAction, saveOwnPushSubscriptionAction } from "@/app/[slug]/(app)/perfil/push-actions";
 
 type PushSubscriptionRow = { id: string; createdAt: Date };
 

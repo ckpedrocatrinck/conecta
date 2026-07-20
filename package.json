@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "format": "prettier --write .",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "db:seed:tenant-b": "tsx prisma/seed-dev-tenant-b.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

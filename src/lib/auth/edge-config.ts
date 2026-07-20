@@ -18,6 +18,10 @@ export const authConfig: NextAuthConfig = {
       if (user?.id) {
         token.userId = user.id;
         token.tenantId = user.tenantId;
+        // tenantSlug viaja no JWT (assinado) para a checagem LEVE de vinculo no
+        // middleware Edge (INC-014 Bloco 3): slug da URL x tenantSlug do token,
+        // sem tocar banco. Nao e' a barreira — o Node revalida + RLS seguram.
+        token.tenantSlug = user.tenantSlug;
         token.role = user.role;
         token.sessionId = user.sessionId;
       }
@@ -26,6 +30,7 @@ export const authConfig: NextAuthConfig = {
     async session({ session, token }) {
       session.user.id = token.userId;
       session.user.tenantId = token.tenantId;
+      session.user.tenantSlug = token.tenantSlug;
       session.user.role = token.role;
       session.user.sessionId = token.sessionId;
       return session;

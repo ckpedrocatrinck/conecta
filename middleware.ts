@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 import { authConfig } from "./src/lib/auth/edge-config";
 import { isPublicPath } from "./src/lib/auth/middleware-paths";
+import { extractTenantSlug } from "./src/lib/tenant/slug-path";
 
 // Usa SO' a config edge-safe (sem providers) — importar ./src/lib/auth/config
 // aqui puxaria o Credentials provider (hashCpf/withTenant), que dependem de
@@ -20,18 +21,57 @@ const { auth } = NextAuth(authConfig);
 export default auth((req) => {
   const { pathname } = req.nextUrl;
 
-  if (isPublicPath(pathname)) return NextResponse.next();
+  // INC-014 Bloco 1: extrai o slug candidato do path (string, edge-safe) e o
+  // propaga via header interno `x-tenant-slug` para a camada Node consumir na
+  // resolucao AUTORITATIVA (resolve-tenant.ts + boundary [slug]). Aqui e' so'
+  // transporte — o 404 e a validacao de vinculo sessao<->tenant vivem no Node
+  // (ADR-010 §2 corrigido). A checagem leve (slug da URL x tenantSlug do JWT) e
+  // o redirect por-tenant chegam no Bloco 3; ate' la' a auth abaixo e' a mesma.
+  //
+  // SEGURANCA: o header e' SEMPRE reescrito a partir do valor derivado no
+  // servidor (ou removido) — assim um `x-tenant-slug` que o cliente tente
+  // injetar na request nunca sobrevive ate' a camada Node.
+  const tenantSlug = extractTenantSlug(pathname);
+  const forward = () => {
+    const headers = new Headers(req.headers);
+    if (tenantSlug) headers.set("x-tenant-slug", tenantSlug);
+    else headers.delete("x-tenant-slug");
+    return NextResponse.next({ request: { headers } });
+  };
 
-  if (!req.auth?.user) {
-    const loginUrl = new URL("/login", req.nextUrl);
-    return NextResponse.redirect(loginUrl);
+  // Login tenant-scoped e assets publicos: passam sem sessao.
+  if (isPublicPath(pathname)) return forward();
+
+  // Rotas sem tenant no path (ex.: "/" institucional — fora de escopo; /api/*
+  // que se auto-protegem com 401): deixa o Next resolver. Nao forca login: nao
+  // ha' tenant destino, e os /api/* respondem 401 sozinhos.
+  if (!tenantSlug) return forward();
+
+  const user = req.auth?.user;
+
+  // Nao autenticado numa rota de tenant -> login DESSE tenant (redirect Edge
+  // limpo, 307). Um slug inexistente cai em /{slug}/login, cujo boundary Node
+  // [slug] entao devolve 404 "empresa nao encontrada" sem vazar lista.
+  if (!user) {
+    return NextResponse.redirect(new URL(`/${tenantSlug}/login`, req.nextUrl));
   }
 
-  if (pathname.startsWith("/admin") && req.auth.user.role !== "admin") {
+  // Compare LEVE de vinculo sessao<->tenant (INC-014 Bloco 4). Fast-fail de UX,
+  // NAO a barreira: a barreira e' o guard Node (requireSession) + RLS. Sessao de
+  // outro tenant nesta URL, ou JWT antigo sem tenantSlug -> login do tenant da
+  // URL, sem tocar dados. O tenantSlug do JWT e' assinado (cliente nao forja).
+  if (user.tenantSlug !== tenantSlug) {
+    return NextResponse.redirect(new URL(`/${tenantSlug}/login`, req.nextUrl));
+  }
+
+  // /{slug}/admin/** exige papel admin (checagem rapida; o Node reconfirma em
+  // requireAdmin). /{slug}/pendencias aceita manager -> fica para o guard Node.
+  const segments = pathname.split("/").filter(Boolean); // [slug, secao, ...]
+  if (segments[1] === "admin" && user.role !== "admin") {
     return NextResponse.redirect(new URL("/403", req.nextUrl));
   }
 
-  return NextResponse.next();
+  return forward();
 });
 
 // O Next analisa este export de forma estatica em build-time (Turbopack) —
