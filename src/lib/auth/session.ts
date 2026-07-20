@@ -1,9 +1,12 @@
 import { cache } from "react";
-import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+import { notFound, redirect } from "next/navigation";
 import type { UserRole } from "@prisma/client";
 import { withTenant } from "../db/with-tenant";
 import { findValidSession } from "../repositories/session.repository";
 import { findUserById } from "../repositories/user.repository";
+import { getTenantBySlug } from "../tenant/resolve-tenant";
+import { sessionMatchesTenant } from "../tenant/tenant-access";
 import { auth } from "./config";
 
 export type ActiveSession = {
@@ -83,5 +86,49 @@ export async function requireAdmin(): Promise<ActiveSession> {
 export async function requireAdminOrManager(): Promise<ActiveSession> {
   const session = await requireOnboardedSession();
   if (session.role !== "admin" && session.role !== "manager") redirect("/403");
+  return session;
+}
+
+/**
+ * Guard tenant-scoped (INC-014 Bloco 3 / ADR-010 §4). Exige uma sessao valida
+ * CUJO tenant e' exatamente o tenant designado pela URL. Fonte do tenant da
+ * URL: o header interno `x-tenant-slug`, escrito SEMPRE no servidor pelo
+ * middleware (o cliente nao injeta — ver middleware.ts) e resolvido aqui de
+ * forma AUTORITATIVA contra o banco.
+ *
+ * Caso cross-tenant (decisao de Pedro, ADR-010 §4): se a URL designa um tenant
+ * diferente do da sessao (ex.: logado em /A abrindo /B), a sessao de A NAO e'
+ * aceita em B — redireciona ao login do tenant da URL, SEM NUNCA acessar dados
+ * do destino. Permissivo na navegacao (leva ao lugar certo), rigido na
+ * autenticacao (exige login no novo tenant).
+ *
+ * A barreira final continua sendo RLS + set_config (ADR-003), intocada: mesmo
+ * que este guard falhasse, a sessao de A nao existe no contexto de B (a linha
+ * Session vive no tenant A) e o RLS default-deny impede leitura cruzada. Este
+ * guard e' a aceitacao de sessao na navegacao, uma camada ACIMA da barreira.
+ *
+ * Sera' chamado pelo layout de /{slug}/(app) quando as rotas migrarem (Bloco
+ * 4); ate' la' e' o mecanismo provado por teste (tenant-path-isolation.test.ts).
+ */
+export async function requireTenantSession(): Promise<ActiveSession> {
+  const headerList = await headers();
+  const slug = headerList.get("x-tenant-slug");
+  // Sem slug na URL = fora de um subtree /{slug}. Nao deve ocorrer depois que
+  // as rotas do produto vivem sob [slug] (Bloco 4); cai no login legado.
+  if (!slug) redirect("/login");
+
+  const urlTenant = await getTenantBySlug(slug);
+  if (!urlTenant) notFound();
+
+  const session = await getActiveSession();
+  if (!sessionMatchesTenant(session, urlTenant.id)) {
+    // Sem sessao, ou sessao de OUTRO tenant: nao aceita a sessao de origem no
+    // tenant da URL — manda ao login do tenant da URL, sem tocar dados.
+    redirect(`/${slug}/login`);
+  }
+
+  // sessionMatchesTenant (type-guard) garantiu session != null e
+  // session.tenantId === urlTenant.id — o contexto de dados a jusante e' o
+  // tenant da URL, provado igual ao da sessao.
   return session;
 }
