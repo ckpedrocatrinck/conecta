@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Briefcase } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { filterChipVariants } from "@/components/ui/filter-chip";
+import { HomeBanner } from "@/components/home/home-banner";
 import { CardTemplate } from "@/components/cards/templates";
 import { JobApplyButton } from "@/components/jobs/job-apply-button";
 import { requireOnboardedSession } from "../../../lib/auth/session";
@@ -34,8 +35,10 @@ export default async function VagasPage({
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-5 px-4 py-6">
       <div className="flex flex-col gap-1">
         <h1 className="text-display text-foreground">Vagas internas</h1>
-        <p className="text-meta text-muted-foreground">Candidate-se em 1 toque.</p>
+        <p className="text-meta text-muted-foreground">Toque em uma vaga para ver os requisitos e se candidatar.</p>
       </div>
+
+      <HomeBanner imageSrc="/banners/vagas.png" imageAlt="" title="Vagas internas" />
 
       {branches.length > 1 && (
         <div className="flex flex-wrap gap-2">

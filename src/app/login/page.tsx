@@ -14,9 +14,14 @@ export default async function LoginPage({
   return (
     <div className="flex flex-1 flex-col items-center justify-center bg-background px-6 py-16">
       <div className="w-full max-w-sm">
-        <h1 className="mb-6 text-center text-display text-foreground">Conecta</h1>
+        <div className="flex flex-col items-center gap-1.5 rounded-[var(--radius-card)] border border-border bg-card p-6 shadow-[var(--shadow-card)]">
+          <div className="mb-2 flex size-14 items-center justify-center rounded-2xl bg-primary text-2xl font-extrabold text-primary-foreground">
+            C
+          </div>
+          <h1 className="text-display text-foreground">Conecta</h1>
+          <p className="mb-4 text-meta text-muted-foreground">Comunicação interna da sua empresa</p>
 
-        <form action={loginAction} className="flex flex-col gap-4">
+          <form action={loginAction} className="flex w-full flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="tenantSlug">Empresa</Label>
             <select
@@ -61,10 +66,15 @@ export default async function LoginPage({
             </p>
           )}
 
-          <Button type="submit" size="xl" className="mt-2 w-full">
-            Entrar
-          </Button>
-        </form>
+            <Button type="submit" size="xl" className="mt-2 w-full">
+              Entrar
+            </Button>
+          </form>
+        </div>
+
+        <p className="mt-6 text-center text-meta text-subtle-foreground">
+          Acesso restrito a colaboradores cadastrados. Dados tratados conforme a LGPD.
+        </p>
       </div>
     </div>
   );

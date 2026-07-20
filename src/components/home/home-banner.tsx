@@ -4,16 +4,41 @@ interface HomeBannerProps {
   title: string
   subtitle?: string
   className?: string
+  /** Arte de banner pronta (INC-013.5): quando presente, o banner vira só a
+   * imagem — usada na home (arte com o texto já embutido) e em Vagas (arte sem
+   * texto). O cantos arredondados/fundo já vêm embutidos no asset; o container
+   * só recorta no raio do card. Sem `imageSrc`, cai no bloco de texto leve
+   * (usado no dashboard admin). */
+  imageSrc?: string
+  imageAlt?: string
 }
 
 /**
- * Banner fixo simples da home (INC-013.5, decisão do Pedro): elemento visual
- * leve, NÃO o banner de marketing ocupando a primeira dobra. Banner
- * configurável pelo admin (upload/storage) é Fase 2. Decoração só em tons de
- * verde/neutro — `--action` (laranja) nunca é decoração (design-system §0.1).
- * Compartilhado entre a home do colaborador e o dashboard admin.
+ * Banner da home (INC-013.5). Dois modos:
+ * - `imageSrc`: renderiza a arte fornecida pelo tenant (asset em /public).
+ * - só texto: bloco leve verde-claro (decoração só em verde/neutro — `--action`
+ *   nunca é decoração, design-system §0.1). Compartilhado entre a home do
+ *   colaborador, o dashboard admin e a lista de vagas.
  */
-export function HomeBanner({ title, subtitle, className }: HomeBannerProps) {
+export function HomeBanner({ title, subtitle, className, imageSrc, imageAlt }: HomeBannerProps) {
+  if (imageSrc) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element -- banner estático em /public; <img> evita declarar dimensões fixas e distorcer a arte
+      <img
+        src={imageSrc}
+        alt={imageAlt ?? title}
+        // Faixa larga e mais baixa (decisão do Pedro): ocupa toda a largura, com
+        // altura limitada — no desktop `object-cover` apara a margem (quase vazia)
+        // de cima/baixo da arte, virando uma faixa horizontal. No mobile (altura
+        // natural < max-h) mostra a arte inteira, sem recorte.
+        className={cn(
+          "h-auto max-h-52 w-full rounded-[var(--radius-card)] border border-border object-cover",
+          className,
+        )}
+      />
+    )
+  }
+
   return (
     <div
       className={cn(
