@@ -1,0 +1,56 @@
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { requireSession } from "@/lib/auth/session";
+import { changePasswordAction } from "./actions";
+
+const ERROR_MESSAGES: Record<string, string> = {
+  atual: "Senha atual incorreta.",
+  curta: "A nova senha precisa ter pelo menos 8 caracteres.",
+  confirmacao: "A confirmação não confere com a nova senha.",
+};
+
+export default async function TrocarSenhaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ erro?: string }>;
+}) {
+  await requireSession();
+  const { erro } = await searchParams;
+
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center bg-background px-6 py-16">
+      <div className="w-full max-w-sm">
+        <h1 className="mb-2 text-center text-display text-foreground">Troque sua senha</h1>
+        <p className="mb-6 text-center text-meta text-muted-foreground">
+          Este é o seu primeiro acesso (ou sua senha foi redefinida). Defina uma senha nova antes de continuar.
+        </p>
+
+        <form action={changePasswordAction} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="currentPassword">Senha atual</Label>
+            <Input id="currentPassword" name="currentPassword" size="lg" type="password" autoComplete="current-password" required />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="newPassword">Nova senha</Label>
+            <Input id="newPassword" name="newPassword" size="lg" type="password" autoComplete="new-password" minLength={8} required />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="confirmPassword">Confirmar nova senha</Label>
+            <Input id="confirmPassword" name="confirmPassword" size="lg" type="password" autoComplete="new-password" minLength={8} required />
+          </div>
+
+          {erro && ERROR_MESSAGES[erro] && (
+            <p role="alert" className="text-sm text-destructive">
+              {ERROR_MESSAGES[erro]}
+            </p>
+          )}
+
+          <Button type="submit" size="xl" className="mt-2 w-full">
+            Trocar senha
+          </Button>
+        </form>
+      </div>
+    </div>
+  );
+}

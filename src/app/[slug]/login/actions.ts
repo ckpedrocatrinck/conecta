@@ -14,10 +14,8 @@ export async function loginAction(slug: string, formData: FormData) {
       tenantSlug: slug,
       cpf: formData.get("cpf"),
       password: formData.get("password"),
-      // Bloco 2: a aplicacao ainda vive nas rotas planas (a migracao para
-      // /{slug}/** e' o Bloco 4), entao o pos-login cai na home atual "/". No
-      // Bloco 4 este destino passa a ser `/${slug}`.
-      redirectTo: "/",
+      // Pos-login: home do tenant (as rotas ja vivem sob /{slug} — Bloco 4).
+      redirectTo: `/${slug}`,
     });
   } catch (error) {
     // Erro SEMPRE generico (LGPD): nunca revelar se o CPF ou a empresa existem.

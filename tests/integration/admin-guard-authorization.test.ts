@@ -19,9 +19,21 @@ const mocks = vi.hoisted(() => ({
   redirectMock: vi.fn((url: string) => {
     throw new Error(`REDIRECT:${url}`);
   }),
+  notFoundMock: vi.fn(() => {
+    throw new Error("NOT_FOUND");
+  }),
+  // INC-014: os guards agora resolvem o tenant da URL (header x-tenant-slug ->
+  // getTenantBySlug) e exigem que a sessao seja DESSE tenant. Aqui o tenant da
+  // URL bate com o da sessao (tenant-1) — o foco deste teste e' a autorizacao
+  // por PAPEL, nao o caso cross-tenant (coberto em tenant-path-isolation).
+  getTenantBySlugMock: vi.fn(async () => ({ id: "tenant-1", slug: "tenant-1", name: "Tenant 1" })),
 }));
 
-vi.mock("next/navigation", () => ({ redirect: mocks.redirectMock }));
+vi.mock("next/navigation", () => ({ redirect: mocks.redirectMock, notFound: mocks.notFoundMock }));
+vi.mock("next/headers", () => ({
+  headers: async () => ({ get: (key: string) => (key === "x-tenant-slug" ? "tenant-1" : null) }),
+}));
+vi.mock("../../src/lib/tenant/resolve-tenant", () => ({ getTenantBySlug: mocks.getTenantBySlugMock }));
 vi.mock("../../src/lib/db/with-tenant", () => ({
   withTenant: (_ctx: unknown, callback: (tx: unknown) => unknown) => callback({}),
 }));

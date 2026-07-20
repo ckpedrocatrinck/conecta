@@ -22,17 +22,22 @@ export interface AdminHeaderData {
 interface AdminHeaderNavProps {
   role: UserRole
   data: AdminHeaderData | null
+  /** Slug do tenant corrente (autoritativo, do guard no layout) — prefixa todos
+   * os links do header. INC-014 Bloco 4. */
+  slug: string
 }
 
-const ADMIN_NAV: AdminNavLink[] = [
-  { href: "/admin", label: "Início", exact: true },
-  { href: "/admin/comunicados", label: "Comunicados" },
-  { href: "/admin/posts", label: "Posts" },
-  { href: "/admin/vagas", label: "Vagas" },
-  { href: "/admin/colaboradores", label: "Colaboradores" },
-  { href: "/admin/filiais", label: "Filiais" },
-  { href: "/pendencias", label: "Pendências" },
-  { href: "/admin/auditoria", label: "Auditoria" },
+// Caminhos relativos ao tenant; o slug e' prefixado em runtime (ver componente).
+type AdminNavPath = { path: string; label: string; exact?: boolean }
+const ADMIN_NAV_PATHS: AdminNavPath[] = [
+  { path: "/admin", label: "Início", exact: true },
+  { path: "/admin/comunicados", label: "Comunicados" },
+  { path: "/admin/posts", label: "Posts" },
+  { path: "/admin/vagas", label: "Vagas" },
+  { path: "/admin/colaboradores", label: "Colaboradores" },
+  { path: "/admin/filiais", label: "Filiais" },
+  { path: "/pendencias", label: "Pendências" },
+  { path: "/admin/auditoria", label: "Auditoria" },
 ]
 
 /**
@@ -43,19 +48,26 @@ const ADMIN_NAV: AdminNavLink[] = [
  * continua nos guards (requireAdmin/requireAdminOrManager); este componente só
  * decide o que aparece.
  */
-export function AdminHeaderNav({ role, data }: AdminHeaderNavProps) {
+export function AdminHeaderNav({ role, data, slug }: AdminHeaderNavProps) {
   if (role === "employee" || !data) return null
 
   const isAdmin = role === "admin"
-  const homeHref = isAdmin ? "/admin" : "/pendencias"
-  const baseLinks: AdminNavLink[] = isAdmin ? ADMIN_NAV : [{ href: "/pendencias", label: "Pendências" }]
-  const links: AdminNavLink[] = baseLinks.map((link) =>
-    link.href === "/pendencias" ? { ...link, badge: data.pendingCount } : link
-  )
+  const homeHref = isAdmin ? `/${slug}/admin` : `/${slug}/pendencias`
+  const basePaths: AdminNavPath[] = isAdmin
+    ? ADMIN_NAV_PATHS
+    : [{ path: "/pendencias", label: "Pendências" }]
+  // Prefixa cada caminho com o slug do tenant; badge de pendencias so' no item
+  // Pendencias.
+  const links: AdminNavLink[] = basePaths.map((p) => ({
+    href: `/${slug}${p.path}`,
+    label: p.label,
+    exact: p.exact,
+    ...(p.path === "/pendencias" ? { badge: data.pendingCount } : {}),
+  }))
 
   async function handleSignOut() {
     "use server"
-    await signOut({ redirectTo: "/login" })
+    await signOut({ redirectTo: `/${slug}/login` })
   }
 
   return (

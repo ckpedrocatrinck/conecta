@@ -11,6 +11,9 @@ import { auth } from "./config";
 
 export type ActiveSession = {
   tenantId: string;
+  /** Slug do tenant designado pela URL (autoritativo, resolvido no guard). Use
+   * para montar links/redirects tenant-scoped: `/${session.tenantSlug}/...`. */
+  tenantSlug: string;
   userId: string;
   branchId: string;
   sessionId: string;
@@ -45,6 +48,10 @@ export const getActiveSession = cache(async (): Promise<ActiveSession | null> =>
 
     return {
       tenantId: token.tenantId,
+      // Valor do JWT; os guards tenant-scoped sobrescrevem pelo slug
+      // AUTORITATIVO resolvido da URL (canonical), caso o slug tenha mudado
+      // depois do token ser emitido.
+      tenantSlug: token.tenantSlug,
       userId: user.id,
       branchId: user.branchId,
       sessionId: token.sessionId,
@@ -55,80 +62,70 @@ export const getActiveSession = cache(async (): Promise<ActiveSession | null> =>
   });
 });
 
-/** Exige sessao valida, sem exigir onboarding completo — usado pelas
- * proprias paginas de troca de senha/aviso de privacidade (senao criam
- * loop de redirecionamento com requireOnboardedSession). */
-export async function requireSession(): Promise<ActiveSession> {
+/**
+ * Base de todos os guards tenant-scoped (INC-014 Bloco 3+4 / ADR-010 §4).
+ * Resolve o tenant designado pela URL (header interno `x-tenant-slug`, escrito
+ * SEMPRE no servidor pelo middleware — o cliente nao injeta) de forma
+ * AUTORITATIVA contra o banco, e exige uma sessao valida CUJO tenant e'
+ * exatamente esse.
+ *
+ * Caso cross-tenant (decisao de Pedro): sessao de A numa URL de B -> a sessao
+ * de A NAO e' aceita em B; redireciona ao login do tenant da URL, SEM tocar
+ * dados do destino. Permissivo na navegacao (leva ao lugar certo), rigido na
+ * autenticacao. A barreira final continua sendo RLS + set_config (ADR-003),
+ * intocada — a sessao de A nem existe no contexto de B.
+ *
+ * Retorna a sessao (com `tenantSlug` = slug AUTORITATIVO/canonical da URL) e o
+ * slug, para montar redirects tenant-scoped sem reler o header.
+ */
+async function requireSessionWithSlug(): Promise<{ session: ActiveSession; slug: string }> {
+  const headerList = await headers();
+  const headerSlug = headerList.get("x-tenant-slug");
+  // Sem slug = fora de um subtree /{slug} (nao deve ocorrer: toda rota de
+  // produto vive sob [slug]). Defensivo: 404 em vez de vazar para o login.
+  if (!headerSlug) notFound();
+
+  const urlTenant = await getTenantBySlug(headerSlug);
+  if (!urlTenant) notFound();
+
   const session = await getActiveSession();
-  if (!session) redirect("/login");
-  return session;
+  if (!sessionMatchesTenant(session, urlTenant.id)) {
+    // Sem sessao, ou sessao de OUTRO tenant: nao aceita a sessao no tenant da
+    // URL — manda ao login do tenant da URL, sem tocar dados do destino.
+    redirect(`/${urlTenant.slug}/login`);
+  }
+
+  // session != null e session.tenantId === urlTenant.id (type-guard).
+  return { session: { ...session, tenantSlug: urlTenant.slug }, slug: urlTenant.slug };
 }
 
-/** Exige sessao valida E onboarding completo (senha trocada, aviso
- * aceito) — usado por toda rota "de verdade" da aplicacao (escopo do
- * INC-003, criterio "fluxo completo ... troca de senha -> aceite -> home"). */
+/** Exige sessao valida (do tenant da URL), sem exigir onboarding completo —
+ * usado pelas proprias paginas de troca de senha/aviso de privacidade (senao
+ * criam loop de redirecionamento com requireOnboardedSession). */
+export async function requireSession(): Promise<ActiveSession> {
+  return (await requireSessionWithSlug()).session;
+}
+
+/** Exige sessao valida E onboarding completo (senha trocada, aviso aceito) —
+ * usado por toda rota "de verdade" da aplicacao. Redirects tenant-scoped. */
 export async function requireOnboardedSession(): Promise<ActiveSession> {
-  const session = await requireSession();
-  if (session.mustChangePassword) redirect("/trocar-senha");
-  if (!session.privacyAccepted) redirect("/aviso-privacidade");
+  const { session, slug } = await requireSessionWithSlug();
+  if (session.mustChangePassword) redirect(`/${slug}/trocar-senha`);
+  if (!session.privacyAccepted) redirect(`/${slug}/aviso-privacidade`);
   return session;
 }
 
 export async function requireAdmin(): Promise<ActiveSession> {
   const session = await requireOnboardedSession();
+  // /403 permanece global (pagina de erro, sem dado de tenant).
   if (session.role !== "admin") redirect("/403");
   return session;
 }
 
 /** Painel de pendencias (INC-006): admin ve todas as filiais, manager so' a
- * propria (ver ActiveSession.branchId). Primeiro guard que aceita `manager` —
- * ate o INC-005 esse papel nao tinha nenhuma tela propria. */
+ * propria (ver ActiveSession.branchId). Primeiro guard que aceita `manager`. */
 export async function requireAdminOrManager(): Promise<ActiveSession> {
   const session = await requireOnboardedSession();
   if (session.role !== "admin" && session.role !== "manager") redirect("/403");
-  return session;
-}
-
-/**
- * Guard tenant-scoped (INC-014 Bloco 3 / ADR-010 §4). Exige uma sessao valida
- * CUJO tenant e' exatamente o tenant designado pela URL. Fonte do tenant da
- * URL: o header interno `x-tenant-slug`, escrito SEMPRE no servidor pelo
- * middleware (o cliente nao injeta — ver middleware.ts) e resolvido aqui de
- * forma AUTORITATIVA contra o banco.
- *
- * Caso cross-tenant (decisao de Pedro, ADR-010 §4): se a URL designa um tenant
- * diferente do da sessao (ex.: logado em /A abrindo /B), a sessao de A NAO e'
- * aceita em B — redireciona ao login do tenant da URL, SEM NUNCA acessar dados
- * do destino. Permissivo na navegacao (leva ao lugar certo), rigido na
- * autenticacao (exige login no novo tenant).
- *
- * A barreira final continua sendo RLS + set_config (ADR-003), intocada: mesmo
- * que este guard falhasse, a sessao de A nao existe no contexto de B (a linha
- * Session vive no tenant A) e o RLS default-deny impede leitura cruzada. Este
- * guard e' a aceitacao de sessao na navegacao, uma camada ACIMA da barreira.
- *
- * Sera' chamado pelo layout de /{slug}/(app) quando as rotas migrarem (Bloco
- * 4); ate' la' e' o mecanismo provado por teste (tenant-path-isolation.test.ts).
- */
-export async function requireTenantSession(): Promise<ActiveSession> {
-  const headerList = await headers();
-  const slug = headerList.get("x-tenant-slug");
-  // Sem slug na URL = fora de um subtree /{slug}. Nao deve ocorrer depois que
-  // as rotas do produto vivem sob [slug] (Bloco 4); cai no login legado.
-  if (!slug) redirect("/login");
-
-  const urlTenant = await getTenantBySlug(slug);
-  if (!urlTenant) notFound();
-
-  const session = await getActiveSession();
-  if (!sessionMatchesTenant(session, urlTenant.id)) {
-    // Sem sessao, ou sessao de OUTRO tenant: nao aceita a sessao de origem no
-    // tenant da URL — manda ao login do tenant da URL, sem tocar dados.
-    redirect(`/${slug}/login`);
-  }
-
-  // sessionMatchesTenant (type-guard) garantiu session != null e
-  // session.tenantId === urlTenant.id — o contexto de dados a jusante e' o
-  // tenant da URL, provado igual ao da sessao.
   return session;
 }

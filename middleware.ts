@@ -39,14 +39,33 @@ export default auth((req) => {
     return NextResponse.next({ request: { headers } });
   };
 
+  // Login tenant-scoped e assets publicos: passam sem sessao.
   if (isPublicPath(pathname)) return forward();
 
-  if (!req.auth?.user) {
-    const loginUrl = new URL("/login", req.nextUrl);
-    return NextResponse.redirect(loginUrl);
+  // Rotas sem tenant no path (ex.: "/" institucional — fora de escopo; /api/*
+  // que se auto-protegem com 401): deixa o Next resolver. Nao forca login: nao
+  // ha' tenant destino, e os /api/* respondem 401 sozinhos.
+  if (!tenantSlug) return forward();
+
+  const user = req.auth?.user;
+
+  // Nao autenticado numa rota de tenant -> login DESSE tenant.
+  if (!user) {
+    return NextResponse.redirect(new URL(`/${tenantSlug}/login`, req.nextUrl));
   }
 
-  if (pathname.startsWith("/admin") && req.auth.user.role !== "admin") {
+  // Compare LEVE de vinculo sessao<->tenant (INC-014 Bloco 4). Fast-fail de UX,
+  // NAO a barreira: a barreira e' o guard Node (requireSession) + RLS. Sessao de
+  // outro tenant nesta URL, ou JWT antigo sem tenantSlug -> login do tenant da
+  // URL, sem tocar dados. O tenantSlug do JWT e' assinado (cliente nao forja).
+  if (user.tenantSlug !== tenantSlug) {
+    return NextResponse.redirect(new URL(`/${tenantSlug}/login`, req.nextUrl));
+  }
+
+  // /{slug}/admin/** exige papel admin (checagem rapida; o Node reconfirma em
+  // requireAdmin). /{slug}/pendencias aceita manager -> fica para o guard Node.
+  const segments = pathname.split("/").filter(Boolean); // [slug, secao, ...]
+  if (segments[1] === "admin" && user.role !== "admin") {
     return NextResponse.redirect(new URL("/403", req.nextUrl));
   }
 

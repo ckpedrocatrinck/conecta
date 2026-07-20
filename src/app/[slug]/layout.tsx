@@ -1,5 +1,17 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTenantBySlug } from "@/lib/tenant/resolve-tenant";
+
+// Liga o manifest PADRAO por tenant (/{slug}/manifest) neste subtree,
+// sobrescrevendo o link global do manifest.ts institucional (INC-014 Bloco 4).
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  return { manifest: `/${slug}/manifest` };
+}
 
 // Boundary Node do tenant (ADR-010 §2 corrigido / INC-014). Resolucao
 // AUTORITATIVA do slug da URL -> tenant, no servidor com acesso a banco: slug

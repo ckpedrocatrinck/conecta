@@ -2,8 +2,8 @@
 // sincrona de proposito: recebe a sessao ja resolvida e o tenantId designado
 // pela URL, e diz se aquela sessao vale nesse tenant. Assim a regra de
 // aceitacao (o coracao do caso cross-tenant) e' exaustivamente testavel sem
-// contexto de request. Quem chama (requireTenantSession) e' que executa o
-// redirect/notFound.
+// contexto de request. Quem chama (requireSession e derivados, tenant-scoped)
+// e' que executa o redirect/notFound.
 //
 // IMPORTANTE: isto NAO e' a barreira final de isolamento — o RLS + set_config
 // (ADR-003) sao, e permanecem intocados. Este vinculo governa a ACEITACAO da
