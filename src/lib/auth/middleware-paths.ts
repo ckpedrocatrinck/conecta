@@ -21,6 +21,13 @@ export const PUBLIC_PATHS = [
 // lugares de proposito. Mudou um, muda o outro.
 export const MIDDLEWARE_MATCHER = "/((?!api/auth|api/cron|_next/static|_next/image|favicon.ico).*)";
 
+// Login tenant-scoped: /{slug}/login e' publico (acessivel deslogado), como o
+// /login legado (INC-014 Bloco 2). Um slug inexistente aqui ainda cai no 404 do
+// boundary Node [slug] — "publico" nao vaza nada.
+const TENANT_LOGIN_RE = /^\/[^/]+\/login\/?$/;
+
 export function isPublicPath(pathname: string): boolean {
-  return PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+  if (PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`))) return true;
+  if (TENANT_LOGIN_RE.test(pathname)) return true;
+  return false;
 }

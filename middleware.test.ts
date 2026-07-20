@@ -36,4 +36,15 @@ describe("PUBLIC_PATHS (A2-3 — PWA acessivel deslogado)", () => {
     expect(isPublicPath("/comunicados")).toBe(false);
     expect(isPublicPath("/admin")).toBe(false);
   });
+
+  it("libera o login tenant-scoped /{slug}/login (INC-014 Bloco 2)", () => {
+    expect(isPublicPath("/valeverde/login")).toBe(true);
+    expect(isPublicPath("/vale-verde/login")).toBe(true);
+  });
+
+  it("nao libera rotas de tenant que nao sejam o login", () => {
+    expect(isPublicPath("/valeverde")).toBe(false);
+    expect(isPublicPath("/valeverde/comunicados")).toBe(false);
+    expect(isPublicPath("/valeverde/admin")).toBe(false);
+  });
 });
