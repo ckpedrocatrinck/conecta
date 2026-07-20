@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { filterChipVariants } from "@/components/ui/filter-chip";
 import { requireAdminOrManager } from "../../../../lib/auth/session";
 import { withTenant } from "../../../../lib/db/with-tenant";
 import { getAnnouncementPendencyDetail } from "../../../../lib/announcements/pending-panel";
@@ -44,7 +45,7 @@ export default async function PendenciaDetalhePage({
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
-        <span className="text-sm text-muted-foreground">
+        <span className="text-label uppercase text-subtle-foreground">
           {detail.announcement.seqNumber != null && detail.announcement.year != null
             ? formatAnnouncementCode(detail.announcement.seqNumber, detail.announcement.year)
             : "sem número"}
@@ -53,11 +54,11 @@ export default async function PendenciaDetalhePage({
           {" · "}
           {STATUS_LABEL[detail.announcement.status] ?? detail.announcement.status}
         </span>
-        <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
+        <h1 className="text-display text-foreground">
           {detail.confirmed.length}/{total} confirmados ({percent}%)
         </h1>
         {detail.announcement.status === "archived" && detail.pending.length > 0 && (
-          <p className="text-sm font-semibold text-destructive">
+          <p className="text-meta font-semibold text-destructive">
             Arquivado com {detail.pending.length} pendência{detail.pending.length > 1 ? "s" : ""} não resolvida
             {detail.pending.length > 1 ? "s" : ""}.
           </p>
@@ -65,7 +66,7 @@ export default async function PendenciaDetalhePage({
       </div>
 
       {cobranca != null && (
-        <p className="rounded-lg bg-action-subtle px-4 py-3 text-sm font-medium text-foreground">
+        <p className="rounded-[var(--radius-card)] border border-action-border bg-action-subtle px-4 py-3 text-meta font-medium text-action-deep">
           {Number(cobranca) > 0
             ? `${cobranca} colaborador${Number(cobranca) > 1 ? "es" : ""} notificado${Number(cobranca) > 1 ? "s" : ""}.`
             : "Ninguém pendente para notificar."}
@@ -75,7 +76,7 @@ export default async function PendenciaDetalhePage({
       {detail.pending.length > 0 && (
         <form action={remindPendingAction}>
           <input type="hidden" name="announcementId" value={announcementId} />
-          <SubmitButton variant="action" className="w-full" pendingLabel="Cobrando…">
+          <SubmitButton variant="action" size="xl" className="w-full" pendingLabel="Cobrando…">
             Cobrar pendentes
           </SubmitButton>
         </form>
@@ -83,24 +84,21 @@ export default async function PendenciaDetalhePage({
 
       <a
         href={`/pendencias/${announcementId}/export${filial ? `?filial=${filial}` : ""}`}
-        className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+        className="text-meta font-semibold text-primary underline-offset-4 hover:underline"
       >
         Exportar CSV de confirmações
       </a>
 
       {!isManager && branches.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 text-sm">
-          <Link
-            href={`/pendencias/${announcementId}`}
-            className={!filial ? "rounded-lg bg-primary px-2.5 py-1 text-primary-foreground" : "rounded-lg px-2.5 py-1 text-muted-foreground hover:bg-muted"}
-          >
+        <div className="flex flex-wrap gap-2">
+          <Link href={`/pendencias/${announcementId}`} className={filterChipVariants({ active: !filial })}>
             Todas as filiais
           </Link>
           {branches.map((b) => (
             <Link
               key={b.id}
               href={{ pathname: `/pendencias/${announcementId}`, query: { filial: b.id } }}
-              className={filial === b.id ? "rounded-lg bg-primary px-2.5 py-1 text-primary-foreground" : "rounded-lg px-2.5 py-1 text-muted-foreground hover:bg-muted"}
+              className={filterChipVariants({ active: filial === b.id })}
             >
               {b.name}
             </Link>
@@ -109,19 +107,19 @@ export default async function PendenciaDetalhePage({
       )}
 
       <section className="flex flex-col gap-2">
-        <h2 className="text-sm font-bold text-foreground">Pendentes ({pending.length})</h2>
+        <h2 className="text-card-title font-bold text-foreground">Pendentes ({pending.length})</h2>
         {pending.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Ninguém pendente{filial ? " nesta filial" : ""}.</p>
+          <p className="text-meta text-muted-foreground">Ninguém pendente{filial ? " nesta filial" : ""}.</p>
         ) : (
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-2">
             {pending.map((u) => (
               <Link
                 key={u.id}
                 href={`/pendencias/colaborador/${u.id}`}
-                className="flex items-center justify-between rounded-[var(--radius-card)] border border-border bg-card p-2.5 text-sm shadow-[var(--shadow-card)] hover:bg-muted"
+                className="flex items-center justify-between gap-2 rounded-[var(--radius-card)] border border-border bg-card p-3.5 text-body shadow-[var(--shadow-card)] transition-colors hover:bg-muted"
               >
-                <span className="font-medium text-foreground">{u.fullName}</span>
-                <span className="text-muted-foreground">{branchNameById.get(u.branchId) ?? ""}</span>
+                <span className="font-semibold text-foreground">{u.fullName}</span>
+                <span className="text-meta text-muted-foreground">{branchNameById.get(u.branchId) ?? ""}</span>
               </Link>
             ))}
           </div>
@@ -129,19 +127,19 @@ export default async function PendenciaDetalhePage({
       </section>
 
       <section className="flex flex-col gap-2">
-        <h2 className="text-sm font-bold text-foreground">Confirmados ({confirmed.length})</h2>
+        <h2 className="text-card-title font-bold text-foreground">Confirmados ({confirmed.length})</h2>
         {confirmed.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Ninguém confirmou ainda{filial ? " nesta filial" : ""}.</p>
+          <p className="text-meta text-muted-foreground">Ninguém confirmou ainda{filial ? " nesta filial" : ""}.</p>
         ) : (
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-2">
             {confirmed.map((u) => (
               <Link
                 key={u.id}
                 href={`/pendencias/colaborador/${u.id}`}
-                className="flex items-center justify-between rounded-[var(--radius-card)] border border-border bg-card p-2.5 text-sm shadow-[var(--shadow-card)] hover:bg-muted"
+                className="flex items-center justify-between gap-2 rounded-[var(--radius-card)] border border-border bg-card p-3.5 text-body shadow-[var(--shadow-card)] transition-colors hover:bg-muted"
               >
-                <span className="font-medium text-foreground">{u.fullName}</span>
-                <span className="text-success">{formatDateTimeSaoPaulo(u.ackedAt)}</span>
+                <span className="font-semibold text-foreground">{u.fullName}</span>
+                <span className="text-meta font-medium text-success">{formatDateTimeSaoPaulo(u.ackedAt)}</span>
               </Link>
             ))}
           </div>

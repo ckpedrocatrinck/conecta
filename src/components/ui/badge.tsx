@@ -19,6 +19,10 @@ const badgeVariants = cva(
         quiet: "border border-border-strong px-3 py-1 font-semibold text-subtle-foreground",
         // Rotulo de secao/tipo (ex. RECONHECIMENTO) — marca, nao acao
         label: "bg-primary-subtle px-3 py-1 uppercase text-primary-deep",
+        // Rotulo de categoria em laranja solido (INC-013.5, decisao do Pedro
+        // 2026-07-18 seguindo o prototipo: VAGA INTERNA e afins em --action).
+        // --action-deep + branco = AA para texto pequeno. Ver [[feedback_design_action_color]].
+        category: "bg-action-deep px-3 py-1 uppercase text-action-foreground",
         // Contador de pendencia (nav, trilho admin) — bolinha laranja
         count:
           "min-w-[19px] justify-center bg-action-deep px-1.5 py-px text-[11px] font-extrabold text-action-foreground",

@@ -2,9 +2,13 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { toDatetimeLocalSaoPaulo } from "@/lib/dates/format-datetime";
 import { updateJobOpeningAction } from "./actions";
+
+const TEXTAREA_CLASS =
+  "w-full rounded-lg border-[1.5px] border-input bg-card px-3.5 py-2 text-body outline-none transition-colors placeholder:text-subtle-foreground focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-primary-subtle";
 
 type JobOpeningDetail = {
   id: string;
@@ -24,7 +28,7 @@ export function EditJobOpeningForm({
   branches: { id: string; name: string }[];
 }) {
   return (
-    <form action={updateJobOpeningAction} className="flex flex-col gap-4">
+    <form action={updateJobOpeningAction} className="flex w-full max-w-xl flex-col gap-4">
       <input type="hidden" name="id" value={job.id} />
 
       <div className="flex flex-col gap-1.5">
@@ -34,31 +38,19 @@ export function EditJobOpeningForm({
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="description">Descrição</Label>
-        <textarea
-          id="description"
-          name="description"
-          rows={4}
-          required
-          defaultValue={job.description}
-          className="rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm dark:bg-input/30"
-        />
+        <textarea id="description" name="description" rows={4} required defaultValue={job.description} className={TEXTAREA_CLASS} />
       </div>
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="branchId">Filial (opcional)</Label>
-        <select
-          id="branchId"
-          name="branchId"
-          defaultValue={job.branchId ?? ""}
-          className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm dark:bg-input/30"
-        >
+        <Select id="branchId" name="branchId" defaultValue={job.branchId ?? ""}>
           <option value="">Geral (todas as filiais)</option>
           {branches.map((branch) => (
             <option key={branch.id} value={branch.id}>
               {branch.name}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -68,13 +60,7 @@ export function EditJobOpeningForm({
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="requirements">Requisitos (opcional)</Label>
-        <textarea
-          id="requirements"
-          name="requirements"
-          rows={3}
-          defaultValue={job.requirements ?? ""}
-          className="rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm dark:bg-input/30"
-        />
+        <textarea id="requirements" name="requirements" rows={3} defaultValue={job.requirements ?? ""} className={TEXTAREA_CLASS} />
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -88,7 +74,7 @@ export function EditJobOpeningForm({
         />
       </div>
 
-      <Button type="submit" className="self-start">
+      <Button type="submit" size="touch" className="self-start">
         Salvar
       </Button>
     </form>

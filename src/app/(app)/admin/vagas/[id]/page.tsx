@@ -54,14 +54,14 @@ export default async function JobOpeningDetailPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          {job.title} <span className="text-sm font-normal text-muted-foreground">({STATUS_LABEL[job.status]})</span>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-display text-foreground">
+          {job.title} <span className="text-body font-normal text-muted-foreground">({STATUS_LABEL[job.status]})</span>
         </h1>
         {job.status === "open" && (
           <form action={closeJobOpeningAction}>
             <input type="hidden" name="id" value={job.id} />
-            <SubmitButton variant="secondary" pendingLabel="Fechando…">
+            <SubmitButton variant="secondary" size="touch" pendingLabel="Fechando…">
               Fechar vaga
             </SubmitButton>
           </form>
@@ -69,23 +69,21 @@ export default async function JobOpeningDetailPage({
       </div>
 
       {erro && ERROR_MESSAGES[erro] && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-meta text-destructive">
           {ERROR_MESSAGES[erro]}
         </p>
       )}
-      {salvo === "ok" && <p className="text-sm text-success">Alterações salvas.</p>}
-      {ok && SUCCESS_MESSAGES[ok] && <p className="text-sm text-success">{SUCCESS_MESSAGES[ok]}</p>}
+      {salvo === "ok" && <p className="text-meta font-medium text-success">Alterações salvas.</p>}
+      {ok && SUCCESS_MESSAGES[ok] && <p className="text-meta font-medium text-success">{SUCCESS_MESSAGES[ok]}</p>}
 
       <EditJobOpeningForm job={job} branches={branches} />
 
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-muted-foreground">
-            Candidatos ({applicantViews.length})
-          </h2>
+          <h2 className="text-card-title font-bold text-foreground">Candidatos ({applicantViews.length})</h2>
           {applicantViews.length > 0 && (
             <a href={`/admin/vagas/${job.id}/export`} download>
-              <Button type="button" variant="secondary" size="sm">
+              <Button type="button" variant="secondary" size="touch">
                 Exportar CSV
               </Button>
             </a>
@@ -93,16 +91,19 @@ export default async function JobOpeningDetailPage({
         </div>
 
         {applicantViews.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nenhuma candidatura recebida ainda.</p>
+          <p className="text-meta text-muted-foreground">Nenhuma candidatura recebida ainda.</p>
         ) : (
           <div className="flex flex-col gap-2">
             {applicantViews.map((a) => (
-              <div key={a.userId} className="flex flex-col gap-1 rounded-lg border border-border p-3 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-foreground">{a.fullName}</span>
-                  <span className="text-muted-foreground">{formatDateTimeSaoPaulo(a.createdAt)}</span>
+              <div
+                key={a.userId}
+                className="flex flex-col gap-1 rounded-[var(--radius-card)] border border-border bg-card p-4 text-body shadow-[var(--shadow-card)]"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-semibold text-foreground">{a.fullName}</span>
+                  <span className="text-meta text-muted-foreground">{formatDateTimeSaoPaulo(a.createdAt)}</span>
                 </div>
-                <span className="text-muted-foreground">
+                <span className="text-meta text-muted-foreground">
                   Matrícula {a.registrationCode} · {a.branchName}
                 </span>
                 {a.note && <p className="text-foreground">{a.note}</p>}

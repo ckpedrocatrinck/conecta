@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { requireAdmin } from "../../../../../lib/auth/session";
@@ -40,12 +41,18 @@ export default async function EditarColaboradorPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight text-black dark:text-zinc-50">{user.fullName}</h1>
-        <span className="text-sm text-zinc-500">{user.status === "active" ? "ativo" : "inativo"}</span>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-display text-foreground">{user.fullName}</h1>
+        <span className="inline-flex items-center gap-1.5 text-meta text-muted-foreground">
+          <span
+            className={`size-2 rounded-full ${user.status === "active" ? "bg-primary" : "bg-border-strong"}`}
+            aria-hidden="true"
+          />
+          {user.status === "active" ? "Ativo" : "Inativo"}
+        </span>
       </div>
 
-      <form action={updateEmployeeAction} className="flex flex-col gap-4">
+      <form action={updateEmployeeAction} className="flex w-full max-w-xl flex-col gap-4">
         <input type="hidden" name="id" value={user.id} />
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="fullName">Nome completo</Label>
@@ -53,33 +60,21 @@ export default async function EditarColaboradorPage({
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="branchId">Filial</Label>
-          <select
-            id="branchId"
-            name="branchId"
-            defaultValue={user.branchId}
-            required
-            className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm dark:bg-input/30"
-          >
+          <Select id="branchId" name="branchId" defaultValue={user.branchId} required>
             {branches.map((b) => (
               <option key={b.id} value={b.id}>
                 {b.name}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="role">Papel</Label>
-          <select
-            id="role"
-            name="role"
-            defaultValue={user.role}
-            required
-            className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm dark:bg-input/30"
-          >
+          <Select id="role" name="role" defaultValue={user.role} required>
             <option value="employee">Colaborador</option>
             <option value="manager">Gestor</option>
             <option value="admin">Admin</option>
-          </select>
+          </Select>
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="birthDate">Data de nascimento</Label>
@@ -99,25 +94,25 @@ export default async function EditarColaboradorPage({
         </div>
 
         {erro && ERROR_MESSAGES[erro] && (
-          <p role="alert" className="text-sm text-destructive">
+          <p role="alert" className="text-meta text-destructive">
             {ERROR_MESSAGES[erro]}
           </p>
         )}
-        {sucesso && <p className="text-sm text-emerald-600 dark:text-emerald-400">Alterações salvas.</p>}
+        {sucesso && <p className="text-meta font-medium text-success">Alterações salvas.</p>}
 
-        <Button type="submit">Salvar alterações</Button>
+        <Button type="submit" size="touch" className="self-start">Salvar alterações</Button>
       </form>
 
-      {status === "desligado" && <p className="text-sm text-success">Colaborador desligado.</p>}
-      {status === "reativado" && <p className="text-sm text-success">Colaborador reativado.</p>}
+      {status === "desligado" && <p className="text-meta font-medium text-success">Colaborador desligado.</p>}
+      {status === "reativado" && <p className="text-meta font-medium text-success">Colaborador reativado.</p>}
 
-      <div className="flex flex-col gap-3 border-t border-zinc-200 pt-4 dark:border-zinc-800">
-        <h2 className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Ações</h2>
+      <div className="flex flex-col gap-3 border-t border-border pt-4">
+        <h2 className="text-label uppercase text-subtle-foreground">Ações</h2>
         <ResetPasswordButton userId={user.id} />
         {user.status === "active" ? (
           <ConfirmDialog
             triggerLabel="Desligar colaborador"
-            triggerSize="sm"
+            triggerSize="touch"
             title="Desligar este colaborador?"
             description="O acesso é revogado imediatamente (sessões ativas encerradas). O histórico de confirmações de leitura é preservado."
             confirmLabel="Desligar"
@@ -128,7 +123,7 @@ export default async function EditarColaboradorPage({
           <form action={toggleEmployeeStatusAction}>
             <input type="hidden" name="id" value={user.id} />
             <input type="hidden" name="nextStatus" value="active" />
-            <SubmitButton variant="secondary" size="sm" pendingLabel="Reativando…">
+            <SubmitButton variant="secondary" size="touch" pendingLabel="Reativando…">
               Reativar colaborador
             </SubmitButton>
           </form>

@@ -12,20 +12,20 @@ export function ImportCsvForm() {
   return (
     <div className="flex flex-col gap-6">
       <form action={formAction} className="flex flex-col gap-3">
-        <input type="file" name="file" accept=".csv,text/csv" required className="text-sm" />
+        <input type="file" name="file" accept=".csv,text/csv" required className="text-body file:mr-3 file:rounded-lg file:border-[1.5px] file:border-border-strong file:bg-card file:px-3 file:py-2 file:text-sm file:font-semibold file:text-foreground" />
         {state.status === "error" && (
-          <p role="alert" className="text-sm text-destructive">
+          <p role="alert" className="text-meta text-destructive">
             {state.message}
           </p>
         )}
-        <Button type="submit" disabled={pending} className="self-start">
+        <Button type="submit" size="touch" disabled={pending} className="self-start">
           {pending ? "Importando..." : "Importar"}
         </Button>
       </form>
 
       {state.status === "done" && (
         <div className="flex flex-col gap-3">
-          <p className="text-sm">
+          <p className="text-body">
             {state.created} criado(s), {state.updated} atualizado(s), {state.errors} erro(s) de {state.results.length}{" "}
             linha(s).
           </p>
@@ -34,13 +34,13 @@ export function ImportCsvForm() {
             {state.results.map((result) => (
               <div
                 key={result.line}
-                className={`rounded border p-2 text-sm ${
+                className={`rounded-lg border p-2 text-meta ${
                   result.status === "error"
                     ? "border-destructive/40 bg-destructive/5 text-destructive"
-                    : "border-zinc-200 dark:border-zinc-800"
+                    : "border-border bg-card"
                 }`}
               >
-                <span className="font-mono text-xs text-zinc-500">linha {result.line}</span>{" "}
+                <span className="font-mono text-xs text-subtle-foreground">linha {result.line}</span>{" "}
                 {result.status === "error" && <>— erro: {result.message}</>}
                 {result.status === "updated" && <>— matrícula {result.registrationCode} atualizada</>}
                 {result.status === "created" && (

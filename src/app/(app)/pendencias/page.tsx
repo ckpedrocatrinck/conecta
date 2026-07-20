@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ClipboardList, TriangleAlert } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { filterChipVariants } from "@/components/ui/filter-chip";
 import { requireAdminOrManager } from "../../../lib/auth/session";
 import { withTenant } from "../../../lib/db/with-tenant";
 import { listAnnouncementPendencySummaries } from "../../../lib/announcements/pending-panel";
@@ -26,12 +27,17 @@ export default async function PendenciasPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Painel de pendências</h1>
+      <div className="flex flex-col gap-0.5">
+        <h1 className="text-display text-foreground">Painel de pendências</h1>
+        <p className="text-meta text-muted-foreground">
+          Comunicados publicados que ainda aguardam ciência de colaboradores.
+        </p>
+      </div>
 
       {dp11Count > 0 && (
-        <div className="flex items-center gap-3 rounded-lg bg-destructive/10 px-4 py-3 text-destructive">
+        <div className="flex items-center gap-3 rounded-[var(--radius-card)] bg-destructive/10 px-4 py-3 text-destructive">
           <TriangleAlert className="size-5 shrink-0" aria-hidden="true" />
-          <p className="flex-1 text-sm font-medium">
+          <p className="flex-1 text-meta font-medium">
             {dp11Count} comunicado{dp11Count > 1 ? "s" : ""} arquivado{dp11Count > 1 ? "s" : ""} com pendência de ciência
             não resolvida.
           </p>
@@ -39,18 +45,15 @@ export default async function PendenciasPage({
       )}
 
       {!isManager && branches.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 text-sm">
-          <Link
-            href="/pendencias"
-            className={!filial ? "rounded-lg bg-primary px-2.5 py-1 text-primary-foreground" : "rounded-lg px-2.5 py-1 text-muted-foreground hover:bg-muted"}
-          >
+        <div className="flex flex-wrap gap-2">
+          <Link href="/pendencias" className={filterChipVariants({ active: !filial })}>
             Todas as filiais
           </Link>
           {branches.map((b) => (
             <Link
               key={b.id}
               href={{ pathname: "/pendencias", query: { filial: b.id } }}
-              className={filial === b.id ? "rounded-lg bg-primary px-2.5 py-1 text-primary-foreground" : "rounded-lg px-2.5 py-1 text-muted-foreground hover:bg-muted"}
+              className={filterChipVariants({ active: filial === b.id })}
             >
               {b.name}
             </Link>
@@ -65,15 +68,15 @@ export default async function PendenciasPage({
           description="Comunicados que exigem ciência aparecem aqui com o percentual de confirmação."
         />
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2.5">
           {summaries.map((s) => (
             <Link
               key={s.announcement.id}
               href={`/pendencias/${s.announcement.id}`}
-              className="flex flex-col gap-2 rounded-[var(--radius-card)] border border-border bg-card p-3 shadow-[var(--shadow-card)] hover:bg-muted"
+              className="flex flex-col gap-2.5 rounded-[var(--radius-card)] border border-border bg-card p-4 shadow-[var(--shadow-card)] transition-colors hover:bg-muted"
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="font-bold text-foreground">
+                <span className="text-card-title font-bold text-foreground">
                   {s.announcement.seqNumber != null && s.announcement.year != null
                     ? formatAnnouncementCode(s.announcement.seqNumber, s.announcement.year)
                     : "sem número"}
@@ -81,17 +84,29 @@ export default async function PendenciasPage({
                   {s.announcement.category}
                 </span>
                 {s.isArchivedWithPendency && (
-                  <span className="shrink-0 rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive">
+                  <span className="shrink-0 rounded-full bg-destructive/10 px-2 py-0.5 text-label text-destructive">
                     Arquivado com pendência
                   </span>
                 )}
               </div>
-              <div className="flex items-center justify-between gap-2 text-sm">
+              <div
+                className="h-2 overflow-hidden rounded-full bg-muted"
+                role="progressbar"
+                aria-valuenow={s.percentConfirmed}
+                aria-valuemin={0}
+                aria-valuemax={100}
+              >
+                <div
+                  className={`h-full rounded-full ${s.percentConfirmed === 100 ? "bg-success" : "bg-action"}`}
+                  style={{ width: `${s.percentConfirmed}%` }}
+                />
+              </div>
+              <div className="flex items-center justify-between gap-2 text-meta">
                 <span className="text-muted-foreground">
                   {s.confirmedCount}/{s.targetTotal} confirmados
                   {s.pendingCount > 0 && ` · ${s.pendingCount} pendente${s.pendingCount > 1 ? "s" : ""}`}
                 </span>
-                <span className={s.percentConfirmed === 100 ? "font-semibold text-success" : "font-semibold text-action"}>
+                <span className={s.percentConfirmed === 100 ? "font-bold text-success" : "font-bold text-action"}>
                   {s.percentConfirmed}%
                 </span>
               </div>

@@ -18,7 +18,7 @@ export default async function CardsPreviewPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Preview de templates (mock)</h1>
+        <h1 className="text-display text-foreground">Preview de templates (mock)</h1>
         <p className="text-sm text-muted-foreground">
           Os cards abaixo usam dados fictícios (nomes longos, textos de teste) só para validar o template
           visual isolado — não são o card real que aparece na home/feed. Vaga ainda não tem dado real

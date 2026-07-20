@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { Plus } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
 import { requireAdmin } from "../../../../lib/auth/session";
 import { withTenant } from "../../../../lib/db/with-tenant";
 import { findPostsForAdminList } from "../../../../lib/repositories/post.repository";
@@ -17,31 +20,42 @@ export default async function PostsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Posts do feed</h1>
-        <Link href="/admin/posts/novo" className="text-primary underline-offset-4 hover:underline">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-0.5">
+          <h1 className="text-display text-foreground">Posts do feed</h1>
+          <p className="text-meta text-muted-foreground">
+            Reconhecimentos, avisos e cards automáticos exibidos aos colaboradores.
+          </p>
+        </div>
+        <Link href="/admin/posts/novo" className={buttonVariants({ variant: "default", size: "touch" })}>
+          <Plus aria-hidden="true" />
           Novo post
         </Link>
       </div>
 
-      {posts.length === 0 && <p className="text-sm text-muted-foreground">Nenhum post criado ainda.</p>}
-
-      <div className="flex flex-col gap-2">
-        {posts.map((post) => (
-          <Link
-            key={post.id}
-            href={`/admin/posts/${post.id}`}
-            className="flex items-center justify-between rounded-lg border border-border p-3 text-sm hover:bg-muted"
-          >
-            <span>
-              {post.title} <span className="text-muted-foreground">({POST_TYPE_LABEL[post.type] ?? post.type})</span>
-            </span>
-            <span className="text-muted-foreground">
-              {formatCalendarDate(post.eventDate)} · {post.branch?.name ?? "Geral"} · {STATUS_LABEL[post.status] ?? post.status}
-            </span>
-          </Link>
-        ))}
-      </div>
+      {posts.length === 0 ? (
+        <p className="text-meta text-muted-foreground">Nenhum post criado ainda.</p>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {posts.map((post) => (
+            <Link
+              key={post.id}
+              href={`/admin/posts/${post.id}`}
+              className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-border bg-card p-4 shadow-[var(--shadow-card)] transition-colors hover:bg-muted"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <Badge variant="label">{POST_TYPE_LABEL[post.type] ?? post.type}</Badge>
+                <span className="text-meta text-subtle-foreground">{formatCalendarDate(post.eventDate)}</span>
+              </div>
+              <span className="text-card-title font-bold text-foreground">{post.title}</span>
+              <div className="flex items-center justify-between gap-2 text-meta text-muted-foreground">
+                <span>{STATUS_LABEL[post.status] ?? post.status}</span>
+                <span>{post.branch?.name ?? "Geral"}</span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

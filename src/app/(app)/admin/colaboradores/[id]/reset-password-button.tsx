@@ -11,9 +11,9 @@ export function ResetPasswordButton({ userId }: { userId: string }) {
 
   if (state.status === "ok") {
     return (
-      <div className="flex flex-col gap-2 rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm dark:border-emerald-800 dark:bg-emerald-950">
+      <div className="flex flex-col gap-2 rounded-[var(--radius-card)] border border-border bg-primary-subtle p-3 text-meta text-foreground">
         <p>Nova senha provisória (repasse ao colaborador — só aparece aqui, uma vez):</p>
-        <p className="rounded bg-white px-3 py-2 font-mono text-base tracking-wider dark:bg-black">
+        <p className="rounded-lg border border-border bg-card px-3 py-2 font-mono text-base tracking-wider text-foreground">
           {state.provisionalPassword}
         </p>
       </div>
@@ -23,7 +23,7 @@ export function ResetPasswordButton({ userId }: { userId: string }) {
   return (
     <form action={formAction}>
       <input type="hidden" name="id" value={userId} />
-      <Button type="submit" variant="outline" size="sm" disabled={pending}>
+      <Button type="submit" variant="outline" size="touch" disabled={pending}>
         {pending ? "Gerando..." : "Redefinir senha"}
       </Button>
     </form>
