@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 import { authConfig } from "./src/lib/auth/edge-config";
 import { isPublicPath } from "./src/lib/auth/middleware-paths";
+import { extractTenantSlug } from "./src/lib/tenant/slug-path";
 
 // Usa SO' a config edge-safe (sem providers) — importar ./src/lib/auth/config
 // aqui puxaria o Credentials provider (hashCpf/withTenant), que dependem de
@@ -20,7 +21,25 @@ const { auth } = NextAuth(authConfig);
 export default auth((req) => {
   const { pathname } = req.nextUrl;
 
-  if (isPublicPath(pathname)) return NextResponse.next();
+  // INC-014 Bloco 1: extrai o slug candidato do path (string, edge-safe) e o
+  // propaga via header interno `x-tenant-slug` para a camada Node consumir na
+  // resolucao AUTORITATIVA (resolve-tenant.ts + boundary [slug]). Aqui e' so'
+  // transporte — o 404 e a validacao de vinculo sessao<->tenant vivem no Node
+  // (ADR-010 §2 corrigido). A checagem leve (slug da URL x tenantSlug do JWT) e
+  // o redirect por-tenant chegam no Bloco 3; ate' la' a auth abaixo e' a mesma.
+  //
+  // SEGURANCA: o header e' SEMPRE reescrito a partir do valor derivado no
+  // servidor (ou removido) — assim um `x-tenant-slug` que o cliente tente
+  // injetar na request nunca sobrevive ate' a camada Node.
+  const tenantSlug = extractTenantSlug(pathname);
+  const forward = () => {
+    const headers = new Headers(req.headers);
+    if (tenantSlug) headers.set("x-tenant-slug", tenantSlug);
+    else headers.delete("x-tenant-slug");
+    return NextResponse.next({ request: { headers } });
+  };
+
+  if (isPublicPath(pathname)) return forward();
 
   if (!req.auth?.user) {
     const loginUrl = new URL("/login", req.nextUrl);
@@ -31,7 +50,7 @@ export default auth((req) => {
     return NextResponse.redirect(new URL("/403", req.nextUrl));
   }
 
-  return NextResponse.next();
+  return forward();
 });
 
 // O Next analisa este export de forma estatica em build-time (Turbopack) —
