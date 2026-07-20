@@ -49,7 +49,9 @@ export default auth((req) => {
 
   const user = req.auth?.user;
 
-  // Nao autenticado numa rota de tenant -> login DESSE tenant.
+  // Nao autenticado numa rota de tenant -> login DESSE tenant (redirect Edge
+  // limpo, 307). Um slug inexistente cai em /{slug}/login, cujo boundary Node
+  // [slug] entao devolve 404 "empresa nao encontrada" sem vazar lista.
   if (!user) {
     return NextResponse.redirect(new URL(`/${tenantSlug}/login`, req.nextUrl));
   }

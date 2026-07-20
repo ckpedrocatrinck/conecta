@@ -37,12 +37,13 @@ describe("PUBLIC_PATHS (A2-3 — PWA acessivel deslogado)", () => {
     expect(isPublicPath("/admin")).toBe(false);
   });
 
-  it("libera o login tenant-scoped /{slug}/login (INC-014 Bloco 2)", () => {
+  it("libera o login e o manifest tenant-scoped (/{slug}/login, /{slug}/manifest) — INC-014", () => {
     expect(isPublicPath("/valeverde/login")).toBe(true);
     expect(isPublicPath("/vale-verde/login")).toBe(true);
+    expect(isPublicPath("/vale-verde/manifest")).toBe(true);
   });
 
-  it("nao libera rotas de tenant que nao sejam o login", () => {
+  it("nao libera rotas de tenant que nao sejam login/manifest", () => {
     expect(isPublicPath("/valeverde")).toBe(false);
     expect(isPublicPath("/valeverde/comunicados")).toBe(false);
     expect(isPublicPath("/valeverde/admin")).toBe(false);
