@@ -15,6 +15,7 @@ import {
   revokeSession,
 } from "../../src/lib/repositories/session.repository";
 import {
+  effectiveFailedAttempts,
   findUserByCpfHash,
   findUserById,
   registerFailedLogin,
@@ -102,6 +103,38 @@ describe("rate limit de login (sem Redis)", () => {
       const user = await findUserById(tx, tenant.tenant.id, userId);
       expect(user?.failedLoginAttempts).toBe(0);
       expect(user?.lockedUntil).toBeNull();
+    });
+  });
+});
+
+describe("decaimento do lockout apos a janela expirar (INC-013 G5)", () => {
+  it("effectiveFailedAttempts: zera com lock expirado; mantem com lock ativo/nulo", () => {
+    const past = new Date(Date.now() - 1000);
+    const future = new Date(Date.now() + 60_000);
+    expect(effectiveFailedAttempts(5, past)).toBe(0);
+    expect(effectiveFailedAttempts(5, null)).toBe(5);
+    expect(effectiveFailedAttempts(3, future)).toBe(3);
+  });
+
+  it("apos a janela expirar, a proxima falha reconta do zero (nao re-trava na hora)", async () => {
+    const userId = tenant.users[3].id;
+    await withTenant({ tenantId: tenant.tenant.id }, async (tx) => {
+      // Estado: conta que atingiu o limite, mas cuja janela de lockout ja' passou.
+      await tx.user.update({
+        where: { id: userId },
+        data: { failedLoginAttempts: 5, lockedUntil: new Date(Date.now() - 1000) },
+      });
+
+      const before = await findUserById(tx, tenant.tenant.id, userId);
+      // O authorize passa o contador EFETIVO (0, pois a trava expirou).
+      const attempts = effectiveFailedAttempts(before!.failedLoginAttempts, before!.lockedUntil);
+      expect(attempts).toBe(0);
+
+      await registerFailedLogin(tx, userId, attempts);
+
+      const after = await findUserById(tx, tenant.tenant.id, userId);
+      expect(after!.failedLoginAttempts).toBe(1); // reconta, nao 6
+      expect(after!.lockedUntil).toBeNull(); // trava antiga limpa, nao re-travou
     });
   });
 });

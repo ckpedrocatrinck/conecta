@@ -5,7 +5,12 @@ import { verifyPassword } from "../crypto/password-hash";
 import { withTenant } from "../db/with-tenant";
 import { createSession, revokeSession } from "../repositories/session.repository";
 import { findActiveTenantBySlug } from "../repositories/tenant.repository";
-import { findUserByCpfHash, registerFailedLogin, registerSuccessfulLogin } from "../repositories/user.repository";
+import {
+  effectiveFailedAttempts,
+  findUserByCpfHash,
+  registerFailedLogin,
+  registerSuccessfulLogin,
+} from "../repositories/user.repository";
 import { authConfig, SESSION_MAX_AGE_SECONDS } from "./edge-config";
 
 // Config completa (Node-only) — usada pelo route handler e por Server
@@ -42,7 +47,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
           const validPassword = await verifyPassword(password, user.passwordHash);
           if (!validPassword) {
-            await registerFailedLogin(tx, user.id, user.failedLoginAttempts);
+            // Contador efetivo: se a conta esteve travada mas a janela ja'
+            // expirou, recomeca do zero em vez de re-travar na 1a falha (G5).
+            const attempts = effectiveFailedAttempts(user.failedLoginAttempts, user.lockedUntil);
+            await registerFailedLogin(tx, user.id, attempts);
             return null;
           }
 

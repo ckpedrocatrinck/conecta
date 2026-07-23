@@ -30,16 +30,34 @@ export function findUserByRegistrationCode(tx: Prisma.TransactionClient, tenantI
   return tx.user.findFirst({ where: { tenantId, registrationCode } });
 }
 
+/**
+ * Contador de falhas EFETIVO para a proxima tentativa (INC-013 G5 — decaimento).
+ * Se a conta esteve travada mas a janela de lockout ja' expirou, recomeca do
+ * zero: sem isso, apos os 15 min de trava o `failedLoginAttempts` continuava no
+ * limite e a 1a falha seguinte re-travava na hora. Chamado pelo authorize()
+ * SO' quando a conta nao esta' mais travada (lockedUntil no passado ou nulo).
+ * Puro (now injetavel) para teste. */
+export function effectiveFailedAttempts(
+  failedLoginAttempts: number,
+  lockedUntil: Date | null,
+  now: number = Date.now(),
+): number {
+  if (lockedUntil && lockedUntil.getTime() <= now) return 0;
+  return failedLoginAttempts;
+}
+
 /** Login com senha errada: incrementa o contador e, ao atingir o limite,
- * tranca a conta por um periodo (rate limit sem Redis — ver plano do INC-003).
- * `currentAttempts` vem do registro ja lido pelo authorize() antes de chamar
- * verifyPassword — evita uma leitura extra so' para saber o contador atual. */
+ * tranca a conta por um periodo (rate limit por conta, sem Redis — ver ADR-006).
+ * `currentAttempts` e' o contador EFETIVO (ja passado por effectiveFailedAttempts
+ * pelo authorize), evitando uma leitura extra. Grava `lockedUntil` SEMPRE (nova
+ * trava ao atingir o limite, ou `null` caso contrario) — o `null` limpa uma
+ * trava antiga ja' expirada quando o contador reinicia (G5). */
 export function registerFailedLogin(tx: Prisma.TransactionClient, userId: string, currentAttempts: number) {
   const attempts = currentAttempts + 1;
-  const lockedUntil = attempts >= LOGIN_LOCKOUT_THRESHOLD ? new Date(Date.now() + LOGIN_LOCKOUT_DURATION_MS) : undefined;
+  const lockedUntil = attempts >= LOGIN_LOCKOUT_THRESHOLD ? new Date(Date.now() + LOGIN_LOCKOUT_DURATION_MS) : null;
   return tx.user.update({
     where: { id: userId },
-    data: { failedLoginAttempts: attempts, ...(lockedUntil ? { lockedUntil } : {}) },
+    data: { failedLoginAttempts: attempts, lockedUntil },
   });
 }
 
