@@ -7,6 +7,7 @@ import { withTenant } from "../../src/lib/db/with-tenant";
 import { createAnnouncementAck, findAnnouncementAcksByTenant } from "../../src/lib/repositories/announcement-ack.repository";
 import { findAnnouncementById, findAnnouncementsByTenant } from "../../src/lib/repositories/announcement.repository";
 import { findJobOpeningsByTenant } from "../../src/lib/repositories/job-opening.repository";
+import { findBenefitsForAdminList } from "../../src/lib/repositories/benefit.repository";
 import { findPostsByTenant } from "../../src/lib/repositories/post.repository";
 import { findUsersByTenant } from "../../src/lib/repositories/user.repository";
 
@@ -84,6 +85,12 @@ describe("caminho feliz — via camada de acesso (withTenant + repositorio)", ()
     expect(jobs.length).toBe(tenantA.jobOpenings.length);
     expect(jobs.every((j) => j.tenantId === tenantA.tenant.id)).toBe(true);
   });
+
+  it("tenant A so ve seus proprios beneficios [INC-015]", async () => {
+    const benefits = await withTenant({ tenantId: tenantA.tenant.id }, (tx) => findBenefitsForAdminList(tx, tenantA.tenant.id));
+    expect(benefits.length).toBe(tenantA.benefits.length);
+    expect(benefits.every((b) => b.tenantId === tenantA.tenant.id)).toBe(true);
+  });
 });
 
 describe("adversarial — query SEM filtro dentro do contexto de tenant A (prova a RLS, nao so o filtro da app) [INC-008]", () => {
@@ -155,6 +162,12 @@ describe("adversarial — query SEM filtro dentro do contexto de tenant A (prova
     const applications = await withTenant({ tenantId: tenantA.tenant.id }, (tx) => tx.jobApplication.findMany());
     expect(applications.length).toBeGreaterThan(0);
     expect(applications.every((a) => a.tenantId === tenantA.tenant.id)).toBe(true);
+  });
+
+  it("benefit.findMany() sem where ainda retorna so tenant A [INC-015]", async () => {
+    const benefits = await withTenant({ tenantId: tenantA.tenant.id }, (tx) => tx.benefit.findMany());
+    expect(benefits.length).toBeGreaterThan(0);
+    expect(benefits.every((b) => b.tenantId === tenantA.tenant.id)).toBe(true);
   });
 });
 

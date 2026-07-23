@@ -34,6 +34,7 @@ export async function cleanupTenant(ownerDb: PrismaClient, tenantId: string): Pr
     await tx.announcement.deleteMany({ where: { tenantId } });
     await tx.jobApplication.deleteMany({ where: { tenantId } });
     await tx.jobOpening.deleteMany({ where: { tenantId } });
+    await tx.benefit.deleteMany({ where: { tenantId } });
     await tx.postReaction.deleteMany({ where: { tenantId } });
     await tx.postMedia.deleteMany({ where: { tenantId } });
     await tx.postPerson.deleteMany({ where: { tenantId } });
