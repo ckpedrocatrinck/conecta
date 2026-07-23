@@ -47,7 +47,9 @@ export default async function TenantLoginPage({
 
             {erro && (
               <p role="alert" className="text-sm text-destructive">
-                CPF ou senha inválidos.
+                {erro === "rate"
+                  ? "Muitas tentativas. Aguarde alguns minutos e tente novamente."
+                  : "CPF ou senha inválidos."}
               </p>
             )}
 
