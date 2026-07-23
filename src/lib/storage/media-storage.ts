@@ -54,4 +54,11 @@ class LocalMediaStorage implements MediaStorage {
 // para um INC futuro. Trocar aqui por uma implementacao com
 // @aws-sdk/client-s3 + s3-request-presigner nao deve exigir mudar nenhum
 // chamador — todos dependem so' da interface MediaStorage.
+//
+// FOLLOW-UP LGPD (INC-013 G1): a anonimizacao de desligados anula `photoUrl`
+// (a referencia no banco), mas NAO apaga o objeto fisico. Quando o R2 real
+// entrar, este INC de storage DEVE adicionar um `delete(key)` a interface e
+// chama-lo na anonimizacao (anonymize-sweep.ts) — senao o blob da foto persiste
+// no bucket. Hoje o mock grava em `.local-media` (nao servido), entao nao
+// bloqueia o piloto; passa a bloquear no dia em que a foto virar objeto no R2.
 export const mediaStorage: MediaStorage = new LocalMediaStorage();
