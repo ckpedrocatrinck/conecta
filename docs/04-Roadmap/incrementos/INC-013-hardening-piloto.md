@@ -121,6 +121,7 @@ adicionar (o prazo conta a partir do desligamento, não do `updated_at` genéric
 ## BLOCO D — Operação (backup, restore, seed, runbook, métricas)
 - Backup automático do banco + **teste de restore executado de verdade** em
   ambiente limpo, com log/print no vault. (Critério de aceite crítico.)
+  Roteiro + template de evidência: `docs/00-Processo/runbook-teste-de-restore.md`.
 - Seed de produção: import real de filiais + colaboradores do Vale Verde (com
   autorização formal — depende de você obter os dados reais e o aceite).
 - Runbook de go-live: passo a passo de deploy, plano de rollback, canal de
