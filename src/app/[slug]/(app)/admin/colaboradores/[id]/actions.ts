@@ -43,18 +43,27 @@ export async function updateEmployeeAction(formData: FormData) {
       email: email || null,
     });
 
-    // Trilha de mudanca de privilegio (LGPD/auditoria) — so' grava
-    // previousRole/newRole quando o papel de fato muda, nunca dado pessoal.
-    const roleChanged = before != null && before.role !== role;
-
     await recordAuditLog(tx, {
       tenantId: session.tenantId,
       actorUserId: session.userId,
       action: "employee.update",
       entity: "User",
       entityId: id,
-      metadata: roleChanged ? { roleChanged: true, previousRole: before.role, newRole: role } : undefined,
     });
+
+    // Mudanca de papel = evento de privilegio com action DEDICADA (auditoria
+    // G12), separada da edicao de cadastro — trilha filtravel de escalada de
+    // privilegio. previousRole/newRole sao nivel de acesso, nao dado pessoal.
+    if (before != null && before.role !== role) {
+      await recordAuditLog(tx, {
+        tenantId: session.tenantId,
+        actorUserId: session.userId,
+        action: "employee.role_change",
+        entity: "User",
+        entityId: id,
+        metadata: { previousRole: before.role, newRole: role },
+      });
+    }
 
     return "ok" as const;
   });
