@@ -19,7 +19,7 @@
 
 ## Ainda abertas — não bloqueiam o início do desenvolvimento
 
-**DP-02 — Nome do produto.** "Conecta" é placeholder. Impacta domínio, repo, manifest do PWA e marca. Verificar disponibilidade no INPI antes de fixar. Pode rodar INC-001 com o placeholder e renomear depois (custo baixo se decidido cedo).
+**DP-02 — Nome/domínio definitivo do produto.** "Conecta" é placeholder. Impacta domínio, repo, manifest do PWA e marca. Antes de fixar: verificar **disponibilidade do domínio** (registro.br) **e da marca** (INPI). Pode rodar com o placeholder e renomear depois (custo baixo se decidido cedo), mas o nome definitivo deve estar resolvido antes do go-live do piloto (aparece no aviso de privacidade — G2/DP separado — e na marca do header). Relacionado: DP-18 (site institucional na raiz do domínio).
 **Responsável:** Pedro.
 
 **DP-05 — Dados de custo/contrato da portal legado.** Quanto o Vale Verde paga, fidelidade, quem assinou. Define teto de preço e timing da troca. Não bloqueia dev; informa a estratégia comercial.
@@ -54,6 +54,30 @@
 
 **DP-15 — Tela de admin para logo/cor do tenant.** O INC-009 adicionou `Tenant.logoUrl`/`Tenant.accentColor` ao schema, mas sem UI para editar — no piloto, configurado direto no banco. Antes da fase comercial (onboarding de novos clientes sem acesso ao banco), precisa de uma tela de admin (provavelmente super-admin, não o admin de tenant) para upload de logo + escolha da cor de destaque, com validação de contraste AA contra `--background`/`--card` (o design-system exige AA em toda combinação texto/fundo nova).
 **Responsável:** Pedro (priorizar quando o segundo cliente entrar).
+
+**DP-18 — Site institucional (raiz do domínio, ex.: `conecta.com.br`).** Página de marketing/institucional na raiz do domínio, **separada** do app (o app fica em subdomínio/rota própria). **Decisão de escopo: é projeto SEPARADO e pós-piloto** — não faz parte do produto Conecta nem de nenhum INC atual; registrado aqui só para não se perder. Depende de DP-02 (nome/domínio definitivo).
+**Responsável:** Pedro (pós-piloto).
+
+---
+
+## Bloqueadores e dependências do go-live do piloto (INC-013)
+
+> Itens do hardening que **não são código** — dependem de input do Pedro (jurídico) ou de verificação em painel (host/Neon/Vercel). Rastreados em detalhe na auditoria (`docs/00-Processo/auditoria-conformidade-lgpd-2026-07.md`) e no INC (`docs/04-Roadmap/incrementos/INC-013-hardening-piloto.md`); consolidados aqui para não se perderem. **Os 🔴 bloqueiam a entrada de dado real de pessoa no piloto.**
+
+**G2 — Aviso de privacidade definitivo.** 🔴 Substituir o placeholder (`src/lib/privacy/notice.ts`), bumpar `PRIVACY_NOTICE_VERSION` e **declarar transferência internacional** (LGPD Art. 33) se a infra rodar fora do Brasil. **Travado em:** (a) texto jurídico do Pedro; (b) M3 (região da infra). Os drafts (`aviso-privacidade.md`, `guia-conformidade-lgpd.md`) estão **untracked** na árvore de trabalho e vão para `docs/03-LGPD/` (não `04-Roadmap/`) quando preenchidos, commitados junto do G2. O código do G2 em si é pequeno.
+**Responsável:** Pedro + jurídico.
+
+**G3 — Execução do teste de restore de backup.** 🔴 **Bloqueia go-live.** O runbook + template de evidência estão prontos (`docs/00-Processo/runbook-teste-de-restore.md`). **Travado em:** (a) M2 (confirmar backup ativo/cifrado no Neon); (b) executar o teste e anexar a evidência no vault (critério de aceite do INC-013).
+**Responsável:** Pedro (executar seguindo o runbook).
+
+**M1 — HTTPS forçado no domínio de produção.** 🔴 Verificação no painel do host.
+**Responsável:** Pedro.
+
+**M2 — Backups automáticos ativos e cifrados.** 🔴 Verificação no painel do Neon. Pré-requisito do G3.
+**Responsável:** Pedro.
+
+**M3 — Região da infra (Neon + Vercel).** 🔴 Confirmar se roda fora do Brasil → alimenta a declaração de transferência internacional do G2 (Art. 33).
+**Responsável:** Pedro.
 
 ---
 
