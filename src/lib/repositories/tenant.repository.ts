@@ -12,6 +12,17 @@ export function findActiveTenants() {
   });
 }
 
+/** Tenants ativos com o prazo de retencao — base da varredura de anonimizacao
+ * (INC-013 G1). Enumeracao cross-tenant legitima (tenants e' a raiz, sem RLS),
+ * mesmo padrao de `findActiveTenants` usado pelo sweep de comunicados. */
+export function findActiveTenantsForAnonymization() {
+  return appDb.tenant.findMany({
+    where: { status: "active" },
+    select: { id: true, slug: true, retentionMonths: true },
+    orderBy: { name: "asc" },
+  });
+}
+
 export function findActiveTenantBySlug(slug: string) {
   return appDb.tenant.findFirst({
     where: { slug, status: "active" },

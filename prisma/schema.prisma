@@ -81,6 +81,14 @@ model Tenant {
   slug      String   @unique
   status    String   @default("active")
   plan      String   @default("pilot")
+  // Prazos de retencao LGPD (ADR-006 §3), configuraveis por tenant. Defaults
+  // propostos; numero final do juridico (DP-06) pode vir durante o piloto sem
+  // travar o go-live (ninguem atinge 24m no dia 1). retentionMonths: apos o
+  // desligamento, anonimiza os dados pessoais. ackRetentionMonths: prazo em que
+  // os registros de ciencia sao preservados (prescricao trabalhista) — hoje so'
+  // documenta a intencao; o corte pos-prazo (fase 2) nao existe ainda (ADR-006).
+  retentionMonths    Int @default(24) @map("retention_months")
+  ackRetentionMonths Int @default(60) @map("ack_retention_months")
   // Identidade visual injetada nos cards gerados (INC-009 / design-system §1):
   // logo + 1 cor de destaque, nunca substitui a marca fixa do produto nem o
   // laranja de acao. logoUrl e' um asset publico (nao pessoal/sensivel, sem
@@ -137,6 +145,11 @@ model User {
   phone                    String?
   email                    String?
   status                   UserStatus @default(active)
+  // Data do desligamento (status -> inactive). O prazo de retencao (ADR-006 §3)
+  // conta a partir DAQUI, nao do updated_at generico. Nulo enquanto ativo; a
+  // rotina de anonimizacao pula inactive sem esta data (nunca anonimiza sem
+  // saber quando a pessoa foi desligada).
+  deactivatedAt            DateTime?  @map("deactivated_at") @db.Timestamptz
   anonymizedAt             DateTime?  @map("anonymized_at") @db.Timestamptz
   passwordHash             String     @map("password_hash")
   mustChangePassword       Boolean    @default(true) @map("must_change_password")

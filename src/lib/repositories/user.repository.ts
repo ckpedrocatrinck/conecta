@@ -1,4 +1,5 @@
 import { Prisma } from "@prisma/client";
+import { anonymizedCpfHash } from "../crypto/cpf-hash";
 import type { MonthDay } from "../dates/birthday-window";
 
 const LOGIN_LOCKOUT_THRESHOLD = 5;
@@ -159,13 +160,76 @@ export function updateEmployeeProfile(
   return tx.user.updateMany({ where: { id: userId, tenantId }, data });
 }
 
+/** Muda o status e carimba `deactivatedAt`: ao desligar (inactive) grava a data
+ * — base de contagem do prazo de retencao/anonimizacao (ADR-006 §3, INC-013 G1),
+ * nao o updated_at generico; ao reativar limpa para null (o relogio recomeca se
+ * a pessoa for desligada de novo). `now` injetavel para teste. */
 export function setEmployeeStatus(
   tx: Prisma.TransactionClient,
   tenantId: string,
   userId: string,
   status: "active" | "inactive",
+  now: Date = new Date(),
 ) {
-  return tx.user.updateMany({ where: { id: userId, tenantId }, data: { status } });
+  return tx.user.updateMany({
+    where: { id: userId, tenantId },
+    data: { status, deactivatedAt: status === "inactive" ? now : null },
+  });
+}
+
+export type AnonymizationCandidate = { id: string; deactivatedAt: Date | null };
+
+/**
+ * Desligados VENCIDOS elegiveis para anonimizacao (INC-013 G1 / ADR-006 §3):
+ * `inactive` + desligados ate' o `cutoff` (now - retentionMonths) + ainda nao
+ * anonimizados. O `deactivatedAt: { not: null }` e' explicito de proposito: um
+ * inactive SEM data de desligamento (legado, pre-G1) e' PULADO — nunca se
+ * anonimiza sem saber quando a pessoa foi desligada (o prazo nao seria contavel).
+ * Roda dentro de `withTenant` (RLS por tenant), com `tenantId` explicito como no
+ * resto do repositorio.
+ */
+export function findUsersDueForAnonymization(
+  tx: Prisma.TransactionClient,
+  tenantId: string,
+  cutoff: Date,
+): Promise<AnonymizationCandidate[]> {
+  return tx.user.findMany({
+    where: {
+      tenantId,
+      status: "inactive",
+      deactivatedAt: { not: null, lte: cutoff },
+      anonymizedAt: null,
+    },
+    select: { id: true, deactivatedAt: true },
+    orderBy: { deactivatedAt: "asc" },
+  });
+}
+
+/**
+ * Sobrescreve a PII de um usuario desligado por rotulos pseudonimizados e
+ * carimba `anonymizedAt` (INC-013 G1 / ADR-006 §3). IRREVERSIVEL. O
+ * `anonymizedAt: null` no WHERE garante idempotencia no proprio SQL: reexecucao
+ * casa 0 linhas. NAO toca `registrationCode` (vinculo minimo para provar quem
+ * confirmou, ADR-006 §3), `status`, nem qualquer tabela de ack (a FK
+ * `announcement_acks.user_id` aponta para `id`, que nao muda — o trigger de
+ * imutabilidade do ack e' de outra tabela e nunca dispara). `now` injetavel
+ * para teste. Retorna `{ count }` (0 = ja anonimizado / nao encontrado).
+ */
+export function anonymizeUser(tx: Prisma.TransactionClient, userId: string, now: Date = new Date()) {
+  return tx.user.updateMany({
+    where: { id: userId, anonymizedAt: null },
+    data: {
+      fullName: `Colaborador Anonimizado #${userId.slice(0, 8)}`,
+      cpfHash: anonymizedCpfHash(userId),
+      phone: null,
+      email: null,
+      photoUrl: null,
+      birthDate: null,
+      birthdayVisible: false,
+      photoVisible: false,
+      anonymizedAt: now,
+    },
+  });
 }
 
 /** Redefine a senha para uma nova provisoria (acao administrativa explicita,

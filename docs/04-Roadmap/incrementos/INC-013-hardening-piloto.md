@@ -99,6 +99,21 @@ adicionar (o prazo conta a partir do desligamento, não do `updated_at` genéric
 - Idempotência (rodar 2x não re-anonimiza).
 - Anonimização não viola trigger de imutabilidade de ack/version/audit.
 
+**Follow-ups do G1 (registrados, fora do escopo desta entrega):**
+- **Purga do blob da foto no R2:** a anonimização anula `photoUrl` (a referência
+  no banco), mas o arquivo físico da foto persistirá quando o storage real (R2)
+  for ativado. Hoje o storage é mock (`LocalMediaStorage`, grava em `.local-media`,
+  nunca servido — dívida aprovada, `media-storage.ts:53`), então **não bloqueia o
+  piloto**. Vira **pendência LGPD obrigatória do INC de storage**: ao trocar o mock
+  pelo R2, adicionar `delete(key)` à interface `MediaStorage` e chamá-lo na
+  anonimização (`src/lib/users/anonymize-sweep.ts`). Anotado no código no ponto da
+  troca (`media-storage.ts`).
+- **Fase 2 (corte pós-`ackRetentionMonths`):** o G1 implementa só a fase 1 (24m);
+  `ackRetentionMonths` (60m) é guardado como config mas **não há job de corte**
+  pós-prescrição (o ack fica indefinidamente sob pseudônimo, e nunca é deletado).
+  O desenho legal do "o que acontece aos 5 anos" depende do jurídico (DP-06) —
+  documentado como TODO no ADR-006.
+
 ### Outros itens do Bloco C (menores, depois do G1)
 - G2 aviso definitivo (jurídico), G7 já feito no Bloco B, G10 "Meus dados" acks
   do titular, G8 export por tenant (🔵 piloto), G9 ConsentEvent (🔵).
