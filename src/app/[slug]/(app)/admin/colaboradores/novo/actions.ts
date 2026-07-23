@@ -65,13 +65,15 @@ export async function createEmployeeAction(
       email: email || undefined,
     });
 
+    // Minimizacao (auditoria A3-3): entityId (user.id) ja identifica o registro;
+    // a matricula na metadata era duplicacao de identificador sem necessidade —
+    // removida. Quem for auditar resolve a matricula pelo proprio User.
     await recordAuditLog(tx, {
       tenantId: session.tenantId,
       actorUserId: session.userId,
       action: "employee.create",
       entity: "User",
       entityId: user.id,
-      metadata: { registrationCode },
     });
 
     return { status: "ok", provisionalPassword, fullName };
