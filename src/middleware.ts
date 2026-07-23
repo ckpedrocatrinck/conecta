@@ -1,8 +1,8 @@
 import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
-import { authConfig } from "./src/lib/auth/edge-config";
-import { isPublicPath } from "./src/lib/auth/middleware-paths";
-import { extractTenantSlug } from "./src/lib/tenant/slug-path";
+import { authConfig } from "./lib/auth/edge-config";
+import { isPublicPath } from "./lib/auth/middleware-paths";
+import { extractTenantSlug } from "./lib/tenant/slug-path";
 
 // Usa SO' a config edge-safe (sem providers) — importar ./src/lib/auth/config
 // aqui puxaria o Credentials provider (hashCpf/withTenant), que dependem de
