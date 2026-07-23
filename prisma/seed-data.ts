@@ -239,5 +239,31 @@ export async function buildTenantFixtures(db: PrismaClient, opts: BuildTenantFix
     jobOpenings.push(jobOpening);
   }
 
-  return { tenant, branches, users, announcements, posts, jobOpenings };
+  // Clube de Beneficios (INC-015): alguns beneficios em categorias variadas,
+  // com sortOrder distinto (testa ordenacao) e um inativo (testa filtro
+  // active=true do colaborador).
+  const benefits = [];
+  const benefitsData = [
+    { category: "saude" as const, partnerName: "Academia Fit", title: "30% de desconto na mensalidade", description: "Apresente o cracha na recepcao. Valido para todos os planos.", sortOrder: 1, active: true },
+    { category: "saude" as const, partnerName: "Farmacia Bem-Estar", title: "15% em medicamentos genericos", description: "Desconto na apresentacao do cracha.", sortOrder: 2, active: true },
+    { category: "alimentacao" as const, partnerName: "Restaurante do Chef", title: "Almoco executivo com 20% off", description: "De segunda a sexta, no horario de almoco.", sortOrder: 1, active: true },
+    { category: "educacao" as const, partnerName: "Escola de Idiomas Global", title: "Bolsa de 25% em cursos de ingles", description: "Extensivo a dependentes.", sortOrder: 1, active: false },
+  ];
+  for (const b of benefitsData) {
+    const benefit = await db.benefit.create({
+      data: {
+        tenantId: tenant.id,
+        category: b.category,
+        partnerName: b.partnerName,
+        title: b.title,
+        description: b.description,
+        sortOrder: b.sortOrder,
+        active: b.active,
+        createdBy: admin.id,
+      },
+    });
+    benefits.push(benefit);
+  }
+
+  return { tenant, branches, users, announcements, posts, jobOpenings, benefits };
 }

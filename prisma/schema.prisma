@@ -71,6 +71,21 @@ enum JobStatus {
   closed
 }
 
+// Categorias do Clube de Beneficios (INC-015). Valores em minusculo, alinhados
+// a convencao dos demais enums deste schema (open/admin/etc.). O doc do INC
+// escrevia em MAIUSCULO, mas foi corrigido para minusculo (decisao do Pedro:
+// consistencia de codigo vale mais aqui) — doc e schema batem. Enum FIXO no MVP;
+// se algum cliente pedir categorias configuraveis por tenant, a evolucao
+// (enum -> tabela) fica para fase 2. Rotulos de exibicao (Saude, Lazer, ...)
+// vivem em src/lib/benefits/category-labels.ts.
+enum BenefitCategory {
+  saude
+  lazer
+  educacao
+  alimentacao
+  outros
+}
+
 // ---------------------------------------------------------------------------
 // Fundação
 // ---------------------------------------------------------------------------
@@ -106,6 +121,7 @@ model Tenant {
   announcements Announcement[]
   posts         Post[]
   jobOpenings   JobOpening[]
+  benefits      Benefit[]
 
   @@map("tenants")
 }
@@ -178,6 +194,7 @@ model User {
   postReactions               PostReaction[]
   jobOpeningsCreated          JobOpening[]
   jobApplications             JobApplication[]
+  benefitsCreated             Benefit[]
 
   @@unique([tenantId, cpfHash])
   @@unique([tenantId, registrationCode])
@@ -501,4 +518,40 @@ model JobApplication {
   @@unique([jobOpeningId, userId])
   @@index([tenantId])
   @@map("job_applications")
+}
+
+// ---------------------------------------------------------------------------
+// Clube de Beneficios / Parceiros (INC-015)
+// ---------------------------------------------------------------------------
+
+// Beneficios que a EMPRESA-CLIENTE (tenant) oferece aos seus funcionarios
+// (desconto em academia, farmacia, escola, etc.). Vitrine informativa: o admin
+// cadastra, o colaborador le. Mesmo padrao multi-tenant de JobOpening
+// (tenant_id + RLS + created_by com onDelete: Restrict).
+//
+// MVP so' TEXTO: `logoUrl` entra nulo e sem UI de upload — a fase 2 (quando o
+// R2 for ativado) preenche sem exigir migration. Nada de storage aqui.
+model Benefit {
+  id          String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId    String          @map("tenant_id") @db.Uuid
+  category    BenefitCategory
+  partnerName String          @map("partner_name")
+  title       String
+  description String
+  location    String?
+  contact     String?
+  // NULO no MVP (fase 2 / R2) — campo ja' existe para nao exigir migration depois.
+  logoUrl     String?         @map("logo_url")
+  active      Boolean         @default(true)
+  sortOrder   Int             @default(0) @map("sort_order")
+  createdBy   String          @map("created_by") @db.Uuid
+  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime        @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant  Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  creator User   @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+
+  // Cobre a listagem do colaborador (active + category, ordenada) e a do admin.
+  @@index([tenantId, active, category, sortOrder])
+  @@map("benefits")
 }

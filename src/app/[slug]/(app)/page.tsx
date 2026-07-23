@@ -16,11 +16,13 @@ import { formatAnnouncementCode } from "@/lib/announcements/publish";
 import { findUnreadNotificationsForUser, markNotificationRead } from "@/lib/repositories/notification.repository";
 import { findPostsForFeed } from "@/lib/repositories/post.repository";
 import { findOpenJobOpeningsForEmployee } from "@/lib/repositories/job-opening.repository";
+import { findActiveBenefitsForEmployee } from "@/lib/repositories/benefit.repository";
 import { findTenantBranding } from "@/lib/repositories/tenant.repository";
 import { buildFeedCards, FEED_PAGE_SIZE } from "@/lib/feed/build-feed-view";
 import { birthdayWindowMonthDays } from "@/lib/dates/birthday-window";
 import { buildBirthdayListView, buildTodaysBirthdayCards } from "@/lib/birthdays/build-birthday-view";
 import { jobOpeningToCardData } from "@/lib/jobs/build-job-opening-view";
+import { Gift } from "lucide-react";
 
 const HOME_JOB_OPENINGS_LIMIT = 3;
 
@@ -28,13 +30,14 @@ export default async function Home() {
   const session = await requireOnboardedSession();
   const now = new Date();
   const todayMonthDay = birthdayWindowMonthDays(now, 0);
-  const [{ user, notifications, feedPosts, birthdayRows, openJobs, pendingAnnouncements }, branding] = await Promise.all([
+  const [{ user, notifications, feedPosts, birthdayRows, openJobs, benefits, pendingAnnouncements }, branding] = await Promise.all([
     withTenant({ tenantId: session.tenantId }, async (tx) => ({
       user: await findUserById(tx, session.tenantId, session.userId),
       notifications: await findUnreadNotificationsForUser(tx, session.tenantId, session.userId),
       feedPosts: await findPostsForFeed(tx, session.tenantId, { limit: FEED_PAGE_SIZE }),
       birthdayRows: await findUpcomingBirthdays(tx, session.tenantId, todayMonthDay),
       openJobs: await findOpenJobOpeningsForEmployee(tx, session.tenantId, { now }),
+      benefits: await findActiveBenefitsForEmployee(tx, session.tenantId),
       // Itens que exigem ciencia do usuario (mesmo estado do badge de navegacao,
       // aqui com o comunicado em si para o card acionavel da home — protótipo
       // "Ler e confirmar"). So' apresentacao: a lista reusa o mesmo calculo de
@@ -188,6 +191,32 @@ export default async function Home() {
               <CardTemplate data={jobOpeningToCardData(job, branding)} />
             </Link>
           ))}
+        </div>
+      )}
+
+      {benefits.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <h2 className="text-card-title font-bold text-foreground">Clube de Benefícios</h2>
+            <Link href={`/${session.tenantSlug}/beneficios`} className="text-meta font-semibold text-primary underline-offset-4 hover:underline">
+              Ver todos
+            </Link>
+          </div>
+          {/* Card-chamada (descoberta) — convite enxuto, NAO a lista (que vive em
+              /beneficios, tambem acessivel pelo icone do bottom nav). O card serve
+              descoberta no comeco do piloto; o icone serve acesso intencional. */}
+          <Link
+            href={`/${session.tenantSlug}/beneficios`}
+            className="flex items-center gap-3 rounded-[var(--radius-card)] border border-border bg-card p-4 shadow-[var(--shadow-card)] transition-colors hover:bg-muted"
+          >
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary-subtle text-primary">
+              <Gift className="size-5" aria-hidden="true" />
+            </span>
+            <span className="flex flex-col gap-0.5">
+              <span className="text-body font-semibold text-foreground">Clube de Benefícios</span>
+              <span className="text-meta text-muted-foreground">Descontos e vantagens da empresa para você.</span>
+            </span>
+          </Link>
         </div>
       )}
     </div>

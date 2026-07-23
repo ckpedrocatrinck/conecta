@@ -16,7 +16,15 @@ Dois sistemas de navegação distintos, selecionados por papel.
 ### Colaborador (employee) — bottom navigation mobile-first
 - Itens: **Início** (home/feed) · **Comunicados** (com badge de pendência) · **Perfil**.
 - **Vagas** entra como 4º item quando o INC-011 for implementado.
-- Máximo de 5 itens (regra de bottom nav: 3–5, alvos ≥48px). Início/Comunicados/Perfil = 3 agora.
+- **Benefícios** entra como 5º item no INC-015 (2026-07-23). Decisão consciente do
+  Pedro de usar o slot máximo (5) em troca de acesso permanente a uma feature de
+  uso frequente, aceitando o aperto visual em 360px — mitigado no componente
+  (`px-1`, label menor, truncamento de segurança); a altura do alvo continua 48px
+  (`min-h-12`) e cada item ocupa ~72px de largura a 360px, mantendo o alvo de toque
+  ≥48px. É o teto: novos itens de colaborador NÃO cabem mais aqui (ver Gatilho de
+  revisão).
+- Máximo de 5 itens (regra de bottom nav: 3–5, alvos ≥48px). Com o INC-015 o
+  bottom nav do colaborador está **cheio (5 itens)**.
 - O item **Comunicados exibe badge** (contador) quando há comunicado pendente de ciência — puxa o colaborador para a ação mais importante do produto sem ele procurar. É o oposto do banner dispensável da portal legado.
 - Componente `BottomNav` já existe (INC-003.5) — este INC popula os itens reais.
 

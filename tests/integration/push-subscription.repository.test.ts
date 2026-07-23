@@ -39,6 +39,7 @@ afterAll(async () => {
     await ownerDb.pushSubscription.deleteMany({ where: { tenantId: t.tenant.id } });
     await ownerDb.post.deleteMany({ where: { tenantId: t.tenant.id } });
     await ownerDb.jobOpening.deleteMany({ where: { tenantId: t.tenant.id } });
+    await ownerDb.benefit.deleteMany({ where: { tenantId: t.tenant.id } });
     await ownerDb.user.deleteMany({ where: { tenantId: t.tenant.id } });
     await ownerDb.tenant.deleteMany({ where: { id: t.tenant.id } });
   }

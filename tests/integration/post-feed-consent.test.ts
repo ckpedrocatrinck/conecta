@@ -43,6 +43,7 @@ afterAll(async () => {
   const tenantIds = [tenantA.tenant.id, tenantB.tenant.id];
   await ownerDb.post.deleteMany({ where: { tenantId: { in: tenantIds } } });
   await ownerDb.jobOpening.deleteMany({ where: { tenantId: { in: tenantIds } } });
+  await ownerDb.benefit.deleteMany({ where: { tenantId: { in: tenantIds } } });
   await ownerDb.user.deleteMany({ where: { tenantId: { in: tenantIds } } });
   await ownerDb.tenant.deleteMany({ where: { id: { in: tenantIds } } });
   await ownerDb.$disconnect();
