@@ -1,7 +1,7 @@
 "use client"
 
 import { usePathname } from "next/navigation"
-import { Briefcase, Home, Megaphone, User } from "lucide-react"
+import { Briefcase, Gift, Home, Megaphone, User } from "lucide-react"
 import type { UserRole } from "@prisma/client"
 
 import { BottomNav, type BottomNavItem } from "@/components/ui/bottom-nav"
@@ -13,17 +13,21 @@ interface AppBottomNavProps {
 }
 
 /**
- * Itens fixos do ADR-009 (Inicio/Comunicados/Vagas/Perfil, todos os papeis —
- * Vagas e' o 4o item, previsto desde o ADR-009 e entregue no INC-011).
- * Ficam aqui (client) e nao vem do servidor porque componentes de icone
- * (funcoes) nao atravessam a fronteira Server->Client como prop serializavel.
- * INC-014: todos os links sao tenant-scoped (`/${slug}/...`).
+ * Itens fixos do ADR-009 (Inicio/Comunicados/Vagas/Beneficios/Perfil, todos os
+ * papeis). Vagas e' o 4o item (INC-011); Beneficios entrou como 5o item no
+ * INC-015 — decisao consciente do Pedro de usar o slot maximo (5) do bottom nav
+ * (ADR-009 sempre permitiu ate' 5) em troca de acesso permanente a uma feature
+ * de uso frequente, aceitando o aperto visual em 360px. Ficam aqui (client) e
+ * nao vem do servidor porque componentes de icone (funcoes) nao atravessam a
+ * fronteira Server->Client como prop serializavel. INC-014: todos os links sao
+ * tenant-scoped (`/${slug}/...`).
  */
 function buildItems(slug: string, pendingCount: number): BottomNavItem[] {
   return [
     { href: `/${slug}`, label: "Início", icon: Home },
     { href: `/${slug}/comunicados`, label: "Comunicados", icon: Megaphone, badge: pendingCount },
     { href: `/${slug}/vagas`, label: "Vagas", icon: Briefcase },
+    { href: `/${slug}/beneficios`, label: "Benefícios", icon: Gift },
     { href: `/${slug}/perfil`, label: "Perfil", icon: User },
   ]
 }

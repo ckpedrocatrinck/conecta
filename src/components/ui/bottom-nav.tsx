@@ -33,7 +33,11 @@ function BottomNav({ items, activeHref, className, ...props }: BottomNavProps) {
             href={href}
             aria-current={isActive ? "page" : undefined}
             className={cn(
-              "flex min-h-12 flex-1 flex-col items-center justify-center gap-0.5 px-2 py-1.5 text-[0.6875rem] font-semibold",
+              // min-h-12 (48px) mantem o alvo de toque na altura; a `px-1` (em vez
+              // de px-2) e o label menor (0.625rem) sao para acomodar 5 itens em
+              // 360px sem quebrar linha (INC-015 — 5o item Beneficios). Cada item
+              // ocupa ~72px de largura a 360px, entao o alvo continua >=48px.
+              "flex min-h-12 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 py-1.5 text-[0.625rem] font-semibold",
               isActive ? "text-primary" : "text-muted-foreground"
             )}
           >
@@ -48,7 +52,7 @@ function BottomNav({ items, activeHref, className, ...props }: BottomNavProps) {
                 </span>
               )}
             </span>
-            {label}
+            <span className="max-w-full truncate leading-none">{label}</span>
             {Boolean(badge) && badge! > 0 && <span className="sr-only">, {badge} pendente{badge! > 1 ? "s" : ""}</span>}
           </Link>
         )

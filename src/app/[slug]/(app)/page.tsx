@@ -17,7 +17,6 @@ import { findUnreadNotificationsForUser, markNotificationRead } from "@/lib/repo
 import { findPostsForFeed } from "@/lib/repositories/post.repository";
 import { findOpenJobOpeningsForEmployee } from "@/lib/repositories/job-opening.repository";
 import { findActiveBenefitsForEmployee } from "@/lib/repositories/benefit.repository";
-import { BENEFIT_CATEGORY_LABELS } from "@/lib/benefits/category-labels";
 import { findTenantBranding } from "@/lib/repositories/tenant.repository";
 import { buildFeedCards, FEED_PAGE_SIZE } from "@/lib/feed/build-feed-view";
 import { birthdayWindowMonthDays } from "@/lib/dates/birthday-window";
@@ -26,7 +25,6 @@ import { jobOpeningToCardData } from "@/lib/jobs/build-job-opening-view";
 import { Gift } from "lucide-react";
 
 const HOME_JOB_OPENINGS_LIMIT = 3;
-const HOME_BENEFITS_LIMIT = 3;
 
 export default async function Home() {
   const session = await requireOnboardedSession();
@@ -204,27 +202,20 @@ export default async function Home() {
               Ver todos
             </Link>
           </div>
+          {/* Card-chamada (descoberta) — convite enxuto, NAO a lista (que vive em
+              /beneficios, tambem acessivel pelo icone do bottom nav). O card serve
+              descoberta no comeco do piloto; o icone serve acesso intencional. */}
           <Link
             href={`/${session.tenantSlug}/beneficios`}
-            className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-border bg-card p-4 shadow-[var(--shadow-card)] transition-colors hover:bg-muted"
+            className="flex items-center gap-3 rounded-[var(--radius-card)] border border-border bg-card p-4 shadow-[var(--shadow-card)] transition-colors hover:bg-muted"
           >
-            <div className="flex items-center gap-2 text-body font-semibold text-foreground">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-subtle text-primary">
-                <Gift className="size-5" aria-hidden="true" />
-              </span>
-              <span>
-                {benefits.length} vantage{benefits.length !== 1 ? "ns" : "m"} para você
-              </span>
-            </div>
-            <ul className="flex flex-col gap-1.5">
-              {benefits.slice(0, HOME_BENEFITS_LIMIT).map((benefit) => (
-                <li key={benefit.id} className="flex items-baseline gap-2 text-meta">
-                  <span className="font-semibold text-foreground">{benefit.partnerName}</span>
-                  <span className="truncate text-muted-foreground">{benefit.title}</span>
-                  <span className="ml-auto shrink-0 text-subtle-foreground">{BENEFIT_CATEGORY_LABELS[benefit.category]}</span>
-                </li>
-              ))}
-            </ul>
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary-subtle text-primary">
+              <Gift className="size-5" aria-hidden="true" />
+            </span>
+            <span className="flex flex-col gap-0.5">
+              <span className="text-body font-semibold text-foreground">Clube de Benefícios</span>
+              <span className="text-meta text-muted-foreground">Descontos e vantagens da empresa para você.</span>
+            </span>
           </Link>
         </div>
       )}
