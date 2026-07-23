@@ -170,9 +170,17 @@ export default async function PerfilPage({
         </Button>
       </form>
 
-      <p className="text-center text-meta text-subtle-foreground">
-        Seus dados são tratados conforme a LGPD. Solicite acesso ou exclusão ao RH.
-      </p>
+      <div className="flex flex-col items-center gap-1">
+        <Link
+          href={`/${session.tenantSlug}/aviso-privacidade?modo=leitura`}
+          className="text-meta font-semibold text-primary underline-offset-4 hover:underline"
+        >
+          Ler o aviso de privacidade
+        </Link>
+        <p className="text-center text-meta text-subtle-foreground">
+          Seus dados são tratados conforme a LGPD. Solicite acesso ou exclusão ao RH.
+        </p>
+      </div>
     </div>
   );
 }

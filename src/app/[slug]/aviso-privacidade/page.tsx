@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { signOut } from "@/lib/auth/config";
 import { requireSession } from "@/lib/auth/session";
 import { PRIVACY_NOTICE_BODY, PRIVACY_NOTICE_TITLE, PRIVACY_NOTICE_VERSION } from "@/lib/privacy/notice";
@@ -22,11 +23,22 @@ const INTERIM_BODY =
   "(registro de ciência de comunicados). Você pode revogar a exibição de aniversário " +
   "e foto para os demais colaboradores a qualquer momento, na tela \"Meus dados\".";
 
-export default async function AvisoPrivacidadePage() {
-  const session = await requireSession();
-  // Nao pular a troca de senha obrigatoria navegando direto pra ca.
-  if (session.mustChangePassword) redirect(`/${session.tenantSlug}/trocar-senha`);
-  if (session.privacyAccepted) redirect(`/${session.tenantSlug}`);
+export default async function AvisoPrivacidadePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ modo?: string }>;
+}) {
+  const [{ modo }, session] = await Promise.all([searchParams, requireSession()]);
+  // modo=leitura (G7): reler o aviso vigente a partir do perfil, SEM forcar novo
+  // aceite. Nao redireciona (mesmo ja' aceito) e mostra o texto read-only.
+  const readOnly = modo === "leitura";
+
+  if (!readOnly) {
+    // Fluxo de PRIMEIRO ACEITE (intacto): nao pular a troca de senha obrigatoria
+    // nem reexibir apos ja' aceito.
+    if (session.mustChangePassword) redirect(`/${session.tenantSlug}/trocar-senha`);
+    if (session.privacyAccepted) redirect(`/${session.tenantSlug}`);
+  }
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center bg-background px-6 py-16">
@@ -39,23 +51,34 @@ export default async function AvisoPrivacidadePage() {
           {IS_PLACEHOLDER ? INTERIM_BODY : PRIVACY_NOTICE_BODY}
         </div>
 
-        <form action={acceptPrivacyNoticeAction}>
-          <Button type="submit" variant="action" size="xl" className="w-full">
-            Li e estou ciente
-          </Button>
-        </form>
+        {readOnly ? (
+          <Link
+            href={`/${session.tenantSlug}/perfil`}
+            className={buttonVariants({ variant: "ghost", size: "xl", className: "w-full" })}
+          >
+            Voltar ao perfil
+          </Link>
+        ) : (
+          <>
+            <form action={acceptPrivacyNoticeAction}>
+              <Button type="submit" variant="action" size="xl" className="w-full">
+                Li e estou ciente
+              </Button>
+            </form>
 
-        <form
-          action={async () => {
-            "use server";
-            await signOut({ redirectTo: `/${session.tenantSlug}/login` });
-          }}
-          className="mt-3"
-        >
-          <Button type="submit" variant="ghost" size="touch" className="w-full">
-            Sair
-          </Button>
-        </form>
+            <form
+              action={async () => {
+                "use server";
+                await signOut({ redirectTo: `/${session.tenantSlug}/login` });
+              }}
+              className="mt-3"
+            >
+              <Button type="submit" variant="ghost" size="touch" className="w-full">
+                Sair
+              </Button>
+            </form>
+          </>
+        )}
       </div>
     </div>
   );
