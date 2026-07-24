@@ -2,7 +2,9 @@ import type { CardData } from "./card-model";
 
 function toAbsolute(url: string | null, origin: string): string | null {
   if (!url) return null;
-  if (/^https?:\/\//i.test(url)) return url;
+  // URLs ja' absolutas ou auto-contidas (data URI — ex.: logo embutido para o
+  // export, INC-017) passam intactas; so' as relativas ganham o origin.
+  if (/^(https?:|data:)/i.test(url)) return url;
   return `${origin}${url.startsWith("/") ? "" : "/"}${url}`;
 }
 

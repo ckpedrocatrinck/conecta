@@ -4,6 +4,7 @@ import { withTenant } from "@/lib/db/with-tenant";
 import { findBranchesByTenant } from "@/lib/repositories/branch.repository";
 import { findPostWithDetails, findUsersForPersonPicker } from "@/lib/repositories/post.repository";
 import { findTenantBranding } from "@/lib/repositories/tenant.repository";
+import { signBrandingForDisplay } from "@/lib/branding/branding-display";
 import { resolvePickablePeoplePhotos } from "@/lib/posts/resolve-pickable-people";
 import { isPostCardKind } from "@/lib/cards/card-model";
 import { mediaStorage } from "@/lib/storage/media-storage";
@@ -45,7 +46,7 @@ export default async function PostDetailPage({
       ]);
       return { post, branches, rawPeople };
     }),
-    findTenantBranding(session.tenantId),
+    findTenantBranding(session.tenantId).then(signBrandingForDisplay),
   ]);
 
   if (!data) notFound();
