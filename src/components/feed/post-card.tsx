@@ -28,7 +28,10 @@ function PostAttachments({ post }: { post: FeedPostCard }) {
           src={images[0].viewUrl as string}
           fullSrc={`/api/anexo/${images[0].id}`}
           triggerClassName="w-full"
-          className="max-h-[75vh] w-full rounded-lg"
+          // Teto 90vh: foto de pessoas tipica (~3:4, 9:16 moderado) cabe inteira.
+          // object-top: no extremo que excede o teto, o corte come a BASE, nunca
+          // o topo — regra de ouro do feed de reconhecimento: nao cortar cabeca.
+          className="max-h-[90vh] w-full rounded-lg object-top"
         />
       )}
       {images.length > 1 && (
@@ -39,7 +42,9 @@ function PostAttachments({ post }: { post: FeedPostCard }) {
               src={media.viewUrl as string}
               fullSrc={`/api/anexo/${media.id}`}
               triggerClassName="aspect-square w-full"
-              className="size-full rounded-lg"
+              // object-top pela mesma regra: a miniatura quadrada corta a base,
+              // nunca a cabeca.
+              className="size-full rounded-lg object-top"
             />
           ))}
         </div>

@@ -5,7 +5,8 @@
  * natural (Solucao B), nao esta capa. `src` e' URL assinada de curta duracao. */
 export function PostCover({ src }: { src: string }) {
   return (
+    // object-top: o corte do 4:3 come a base, nunca o topo (nao decapita).
     // eslint-disable-next-line @next/next/no-img-element -- URL assinada, curta duracao
-    <img src={src} alt="" className="aspect-[4/3] w-full rounded-lg bg-muted object-cover" />
+    <img src={src} alt="" className="aspect-[4/3] w-full rounded-lg bg-muted object-cover object-top" />
   );
 }
