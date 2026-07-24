@@ -33,6 +33,7 @@
 | 013.5 | Redesenho visual (DP-13 navegação + DP-14 visual) | polimento (entre 4 e 5) | ✅ | 012.5 |
 | 014 | Resolução de tenant por path (`/{slug}`) | fundação (antes do hardening) | ✅ | ADR-010 |
 | 015 | Clube de Benefícios / Parceiros | pré-piloto (paridade portal legado) | ✅ | 014 |
+| 016 | Anexos no feed (imagem + PDF) | 3 (engajamento) | ✅ | 008 · R2 é pré-requisito de PRODUÇÃO |
 | 013 | Hardening pré-piloto: LGPD checklist, backup/restore, seeds reais | 5 | ⬜ | todos, 014 |
 
 Observações:
