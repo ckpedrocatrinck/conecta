@@ -6,7 +6,7 @@ import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { PostPeoplePicker, type PickablePerson } from "@/components/admin/post-people-picker";
-import { PostCardPreview } from "@/components/admin/post-card-preview";
+import { PostCardPreview, type PreviewImage } from "@/components/admin/post-card-preview";
 import type { TenantBranding } from "@/lib/repositories/tenant.repository";
 import { updatePostAction } from "./actions";
 
@@ -17,6 +17,7 @@ type PostDetail = {
   body: string | null;
   eventDate: Date;
   branchId: string | null;
+  status: string;
 };
 
 export function EditPostForm({
@@ -25,12 +26,14 @@ export function EditPostForm({
   people,
   selectedPersonIds,
   branding,
+  previewImages = [],
 }: {
   post: PostDetail;
   branches: { id: string; name: string }[];
   people: PickablePerson[];
   selectedPersonIds: string[];
   branding: TenantBranding;
+  previewImages?: PreviewImage[];
 }) {
   const [type, setType] = useState(post.type);
   const [title, setTitle] = useState(post.title);
@@ -89,11 +92,29 @@ export function EditPostForm({
 
       <PostPeoplePicker people={people} defaultSelectedIds={selectedPersonIds} onSelectionChange={setSelectedPeople} />
 
-      <PostCardPreview type={type} title={title} body={body} selectedPeople={selectedPeople} branding={branding} />
+      <PostCardPreview
+        type={type}
+        title={title}
+        body={body}
+        selectedPeople={selectedPeople}
+        branding={branding}
+        images={previewImages}
+      />
 
-      <SubmitButton size="touch" className="self-start" pendingLabel="Salvando…">
-        Salvar
-      </SubmitButton>
+      {/* Um form, dois submits: o botao clicado envia name=intent, e a
+          updatePostAction salva (save) ou salva+publica (publish) usando o
+          TITULO do formulario — por isso "digitar titulo e Publicar" funciona
+          sem salvar antes (INC-016). */}
+      <div className="flex flex-wrap gap-2">
+        <SubmitButton type="submit" name="intent" value="save" variant="outline" size="touch" pendingLabel="Salvando…">
+          Salvar rascunho
+        </SubmitButton>
+        {post.status === "draft" && (
+          <SubmitButton type="submit" name="intent" value="publish" size="touch" pendingLabel="Publicando…">
+            Publicar
+          </SubmitButton>
+        )}
+      </div>
     </form>
   );
 }

@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, open, readFile, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 // Raiz do mock de storage — fora de `public/`, nunca servido estaticamente
@@ -30,4 +30,36 @@ export async function readMediaFile(key: string): Promise<{ data: Buffer; conten
   } catch {
     return null;
   }
+}
+
+/** Le SO' os primeiros `maxBytes` do objeto + o tamanho total, sem carregar o
+ * arquivo inteiro (mesmo contrato do R2: GetObject com Range: bytes=0-N, cujo
+ * Content-Range revela o tamanho total). Base do confirm de upload (INC-016):
+ * sniff do magic number + checagem de tamanho real sem estourar memoria. */
+export async function readMediaHead(
+  key: string,
+  maxBytes: number,
+): Promise<{ bytes: Buffer; totalSize: number } | null> {
+  const filePath = resolveSafePath(key);
+  try {
+    const { size } = await stat(filePath);
+    const handle = await open(filePath, "r");
+    try {
+      const length = Math.min(maxBytes, size);
+      const buffer = Buffer.alloc(length);
+      if (length > 0) await handle.read(buffer, 0, length, 0);
+      return { bytes: buffer, totalSize: size };
+    } finally {
+      await handle.close();
+    }
+  } catch {
+    return null;
+  }
+}
+
+/** Remove o objeto e seu meta. Idempotente (force: nao falha se ja' nao existe)
+ * — o confirm apaga uploads invalidos e a exclusao de anexo apaga o valido. */
+export async function deleteMediaFile(key: string): Promise<void> {
+  const filePath = resolveSafePath(key);
+  await Promise.all([rm(filePath, { force: true }), rm(`${filePath}.meta.json`, { force: true })]);
 }

@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { deleteMediaFile, readMediaHead } from "./local-media-fs";
 
 // Contrato de acesso restrito a midia (fotos de perfil): a key do objeto e'
 // o que fica gravado no banco (User.photoUrl), NUNCA uma URL publica. Tanto
@@ -8,6 +9,16 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 export interface MediaStorage {
   getUploadUrl(key: string): Promise<string>;
   getViewUrl(key: string): Promise<string>;
+  // Le so' o cabeçalho do objeto (primeiros `maxBytes`) + o tamanho total, sem
+  // baixar o arquivo inteiro. Base do confirm de upload (INC-016): valida o
+  // tipo REAL por magic number e o tamanho real do que ja' foi enviado ao
+  // storage. No R2 mapeia para GetObject com Range: bytes=0-(maxBytes-1) (o
+  // Content-Range da' o tamanho total). Retorna null se a chave nao existe.
+  readHead(key: string, maxBytes: number): Promise<{ bytes: Buffer; totalSize: number } | null>;
+  // Remove o objeto. Usado pelo confirm para descartar upload invalido (tipo
+  // ou tamanho reprovado) e pela remocao de anexo. Idempotente. No R2 mapeia
+  // para DeleteObject.
+  delete(key: string): Promise<void>;
 }
 
 const SIGNED_URL_TTL_MS = 5 * 60 * 1000;
@@ -47,6 +58,14 @@ class LocalMediaStorage implements MediaStorage {
 
   async getViewUrl(key: string): Promise<string> {
     return this.buildUrl(key, "view");
+  }
+
+  async readHead(key: string, maxBytes: number): Promise<{ bytes: Buffer; totalSize: number } | null> {
+    return readMediaHead(key, maxBytes);
+  }
+
+  async delete(key: string): Promise<void> {
+    await deleteMediaFile(key);
   }
 }
 

@@ -66,6 +66,15 @@ enum PostStatus {
   published
 }
 
+// Classe do anexo de post (INC-016): imagem renderiza inline no feed; documento
+// (PDF) vira card de documento (nao renderiza inline). O tipo REAL e' definido
+// por magic number no confirm de upload (src/lib/storage/media-sniff.ts), nunca
+// pela extensao/content-type declarado pelo cliente.
+enum PostMediaKind {
+  image
+  document
+}
+
 enum JobStatus {
   open
   closed
@@ -450,12 +459,22 @@ model PostPerson {
 }
 
 model PostMedia {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  postId    String   @map("post_id") @db.Uuid
-  tenantId  String   @map("tenant_id") @db.Uuid
-  mediaUrl  String   @map("media_url")
-  sortOrder Int      @default(0) @map("sort_order")
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  postId   String @map("post_id") @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+  // Chave do objeto no storage (NUNCA URL publica) — resolvida para URL assinada
+  // de curta duracao na exibicao (ver buildFeedCards). O nome do campo e'
+  // historico (INC-008); segue guardando a key, nao uma URL.
+  mediaUrl String @map("media_url")
+  // Anexos INC-016. `kind` default image cobre as linhas legadas (so' fotos);
+  // mimeType/originalName/sizeBytes ficam nulos no legado e sao sempre
+  // preenchidos em uploads novos (definidos pelo sniff no confirm).
+  kind         PostMediaKind @default(image)
+  mimeType     String?       @map("mime_type")
+  originalName String?       @map("original_name")
+  sizeBytes    Int?          @map("size_bytes")
+  sortOrder    Int           @default(0) @map("sort_order")
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz
 
   post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
 

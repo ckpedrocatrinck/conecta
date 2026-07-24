@@ -13,6 +13,18 @@ type FeedPostWithRelations = Prisma.PostGetPayload<{
   };
 }>;
 
+export type FeedAttachment = {
+  id: string;
+  kind: "image" | "document";
+  // URL assinada de curta duracao para o thumbnail inline — so' imagem. Documento
+  // (PDF) nao renderiza inline: o card de documento abre via /api/anexo/[id], que
+  // re-assina no clique (evita 403 por expiracao do link depois de rolar o feed).
+  viewUrl: string | null;
+  originalName: string | null;
+  sizeBytes: number | null;
+  mimeType: string | null;
+};
+
 export type FeedPostCard = {
   id: string;
   type: string;
@@ -22,7 +34,7 @@ export type FeedPostCard = {
   createdAt: string;
   branchName: string | null;
   people: { userId: string; fullName: string; label: string | null; photoUrl: string | null }[];
-  media: { id: string; viewUrl: string }[];
+  media: FeedAttachment[];
   reactionCount: number;
   reactedByMe: boolean;
 };
@@ -41,8 +53,16 @@ export async function buildFeedCards(posts: FeedPostWithRelations[], currentUser
           return { ...view, photoUrl: view.photoUrl ? await mediaStorage.getViewUrl(view.photoUrl) : null };
         }),
       );
-      const media = await Promise.all(
-        post.media.map(async (m) => ({ id: m.id, viewUrl: await mediaStorage.getViewUrl(m.mediaUrl) })),
+      const media: FeedAttachment[] = await Promise.all(
+        post.media.map(async (m) => ({
+          id: m.id,
+          kind: m.kind,
+          // So' imagem carrega thumbnail inline; documento abre via /api/anexo.
+          viewUrl: m.kind === "image" ? await mediaStorage.getViewUrl(m.mediaUrl) : null,
+          originalName: m.originalName,
+          sizeBytes: m.sizeBytes,
+          mimeType: m.mimeType,
+        })),
       );
 
       return {

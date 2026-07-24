@@ -9,9 +9,7 @@ import { isPostCardKind } from "@/lib/cards/card-model";
 import { mediaStorage } from "@/lib/storage/media-storage";
 import { EditPostForm } from "./form";
 import { PostPhotoUpload } from "./photo-upload";
-import { publishPostAction } from "./actions";
 import { Button } from "@/components/ui/button";
-import { SubmitButton } from "@/components/ui/submit-button";
 
 const ERROR_MESSAGES: Record<string, string> = {
   obrigatorio: "Preencha tipo, título e data do evento.",
@@ -55,14 +53,21 @@ export default async function PostDetailPage({
   const people = await resolvePickablePeoplePhotos(rawPeople);
 
   const existingMedia = await Promise.all(
-    post.media.map(async (m) => ({ id: m.id, viewUrl: await mediaStorage.getViewUrl(m.mediaUrl) })),
+    post.media.map(async (m) => ({
+      id: m.id,
+      kind: m.kind,
+      viewUrl: m.kind === "image" ? await mediaStorage.getViewUrl(m.mediaUrl) : null,
+      originalName: m.originalName,
+      sizeBytes: m.sizeBytes,
+    })),
   );
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-display text-foreground">
-          {post.title} <span className="text-body font-normal text-muted-foreground">({STATUS_LABEL[post.status]})</span>
+          {post.title || "Novo post"}{" "}
+          <span className="text-body font-normal text-muted-foreground">({STATUS_LABEL[post.status]})</span>
         </h1>
         <div className="flex items-center gap-2">
           {isPostCardKind(post.type) && (
@@ -71,12 +76,6 @@ export default async function PostDetailPage({
                 Baixar card
               </Button>
             </a>
-          )}
-          {post.status === "draft" && (
-            <form action={publishPostAction}>
-              <input type="hidden" name="id" value={post.id} />
-              <SubmitButton size="touch" pendingLabel="Publicando…">Publicar</SubmitButton>
-            </form>
           )}
         </div>
       </div>
@@ -90,7 +89,8 @@ export default async function PostDetailPage({
       {ok && SUCCESS_MESSAGES[ok] && <p className="text-meta font-medium text-success">{SUCCESS_MESSAGES[ok]}</p>}
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-label uppercase text-subtle-foreground">Fotos</h2>
+        <h2 className="text-label uppercase text-subtle-foreground">Anexos</h2>
+        <p className="text-meta text-muted-foreground">Imagens (JPG, PNG, WEBP até 5 MB) e documentos PDF (até 10 MB).</p>
         <PostPhotoUpload postId={post.id} existingMedia={existingMedia} />
       </section>
 
@@ -100,6 +100,7 @@ export default async function PostDetailPage({
         people={people}
         selectedPersonIds={post.people.map((p) => p.userId)}
         branding={branding}
+        previewImages={existingMedia.filter((m) => m.kind === "image").map((m) => ({ id: m.id, viewUrl: m.viewUrl }))}
       />
     </div>
   );

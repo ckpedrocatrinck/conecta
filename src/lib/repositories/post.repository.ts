@@ -1,4 +1,4 @@
-import type { Prisma, PostType } from "@prisma/client";
+import type { Prisma, PostType, PostMediaKind } from "@prisma/client";
 
 export function findPostsByTenant(tx: Prisma.TransactionClient, tenantId: string) {
   return tx.post.findMany({ where: { tenantId } });
@@ -9,13 +9,60 @@ export function findPostById(tx: Prisma.TransactionClient, tenantId: string, id:
 }
 
 /** Lista do admin (mais recentes primeiro) — sem paginacao no MVP, mesmo
- * padrao de findAuditLogsForTenant/findAnnouncementsForAdminList. */
+ * padrao de findAuditLogsForTenant/findAnnouncementsForAdminList.
+ *
+ * Exclui rascunhos "pristine" (scaffolds do auto-rascunho do INC-016: draft
+ * sem titulo/texto/pessoas/midia) — eles nao sao conteudo, so' o esqueleto que
+ * o "Novo post" cria. `NOT pristine` expresso como OR de condicoes positivas
+ * (De Morgan) para evitar filtro de relacao dentro de NOT: publicado OU tem
+ * titulo OU tem texto OU tem alguem marcado OU tem anexo. */
 export function findPostsForAdminList(tx: Prisma.TransactionClient, tenantId: string) {
   return tx.post.findMany({
-    where: { tenantId },
-    include: { branch: { select: { name: true } } },
+    where: {
+      tenantId,
+      OR: [
+        { status: "published" },
+        { title: { not: "" } },
+        { body: { not: null } },
+        { people: { some: {} } },
+        { media: { some: {} } },
+      ],
+    },
+    include: {
+      branch: { select: { name: true } },
+      // Primeira imagem como capa do card da lista (INC-016) — so' a chave; a
+      // URL assinada e' resolvida na page. Documentos (PDF) nao viram capa.
+      media: { where: { kind: "image" }, orderBy: { sortOrder: "asc" }, take: 1, select: { mediaUrl: true } },
+    },
     orderBy: { createdAt: "desc" },
   });
+}
+
+/** Rascunhos "pristine" deste admin (auto-rascunho INC-016): draft sem titulo,
+ * texto, pessoas ou midia. Base do reaproveitamento (reusa o mais recente,
+ * apaga os demais) que mantem no maximo 1 scaffold por admin sem sweep. */
+export function findPristineDraftsByAdmin(tx: Prisma.TransactionClient, tenantId: string, adminUserId: string) {
+  return tx.post.findMany({
+    where: {
+      tenantId,
+      createdBy: adminUserId,
+      status: "draft",
+      title: "",
+      body: null,
+      people: { none: {} },
+      media: { none: {} },
+    },
+    orderBy: { createdAt: "desc" },
+    select: { id: true },
+  });
+}
+
+/** Remove posts por id (escopo de tenant). Usado so' para apagar scaffolds
+ * pristine extras do auto-rascunho — que por definicao nao tem midia, entao
+ * nao ha' objeto no storage a limpar. */
+export function deletePostsByIds(tx: Prisma.TransactionClient, tenantId: string, ids: string[]) {
+  if (ids.length === 0) return Promise.resolve({ count: 0 });
+  return tx.post.deleteMany({ where: { tenantId, id: { in: ids } } });
 }
 
 const POST_DETAIL_INCLUDE = {
@@ -132,13 +179,46 @@ export async function replacePostPeople(
   });
 }
 
+export type PostMediaInput = {
+  mediaUrl: string;
+  kind: PostMediaKind;
+  mimeType: string;
+  originalName: string;
+  sizeBytes: number;
+};
+
 /** `tx` ja' roda dentro da transacao aberta por withTenant — nao aninha
- * outra transacao aqui, so' duas queries sequenciais na mesma. */
-export async function addPostMedia(tx: Prisma.TransactionClient, tenantId: string, postId: string, mediaUrl: string) {
+ * outra transacao aqui, so' duas queries sequenciais na mesma. `kind`/`mimeType`
+ * vem do sniff do confirm (tipo REAL), nunca do que o cliente declarou. */
+export async function addPostMedia(
+  tx: Prisma.TransactionClient,
+  tenantId: string,
+  postId: string,
+  media: PostMediaInput,
+) {
   const last = await tx.postMedia.findFirst({ where: { postId, tenantId }, orderBy: { sortOrder: "desc" } });
   return tx.postMedia.create({
-    data: { postId, tenantId, mediaUrl, sortOrder: (last?.sortOrder ?? -1) + 1 },
+    data: {
+      postId,
+      tenantId,
+      mediaUrl: media.mediaUrl,
+      kind: media.kind,
+      mimeType: media.mimeType,
+      originalName: media.originalName,
+      sizeBytes: media.sizeBytes,
+      sortOrder: (last?.sortOrder ?? -1) + 1,
+    },
   });
+}
+
+/** Conta anexos de um post — usado para impor o teto por post no confirm de
+ * upload (o cliente tambem valida, mas o servidor e' a autoridade). */
+export function countPostMedia(tx: Prisma.TransactionClient, tenantId: string, postId: string) {
+  return tx.postMedia.count({ where: { postId, tenantId } });
+}
+
+export function findPostMediaById(tx: Prisma.TransactionClient, tenantId: string, mediaId: string) {
+  return tx.postMedia.findFirst({ where: { id: mediaId, tenantId } });
 }
 
 export function removePostMedia(tx: Prisma.TransactionClient, tenantId: string, mediaId: string) {
