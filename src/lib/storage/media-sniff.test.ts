@@ -10,6 +10,10 @@ const PDF = Buffer.from("%PDF-1.7\n");
 // "MZ" — cabeçalho de executavel Windows (PE). Um arquivo assim renomeado para
 // .pdf/.png NAO deve passar.
 const EXE = Buffer.from([0x4d, 0x5a, 0x90, 0x00]);
+// "PK\x03\x04" — cabeçalho de ZIP. .zip renomeado para .pdf NAO deve passar.
+const ZIP = Buffer.from([0x50, 0x4b, 0x03, 0x04, 0x14, 0x00]);
+// Texto puro (.txt renomeado para .pdf) — sem magic number reconhecivel.
+const TXT = Buffer.from("apenas um texto qualquer, sem cabeçalho\n");
 
 describe("sniffMediaType — tipo real por magic number (INC-016)", () => {
   it("reconhece JPEG, PNG, WEBP e PDF", () => {
@@ -19,8 +23,10 @@ describe("sniffMediaType — tipo real por magic number (INC-016)", () => {
     expect(sniffMediaType(PDF)).toEqual({ kind: "document", contentType: "application/pdf" });
   });
 
-  it("rejeita executavel (MZ) mesmo que a extensao minta ser .pdf/.png", () => {
+  it("rejeita executavel (MZ), ZIP (PK) e TXT mesmo que a extensao minta ser .pdf/.png", () => {
     expect(sniffMediaType(EXE)).toBeNull();
+    expect(sniffMediaType(ZIP)).toBeNull();
+    expect(sniffMediaType(TXT)).toBeNull();
   });
 
   it("rejeita conteudo irreconhecivel e cabeçalho vazio", () => {

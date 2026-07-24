@@ -47,8 +47,12 @@ describe("validateUploadedObject — autoridade pos-upload (INC-016)", () => {
     if (result.ok) expect(result.contentType).toBe("application/pdf");
   });
 
-  it("rejeita executavel disfarcado de .pdf e APAGA o objeto", async () => {
-    const objects = new Map([["k", EXE_HEADER]]);
+  it.each([
+    ["executavel (MZ) disfarcado de .pdf", EXE_HEADER],
+    ["ZIP (PK) disfarcado de .pdf", Buffer.from([0x50, 0x4b, 0x03, 0x04])],
+    ["TXT disfarcado de .pdf", Buffer.from("texto puro, sem magic number\n")],
+  ])("rejeita %s e APAGA o objeto", async (_label, header) => {
+    const objects = new Map([["k", header]]);
     const result = await validateUploadedObject(fakeStorage(objects), "k");
     expect(result).toEqual({ ok: false, reason: "type" });
     expect(objects.has("k")).toBe(false); // invalido foi removido do storage
