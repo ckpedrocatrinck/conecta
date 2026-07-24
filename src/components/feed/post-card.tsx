@@ -97,11 +97,17 @@ export function PostCard({ post, branding }: { post: FeedPostCard; branding: Ten
   const cardData = buildPostCardData(post, branding);
   if (!cardData) return <GeneralPostCard post={post} />;
 
+  // Imagem + reacao entram como `footer` DENTRO do CardShell — cabecalho, foto e
+  // acoes leem como um card unico (mesma borda/fundo), nao blocos soltos (INC-016).
   return (
-    <div className="flex flex-col gap-2">
-      <CardTemplate data={cardData} />
-      <PostAttachments post={post} />
-      <ReactionButton postId={post.id} initialReacted={post.reactedByMe} initialCount={post.reactionCount} />
-    </div>
+    <CardTemplate
+      data={cardData}
+      footer={
+        <>
+          <PostAttachments post={post} />
+          <ReactionButton postId={post.id} initialReacted={post.reactedByMe} initialCount={post.reactionCount} />
+        </>
+      }
+    />
   );
 }
