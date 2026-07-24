@@ -6,6 +6,7 @@ import { requireAdmin } from "@/lib/auth/session";
 import { withTenant } from "@/lib/db/with-tenant";
 import { findPostsForAdminList } from "@/lib/repositories/post.repository";
 import { mediaStorage } from "@/lib/storage/media-storage";
+import { PostCover } from "@/components/admin/post-cover";
 import { POST_TYPE_LABEL } from "@/lib/posts/labels";
 import { formatCalendarDate } from "@/lib/dates/format-date";
 import { createOrReuseDraftAction } from "./actions";
@@ -57,10 +58,7 @@ export default async function PostsPage() {
               href={`/${session.tenantSlug}/admin/posts/${post.id}`}
               className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-border bg-card p-4 shadow-[var(--shadow-card)] transition-colors hover:bg-muted"
             >
-              {post.coverUrl && (
-                // eslint-disable-next-line @next/next/no-img-element -- URL assinada, curta duracao
-                <img src={post.coverUrl} alt="" className="h-28 w-full rounded-lg bg-muted object-contain" />
-              )}
+              {post.coverUrl && <PostCover src={post.coverUrl} className="h-40" />}
               <div className="flex items-center justify-between gap-2">
                 <Badge variant="label">{POST_TYPE_LABEL[post.type] ?? post.type}</Badge>
                 <span className="text-meta text-subtle-foreground">{formatCalendarDate(post.eventDate)}</span>
