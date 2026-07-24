@@ -59,7 +59,7 @@ export default async function PostsPage() {
             >
               {post.coverUrl && (
                 // eslint-disable-next-line @next/next/no-img-element -- URL assinada, curta duracao
-                <img src={post.coverUrl} alt="" className="h-28 w-full rounded-lg object-cover" />
+                <img src={post.coverUrl} alt="" className="h-28 w-full rounded-lg bg-muted object-contain" />
               )}
               <div className="flex items-center justify-between gap-2">
                 <Badge variant="label">{POST_TYPE_LABEL[post.type] ?? post.type}</Badge>
