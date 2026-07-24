@@ -1,4 +1,4 @@
-import type { Prisma, PostType } from "@prisma/client";
+import type { Prisma, PostType, PostMediaKind } from "@prisma/client";
 
 export function findPostsByTenant(tx: Prisma.TransactionClient, tenantId: string) {
   return tx.post.findMany({ where: { tenantId } });
@@ -132,13 +132,46 @@ export async function replacePostPeople(
   });
 }
 
+export type PostMediaInput = {
+  mediaUrl: string;
+  kind: PostMediaKind;
+  mimeType: string;
+  originalName: string;
+  sizeBytes: number;
+};
+
 /** `tx` ja' roda dentro da transacao aberta por withTenant — nao aninha
- * outra transacao aqui, so' duas queries sequenciais na mesma. */
-export async function addPostMedia(tx: Prisma.TransactionClient, tenantId: string, postId: string, mediaUrl: string) {
+ * outra transacao aqui, so' duas queries sequenciais na mesma. `kind`/`mimeType`
+ * vem do sniff do confirm (tipo REAL), nunca do que o cliente declarou. */
+export async function addPostMedia(
+  tx: Prisma.TransactionClient,
+  tenantId: string,
+  postId: string,
+  media: PostMediaInput,
+) {
   const last = await tx.postMedia.findFirst({ where: { postId, tenantId }, orderBy: { sortOrder: "desc" } });
   return tx.postMedia.create({
-    data: { postId, tenantId, mediaUrl, sortOrder: (last?.sortOrder ?? -1) + 1 },
+    data: {
+      postId,
+      tenantId,
+      mediaUrl: media.mediaUrl,
+      kind: media.kind,
+      mimeType: media.mimeType,
+      originalName: media.originalName,
+      sizeBytes: media.sizeBytes,
+      sortOrder: (last?.sortOrder ?? -1) + 1,
+    },
   });
+}
+
+/** Conta anexos de um post — usado para impor o teto por post no confirm de
+ * upload (o cliente tambem valida, mas o servidor e' a autoridade). */
+export function countPostMedia(tx: Prisma.TransactionClient, tenantId: string, postId: string) {
+  return tx.postMedia.count({ where: { postId, tenantId } });
+}
+
+export function findPostMediaById(tx: Prisma.TransactionClient, tenantId: string, mediaId: string) {
+  return tx.postMedia.findFirst({ where: { id: mediaId, tenantId } });
 }
 
 export function removePostMedia(tx: Prisma.TransactionClient, tenantId: string, mediaId: string) {
