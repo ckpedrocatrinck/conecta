@@ -115,12 +115,19 @@ model Tenant {
   ackRetentionMonths Int @default(60) @map("ack_retention_months")
   // Identidade visual injetada nos cards gerados (INC-009 / design-system §1):
   // logo + 1 cor de destaque, nunca substitui a marca fixa do produto nem o
-  // laranja de acao. logoUrl e' um asset publico (nao pessoal/sensivel, sem
-  // LGPD envolvida) — ao contrario de User.photoUrl, nao passa pelo
-  // MediaStorage assinado. Sem UI de edicao neste INC (DP-15); piloto
-  // configura direto no banco.
-  logoUrl     String? @map("logo_url")
-  accentColor String? @map("accent_color") @db.VarChar(7)
+  // laranja de acao. Editaveis pela tela "Aparencia da empresa" (INC-017,
+  // resolve DP-15).
+  // logoUrl: key do MediaStorage (branding/{tenantId}/logo), unificada com o
+  //   banner (INC-017) — nao e' mais asset publico direto. Marca (nao pessoal,
+  //   sem LGPD), mas servida como as fotos: view assinado por sessao do mesmo
+  //   tenant (isolamento por-tenant). No PNG exportavel (satori, sem cookie) e'
+  //   embutida como data URI, ver card-image/route.ts.
+  // homeBannerKey: key do MediaStorage (branding/{tenantId}/banner) do banner da
+  //   home. Nulo => fallback para o asset fixo public/banners/home.png (home
+  //   nunca fica quebrada). Texto do banner e' a propria imagem (sem campo).
+  logoUrl       String? @map("logo_url")
+  homeBannerKey String? @map("home_banner_key")
+  accentColor   String? @map("accent_color") @db.VarChar(7)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 

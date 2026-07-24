@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { appDb } from "../db/app-client";
 
 // tenants nao tem RLS por tenant_id (e' a raiz da hierarquia multi-tenant,
@@ -41,13 +42,43 @@ export async function findTenantName(tenantId: string): Promise<string | null> {
 
 export type TenantBranding = { logoUrl: string | null; accentColor: string | null };
 
-/** Identidade injetada nos cards gerados (INC-009). `logoUrl` e' asset
- * publico (nao pessoal), servido direto — nao passa pelo MediaStorage
- * assinado usado para fotos de pessoa. */
+/** Identidade injetada nos cards gerados (INC-009). Desde o INC-017 `logoUrl`
+ * e' a KEY do MediaStorage (branding/{tenantId}/logo), nao mais um asset
+ * publico direto — o consumidor resolve: no browser, assina via getViewUrl
+ * (`signBrandingForDisplay`); no PNG exportavel, embute como data URI (satori
+ * nao carrega cookie). accentColor e' texto (nao depende de R2). */
 export async function findTenantBranding(tenantId: string): Promise<TenantBranding> {
   const tenant = await appDb.tenant.findUnique({
     where: { id: tenantId },
     select: { logoUrl: true, accentColor: true },
   });
   return { logoUrl: tenant?.logoUrl ?? null, accentColor: tenant?.accentColor ?? null };
+}
+
+/** Banner da home (INC-017): key do MediaStorage ou null (=> fallback fixo). */
+export async function findTenantHomeBannerKey(tenantId: string): Promise<string | null> {
+  const tenant = await appDb.tenant.findUnique({
+    where: { id: tenantId },
+    select: { homeBannerKey: true },
+  });
+  return tenant?.homeBannerKey ?? null;
+}
+
+/** Campos da tela "Aparencia da empresa" (INC-017). Atualizacao parcial: so'
+ * grava as chaves presentes (undefined = nao mexe). `logoUrl`/`homeBannerKey`
+ * sao keys de storage; `accentColor` e' hex `#RRGGBB` (validado na action).
+ * tenants nao tem RLS — o update passa pelo tx do withTenant so' para casar com
+ * o registro de auditoria na mesma operacao. */
+export type TenantAppearanceUpdate = {
+  homeBannerKey?: string | null;
+  logoUrl?: string | null;
+  accentColor?: string | null;
+};
+
+export function updateTenantAppearance(
+  tx: Prisma.TransactionClient,
+  tenantId: string,
+  data: TenantAppearanceUpdate,
+) {
+  return tx.tenant.update({ where: { id: tenantId }, data });
 }

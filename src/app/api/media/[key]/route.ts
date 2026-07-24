@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getActiveSession, type ActiveSession } from "../../../../lib/auth/session";
+import { getActiveSession } from "../../../../lib/auth/session";
 import { verifyMediaToken } from "../../../../lib/storage/media-storage";
 import { readMediaFile, writeMediaFile } from "../../../../lib/storage/local-media-fs";
 import {
@@ -7,31 +7,7 @@ import {
   ALLOWED_MEDIA_CONTENT_TYPES,
   MAX_ANY_UPLOAD_BYTES,
 } from "../../../../lib/storage/media-constraints";
-
-/**
- * Autorizacao por namespace de chave — cada prefixo tem sua propria regra de
- * quem pode ler/escrever:
- * - `avatars/{tenantId}/{userId}`: so' o proprio dono, ver/enviar (INC-003).
- * - `posts/{tenantId}/{postId}/...`: ver e' liberado para qualquer sessao
- *   ativa do tenant (colaborador precisa ver a foto no feed); enviar so'
- *   para admin do mesmo tenant (INC-008).
- */
-function authorizeMediaKey(key: string, mode: "view" | "upload", session: ActiveSession): boolean {
-  const avatarMatch = key.match(/^avatars\/([^/]+)\/([^/]+)$/);
-  if (avatarMatch) {
-    const [, tenantId, userId] = avatarMatch;
-    return tenantId === session.tenantId && userId === session.userId;
-  }
-
-  const postMediaMatch = key.match(/^posts\/([^/]+)\/([^/]+)\/[^/]+$/);
-  if (postMediaMatch) {
-    const [, tenantId] = postMediaMatch;
-    if (tenantId !== session.tenantId) return false;
-    return mode === "view" || session.role === "admin";
-  }
-
-  return false;
-}
+import { authorizeMediaKey } from "./authorize";
 
 export async function GET(request: NextRequest, context: { params: Promise<{ key: string }> }) {
   const { key } = await context.params;
@@ -82,10 +58,12 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ key
   // por classe e' o confirm (validateUploadedObject), que le o objeto gravado.
   // Avatar (INC-003) so' aceita imagem — nao ha etapa de confirm que revalide a
   // foto de perfil, entao a guarda por namespace continua sendo a linha de
-  // defesa aqui. Anexo de post (posts/) aceita imagem + PDF; o tipo REAL desses
-  // e' reconferido no confirm (validateUploadedObject).
+  // defesa aqui. Branding (INC-017: banner + logo) tambem so' aceita imagem; o
+  // tipo REAL e' reconferido no confirm (validateUploadedObject). Anexo de post
+  // (posts/) aceita imagem + PDF; o tipo REAL desses e' reconferido no confirm.
   const contentType = request.headers.get("content-type") ?? "";
-  const allowedForKey = decodedKey.startsWith("avatars/")
+  const imageOnly = decodedKey.startsWith("avatars/") || decodedKey.startsWith("branding/");
+  const allowedForKey = imageOnly
     ? (ALLOWED_IMAGE_CONTENT_TYPES as readonly string[])
     : [...ALLOWED_MEDIA_CONTENT_TYPES];
   if (!allowedForKey.includes(contentType)) {
