@@ -26,6 +26,12 @@ token, isolado por tenant — LGPD), gravado/lido pela abstração de storage.
    PDF como **card de documento** (ícone + nome + tamanho + abrir), nunca inline.
 5. Acesso só via `/api/media` (sessão + token + tenant) e `/api/anexo/[id]` (re-assina
    o link no clique). Nunca URL pública adivinhável.
+6. **Auto-rascunho (solução TEMPORÁRIA — ver DP-19):** "Novo post" cria/reaproveita
+   um rascunho e leva direto à tela de compor (que já tem a seção Anexos), para o
+   admin anexar na mesma tela em que escreve — a chave do storage precisa do
+   `postId`. Órfãos tratados 100% no DB (reusa 1 rascunho *pristine* por admin +
+   apaga extras + não lista pristine + guard de publicação exige título). A solução
+   limpa (staging por sessão) depende do R2 e fica como dívida (DP-19).
 
 ## Critérios de aceite
 - [x] Upload aceita jpg/png/webp/pdf e **rejeita o resto**, inclusive arquivo com
@@ -39,6 +45,9 @@ token, isolado por tenant — LGPD), gravado/lido pela abstração de storage.
 - [x] Anexo servido só com sessão/token; nunca público — contrato reusado de
       `/api/media` + `media-storage.test.ts`.
 - [x] Feed em 360px: PDF como card de documento empilhado, sem scroll horizontal.
+- [x] Auto-rascunho: "Novo post" cai direto na tela de compor com Anexos; ≤1
+      rascunho pristine por admin (reuso + limpeza); pristine não aparece na lista;
+      não publica sem título — `post-auto-draft.test.ts`.
 
 ## ⚠️ Pré-requisito de PRODUÇÃO — ativar o R2 ANTES de subir
 Em **dev**, o storage é o **mock local** (`.local-media`, fora de `public/`,
@@ -75,8 +84,9 @@ disco é efêmero e por instância — anexos gravados sumiriam. Antes do go-liv
 - **Branch:** inc-016-anexos-no-feed
 - **Migração:** `20260724100000_inc016_post_media_attachments` (aplicada com
   `prisma migrate deploy`, ADR-008).
-- **Testes:** 246 passando (19 novos: sniff, validação de confirm, contrato de
-  storage local, isolamento de anexo).
+- **Testes:** suíte verde (novos: sniff, validação de confirm incl. arquivo
+  disfarçado ponta-a-ponta no storage real, contrato de storage local, isolamento
+  de anexo, auto-rascunho).
 
 ---
 
@@ -102,6 +112,11 @@ disco é efêmero e por instância — anexos gravados sumiriam. Antes do go-liv
   cliente e remoção que também apaga o objeto no storage.
 - Avatar: como não tem etapa de confirm, a rota `/api/media` passou a validar
   o tipo por namespace (avatar → só imagem; posts → imagem+PDF).
+- **Auto-rascunho (DP-19):** "Novo post" (`createOrReuseDraftAction`) cria/reaproveita
+  um rascunho e leva direto à tela de compor (a antiga tela `novo/` foi removida —
+  a de edição virou a única de composição). Órfãos tratados no DB:
+  `findPristineDraftsByAdmin` + `deletePostsByIds` (reusa 1, apaga extras → ≤1 por
+  admin), `findPostsForAdminList` exclui pristine, `publishPostAction` exige título.
 
 ### Decisões tomadas durante a implementação
 - **Caminho presigned + validar-no-confirm** (em vez de proxy pelo servidor): o
@@ -116,33 +131,46 @@ disco é efêmero e por instância — anexos gravados sumiriam. Antes do go-liv
   também habilita a limpeza do objeto na remoção de anexo e o follow-up de
   anonimização.
 - **`kind`/`mime` vêm do sniff, nunca do cliente.**
+- **Auto-rascunho é temporário (DP-19):** solução limpa (staging por sessão)
+  depende do R2 (mover objetos no storage). O tratamento de órfãos escolhido
+  (reuso + limpeza + não-listar + guard) limita o custo a ≤1 rascunho vazio por
+  admin, sem sweep agendado.
 
 ### Como testar (QA local — URLs com slug `vale-verde`)
 Pré: `npm run dev`, logado como admin do tenant de dev.
-1. **Postar com imagem:** `/vale-verde/admin/posts/novo` → cria rascunho →
-   na tela `/vale-verde/admin/posts/{id}`, seção **Anexos**, enviar um JPG/PNG
-   → publicar. Ver no feed `/vale-verde` o thumbnail; tocar abre em tamanho
-   grande.
+1. **Postar com imagem:** `/vale-verde/admin/posts` → **Novo post** → cai
+   direto na tela de compor (`/vale-verde/admin/posts/{id}`) com a seção
+   **Anexos** → enviar um JPG/PNG → preencher título/data → publicar. Ver no feed
+   `/vale-verde` o thumbnail; tocar abre em tamanho grande.
 2. **Postar com PDF:** mesmo fluxo, enviar um PDF (≤10 MB). No feed, aparece o
    **card de documento** (ícone + nome + tamanho + "Abrir"); tocar abre o PDF.
-3. **Rejeição de tipo falso:** renomear um `.exe`/`.zip` para `documento.pdf` e
-   tentar enviar → rejeição clara ("Tipo de arquivo não permitido…"); o objeto não
-   vira anexo (e é apagado do storage).
+3. **Rejeição de tipo falso:** renomear um `.exe`/`.zip`/`.txt` para `documento.pdf`
+   e tentar enviar → rejeição clara ("Tipo de arquivo não permitido…"); o objeto
+   não vira anexo (e é apagado do storage).
 4. **Limite:** enviar imagem >5 MB ou PDF >10 MB → rejeição de tamanho.
 5. **360px:** abrir o feed em viewport 360px → sem scroll horizontal; PDFs
    empilhados.
+6. **Auto-rascunho:** clicar **Novo post** 3× sem preencher → volta sempre ao mesmo
+   rascunho vazio; a lista de posts **não** mostra rascunhos vazios; tentar publicar
+   sem título → erro "Preencha ao menos o título antes de publicar."
 
 ### Critérios de aceite
-- [x] Tipos válidos aceitos, inválidos (incl. extensão falsa) rejeitados — testes.
+- [x] Tipos válidos aceitos, inválidos (incl. extensão falsa .exe/.zip/.txt→.pdf)
+      rejeitados + objeto apagado — `media-sniff.test.ts`, `validate-upload.test.ts`,
+      `local-media-fs.test.ts` (ponta-a-ponta no storage real).
 - [x] Limites 5/10 MB no tamanho real; objeto reprovado apagado — testes.
 - [x] Isolamento por tenant; nunca público — testes + contrato /api/media.
 - [x] Feed 360px com card de PDF.
+- [x] Auto-rascunho: compor+anexar na mesma tela; ≤1 pristine/admin; não lista
+      pristine; não publica sem título — `post-auto-draft.test.ts`.
 
 ### Pendências / dívidas técnicas criadas
 - **R2 é pré-requisito de produção** (ver seção acima) — mock local não sobrevive
   em serverless.
+- **DP-19 — auto-rascunho é temporário**: solução limpa (staging por sessão)
+  depende do R2. Registrada em `docs/05-Decisoes-Pendentes.md`.
 - **Orphan-sweep** e **`delete(key)` na anonimização** — follow-ups ligados à
-  ativação do R2.
+  ativação do R2 (mesmo conjunto de dívidas da DP-19).
 - `npx prisma generate` deu `EPERM` ao renomear o `query_engine-*.dll.node`
   (arquivo travado por processo Node no Windows); os tipos foram gerados e os
   testes passam com o engine existente. Se der problema, fechar processos Node e

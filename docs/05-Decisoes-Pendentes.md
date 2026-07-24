@@ -58,6 +58,9 @@
 **DP-18 — Site institucional (raiz do domínio, ex.: `conecta.com.br`).** Página de marketing/institucional na raiz do domínio, **separada** do app (o app fica em subdomínio/rota própria). **Decisão de escopo: é projeto SEPARADO e pós-piloto** — não faz parte do produto Conecta nem de nenhum INC atual; registrado aqui só para não se perder. Depende de DP-02 (nome/domínio definitivo).
 **Responsável:** Pedro (pós-piloto).
 
+**DP-19 — Auto-rascunho é solução TEMPORÁRIA para anexos "postar com tudo junto" (INC-016).** Para o admin anexar imagem/PDF na mesma tela em que escreve o post, o "Novo post" cria/reaproveita um rascunho automaticamente e leva direto à tela de compor — porque a chave do storage do anexo (`posts/{tenant}/{postId}/…`) precisa do `postId`, que só existe depois do rascunho nascer. O tratamento de órfãos atual (reusar 1 rascunho pristine por admin + apagar extras + não listar pristine + guard de publicação) resolve o custo de escala **sem sweep e sem R2** (é 100% DB), mas o modelo continua sendo "criar linha antes de ter conteúdo". A **solução limpa é staging por sessão**: o upload vai para uma área temporária (`_staging/{sessão}/…`) e é *rekeyada* para o post no momento do salvar — assim nenhum rascunho nasce só para hospedar anexo. Ela **depende do R2 real**, porque rekeyar = **mover objetos no storage** (copy+delete / rename de chave), operação que o mock local de disco não expõe de forma production-safe. **Quitar quando o R2 for ativado**, junto do **conjunto de dívidas do R2**: orphan-sweep de objetos não-confirmados, `delete(key)` na anonimização (INC-013 G1), logos de benefício (INC-015 fase 2) e o banner (INC-017). Ver `docs/04-Roadmap/incrementos/INC-016-anexos-no-feed.md`.
+**Responsável:** Pedro (quitar na ativação do R2).
+
 ---
 
 ## Bloqueadores e dependências do go-live do piloto (INC-013)
