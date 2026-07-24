@@ -32,6 +32,10 @@ token, isolado por tenant — LGPD), gravado/lido pela abstração de storage.
    `postId`. Órfãos tratados 100% no DB (reusa 1 rascunho *pristine* por admin +
    apaga extras + não lista pristine + guard de publicação exige título). A solução
    limpa (staging por sessão) depende do R2 e fica como dívida (DP-19).
+7. **Preview com a imagem + lightbox:** o "Preview do card" na tela de compor mostra
+   as imagens anexadas (como no feed real); clicar em qualquer thumbnail (preview ou
+   seção Anexos) abre a imagem ampliada num lightbox (sobreposição, componente
+   reutilizável `ImageLightbox` sobre o Dialog do base-ui).
 
 ## Critérios de aceite
 - [x] Upload aceita jpg/png/webp/pdf e **rejeita o resto**, inclusive arquivo com
@@ -153,6 +157,9 @@ Pré: `npm run dev`, logado como admin do tenant de dev.
 6. **Auto-rascunho:** clicar **Novo post** 3× sem preencher → volta sempre ao mesmo
    rascunho vazio; a lista de posts **não** mostra rascunhos vazios; tentar publicar
    sem título → erro "Preencha ao menos o título antes de publicar."
+7. **Preview + lightbox:** anexar uma imagem → ela aparece no "Preview do card";
+   clicar na imagem (no preview ou na seção Anexos) → abre ampliada; clicar fora / no
+   × → fecha.
 
 ### Critérios de aceite
 - [x] Tipos válidos aceitos, inválidos (incl. extensão falsa .exe/.zip/.txt→.pdf)
