@@ -1,7 +1,6 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
-import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/session";
 import { withTenant } from "@/lib/db/with-tenant";
 import {
@@ -95,29 +94,31 @@ export async function confirmBrandingUploadAction(
 
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
 
-/** Cor de destaque do tenant (`accentColor`). Texto no banco — NAO depende de
- * R2, funciona no piloto independente do storage. */
-export async function updateAccentColorAction(formData: FormData) {
-  const session = await requireAdmin();
-  const raw = String(formData.get("accentColor") ?? "").trim();
-  const base = `/${session.tenantSlug}/admin/aparencia`;
+export type UpdateAccentColorResult = { ok: true } | { ok: false; error: string };
 
-  if (!HEX_COLOR.test(raw)) {
-    redirect(`${base}?erro=cor`);
+/** Cor de destaque do tenant (`accentColor`). Salva NO ATO (chamada direta pelo
+ * componente client ao mudar a cor, sem botao — mesmo padrao "muda => salva =>
+ * confirma" do banner/logo). Texto no banco: NAO depende de R2, funciona no
+ * piloto independente do storage. Retorna resultado para o feedback inline. */
+export async function updateAccentColorAction(accentColor: string): Promise<UpdateAccentColorResult> {
+  const session = await requireAdmin();
+  const value = accentColor.trim().toLowerCase();
+
+  if (!HEX_COLOR.test(value)) {
+    return { ok: false, error: "Cor inválida (use o seletor)." };
   }
-  const accentColor = raw.toLowerCase();
 
   await withTenant({ tenantId: session.tenantId }, async (tx) => {
-    await updateTenantAppearance(tx, session.tenantId, { accentColor });
+    await updateTenantAppearance(tx, session.tenantId, { accentColor: value });
     await recordAuditLog(tx, {
       tenantId: session.tenantId,
       actorUserId: session.userId,
       action: "tenant.appearance.update",
       entity: "Tenant",
       entityId: session.tenantId,
-      metadata: { field: "accentColor", value: accentColor },
+      metadata: { field: "accentColor", value },
     });
   });
 
-  redirect(`${base}?ok=cor`);
+  return { ok: true };
 }

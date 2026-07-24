@@ -32,6 +32,9 @@ export function AppearanceUploader({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  const savedLabel = target === "banner" ? "Banner atualizado." : "Logo atualizado.";
 
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -39,12 +42,14 @@ export function AppearanceUploader({
 
     // Validacao antecipada (feedback rapido) — a autoridade e' o confirm.
     if (kindForContentType(file.type) !== "image") {
+      setSuccess(null);
       setError("Envie uma imagem (JPG, PNG ou WEBP).");
       event.target.value = "";
       return;
     }
     const limit = maxBytesForContentType(file.type);
     if (limit !== null && file.size > limit) {
+      setSuccess(null);
       setError("Imagem acima do limite de 5 MB.");
       event.target.value = "";
       return;
@@ -52,6 +57,7 @@ export function AppearanceUploader({
 
     setPending(true);
     setError(null);
+    setSuccess(null);
     try {
       // Cada etapa tem sua propria mensagem: NAO colapsar tudo num "formato
       // invalido" generico. Um 500 de servidor (ex.: falha de banco) nao e' um
@@ -88,6 +94,7 @@ export function AppearanceUploader({
         setError(confirmed.error);
         return;
       }
+      setSuccess(savedLabel);
       router.refresh();
     } finally {
       setPending(false);
@@ -128,6 +135,7 @@ export function AppearanceUploader({
       />
 
       {error && <p role="alert" className="text-meta text-destructive">{error}</p>}
+      {success && <p role="status" className="text-meta font-medium text-success">{success}</p>}
     </div>
   );
 }
