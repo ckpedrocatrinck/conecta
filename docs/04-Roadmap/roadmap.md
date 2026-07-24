@@ -34,6 +34,7 @@
 | 014 | Resolução de tenant por path (`/{slug}`) | fundação (antes do hardening) | ✅ | ADR-010 |
 | 015 | Clube de Benefícios / Parceiros | pré-piloto (paridade portal legado) | ✅ | 014 |
 | 016 | Anexos no feed (imagem + PDF) | 3 (engajamento) | ✅ | 008 · R2 é pré-requisito de PRODUÇÃO |
+| 017 | Aparência da empresa (banner + logo + cor) | pré-piloto (resolve DP-15) | ✅ | 016 · banner/logo dependem de R2 em PRODUÇÃO (cor não) |
 | 013 | Hardening pré-piloto: LGPD checklist, backup/restore, seeds reais | 5 | ⬜ | todos, 014 |
 
 Observações:
