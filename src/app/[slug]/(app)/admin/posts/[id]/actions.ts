@@ -26,6 +26,13 @@ import { uploadRejectMessage, validateUploadedObject } from "@/lib/storage/valid
 
 const VALID_TYPES = new Set<PostType>(["recognition", "tenure", "promotion", "general"]);
 
+/**
+ * Salva os campos do post e, se `intent=publish`, publica na MESMA operacao —
+ * um form, dois botoes de submit ("Salvar" / "Publicar", ver EditPostForm). O
+ * titulo validado aqui vem do FORMULARIO (nao do banco), entao "digitar titulo
+ * e clicar Publicar" funciona sem precisar salvar antes. O guard do
+ * auto-rascunho (INC-016) e' o proprio `!title`: rascunho vazio nao publica.
+ */
 export async function updatePostAction(formData: FormData) {
   const session = await requireAdmin();
   const id = String(formData.get("id") ?? "");
@@ -36,6 +43,7 @@ export async function updatePostAction(formData: FormData) {
   const eventDateRaw = String(formData.get("eventDate") ?? "");
   const branchId = String(formData.get("branchId") ?? "").trim();
   const personIds = formData.getAll("personIds").map(String);
+  const publish = String(formData.get("intent") ?? "save") === "publish";
 
   const eventDate = eventDateRaw ? new Date(eventDateRaw) : null;
 
@@ -66,35 +74,20 @@ export async function updatePostAction(formData: FormData) {
       entity: "Post",
       entityId: id,
     });
+
+    if (publish) {
+      await publishPost(tx, session.tenantId, id);
+      await recordAuditLog(tx, {
+        tenantId: session.tenantId,
+        actorUserId: session.userId,
+        action: "post.publish",
+        entity: "Post",
+        entityId: id,
+      });
+    }
   });
 
-  redirect(`/${session.tenantSlug}/admin/posts/${id}?salvo=ok`);
-}
-
-export async function publishPostAction(formData: FormData) {
-  const session = await requireAdmin();
-  const id = String(formData.get("id") ?? "");
-  if (!id) redirect(`/${session.tenantSlug}/admin/posts`);
-
-  // Guard do auto-rascunho (INC-016): nunca publicar um rascunho vazio/pristine.
-  // A publicacao exige titulo — o resto (data) ja' vem preenchido (NOT NULL).
-  const post = await withTenant({ tenantId: session.tenantId }, (tx) => findPostById(tx, session.tenantId, id));
-  if (!post || post.title.trim() === "") {
-    redirect(`/${session.tenantSlug}/admin/posts/${id}?erro=vazio`);
-  }
-
-  await withTenant({ tenantId: session.tenantId }, async (tx) => {
-    await publishPost(tx, session.tenantId, id);
-    await recordAuditLog(tx, {
-      tenantId: session.tenantId,
-      actorUserId: session.userId,
-      action: "post.publish",
-      entity: "Post",
-      entityId: id,
-    });
-  });
-
-  redirect(`/${session.tenantSlug}/admin/posts/${id}?ok=publicado`);
+  redirect(`/${session.tenantSlug}/admin/posts/${id}?${publish ? "ok=publicado" : "salvo=ok"}`);
 }
 
 function postMediaKey(tenantId: string, postId: string): string {

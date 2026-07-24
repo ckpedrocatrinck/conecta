@@ -9,13 +9,10 @@ import { isPostCardKind } from "@/lib/cards/card-model";
 import { mediaStorage } from "@/lib/storage/media-storage";
 import { EditPostForm } from "./form";
 import { PostPhotoUpload } from "./photo-upload";
-import { publishPostAction } from "./actions";
 import { Button } from "@/components/ui/button";
-import { SubmitButton } from "@/components/ui/submit-button";
 
 const ERROR_MESSAGES: Record<string, string> = {
   obrigatorio: "Preencha tipo, título e data do evento.",
-  vazio: "Preencha ao menos o título antes de publicar.",
 };
 
 const SUCCESS_MESSAGES: Record<string, string> = {
@@ -79,12 +76,6 @@ export default async function PostDetailPage({
                 Baixar card
               </Button>
             </a>
-          )}
-          {post.status === "draft" && (
-            <form action={publishPostAction}>
-              <input type="hidden" name="id" value={post.id} />
-              <SubmitButton size="touch" pendingLabel="Publicando…">Publicar</SubmitButton>
-            </form>
           )}
         </div>
       </div>

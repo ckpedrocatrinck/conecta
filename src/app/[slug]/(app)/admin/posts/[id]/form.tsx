@@ -17,6 +17,7 @@ type PostDetail = {
   body: string | null;
   eventDate: Date;
   branchId: string | null;
+  status: string;
 };
 
 export function EditPostForm({
@@ -100,9 +101,20 @@ export function EditPostForm({
         images={previewImages}
       />
 
-      <SubmitButton size="touch" className="self-start" pendingLabel="Salvando…">
-        Salvar
-      </SubmitButton>
+      {/* Um form, dois submits: o botao clicado envia name=intent, e a
+          updatePostAction salva (save) ou salva+publica (publish) usando o
+          TITULO do formulario — por isso "digitar titulo e Publicar" funciona
+          sem salvar antes (INC-016). */}
+      <div className="flex flex-wrap gap-2">
+        <SubmitButton type="submit" name="intent" value="save" variant="outline" size="touch" pendingLabel="Salvando…">
+          Salvar rascunho
+        </SubmitButton>
+        {post.status === "draft" && (
+          <SubmitButton type="submit" name="intent" value="publish" size="touch" pendingLabel="Publicando…">
+            Publicar
+          </SubmitButton>
+        )}
+      </div>
     </form>
   );
 }
