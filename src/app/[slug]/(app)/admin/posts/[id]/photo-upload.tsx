@@ -5,6 +5,7 @@ import { FileText } from "lucide-react";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ImageLightbox } from "@/components/ui/image-lightbox";
 import {
   MAX_POST_ATTACHMENTS,
   kindForContentType,
@@ -115,8 +116,7 @@ export function PostPhotoUpload({
               .filter((m) => m.kind === "image")
               .map((media) => (
                 <div key={media.id} className="relative">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- URL assinada, curta duracao */}
-                  <img src={media.viewUrl ?? ""} alt="" className="size-20 rounded-lg border border-border object-cover" />
+                  <ImageLightbox src={media.viewUrl ?? ""} className="size-20 rounded-lg border border-border" />
                   <ConfirmDialog
                     triggerLabel="×"
                     triggerAriaLabel="Remover anexo"

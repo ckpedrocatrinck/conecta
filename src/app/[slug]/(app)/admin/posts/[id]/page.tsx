@@ -109,6 +109,7 @@ export default async function PostDetailPage({
         people={people}
         selectedPersonIds={post.people.map((p) => p.userId)}
         branding={branding}
+        previewImages={existingMedia.filter((m) => m.kind === "image").map((m) => ({ id: m.id, viewUrl: m.viewUrl }))}
       />
     </div>
   );

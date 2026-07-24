@@ -6,7 +6,7 @@ import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { PostPeoplePicker, type PickablePerson } from "@/components/admin/post-people-picker";
-import { PostCardPreview } from "@/components/admin/post-card-preview";
+import { PostCardPreview, type PreviewImage } from "@/components/admin/post-card-preview";
 import type { TenantBranding } from "@/lib/repositories/tenant.repository";
 import { updatePostAction } from "./actions";
 
@@ -25,12 +25,14 @@ export function EditPostForm({
   people,
   selectedPersonIds,
   branding,
+  previewImages = [],
 }: {
   post: PostDetail;
   branches: { id: string; name: string }[];
   people: PickablePerson[];
   selectedPersonIds: string[];
   branding: TenantBranding;
+  previewImages?: PreviewImage[];
 }) {
   const [type, setType] = useState(post.type);
   const [title, setTitle] = useState(post.title);
@@ -89,7 +91,14 @@ export function EditPostForm({
 
       <PostPeoplePicker people={people} defaultSelectedIds={selectedPersonIds} onSelectionChange={setSelectedPeople} />
 
-      <PostCardPreview type={type} title={title} body={body} selectedPeople={selectedPeople} branding={branding} />
+      <PostCardPreview
+        type={type}
+        title={title}
+        body={body}
+        selectedPeople={selectedPeople}
+        branding={branding}
+        images={previewImages}
+      />
 
       <SubmitButton size="touch" className="self-start" pendingLabel="Salvando…">
         Salvar
