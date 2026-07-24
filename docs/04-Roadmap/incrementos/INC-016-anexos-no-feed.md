@@ -91,6 +91,10 @@ disco é efêmero e por instância — anexos gravados sumiriam. Antes do go-liv
 - **Testes:** suíte verde (novos: sniff, validação de confirm incl. arquivo
   disfarçado ponta-a-ponta no storage real, contrato de storage local, isolamento
   de anexo, auto-rascunho).
+- **QA validado por Pedro (3 dimensões):** funcional (postar com anexo pelo fluxo
+  auto-rascunho "tudo junto"); visual (feed Solução B, card coeso, capa admin
+  ancorada no topo); segurança (PDF real passa; `.txt` renomeado para `.pdf` dá
+  "erro no envio" e NÃO vira anexo — a validação discrimina legítimo de disfarçado).
 
 ---
 
@@ -110,17 +114,27 @@ disco é efêmero e por instância — anexos gravados sumiriam. Antes do go-liv
   sniff do magic number, confere o tamanho real, apaga o objeto se reprovar, e só
   então grava `PostMedia`). Núcleo isolado e testável em
   `src/lib/storage/validate-upload.ts` e `media-sniff.ts`.
-- Feed: imagens inline (thumbnail que abre grande) + `DocumentAttachmentCard`
-  para PDF. Rota `/api/anexo/[mediaId]` re-assina a view URL no clique (302).
+- Feed (**Solução B — aspecto natural**): 1 imagem ocupa a largura do card e a
+  altura segue a proporção, com teto **90vh** + `object-top` (nunca corta
+  cabeça/rosto — regra de ouro do feed de reconhecimento); 2+ imagens viram
+  **grade 2-col**. **Card coeso:** imagem + reação entram como slot `footer` dentro
+  do `CardShell` (mesma borda/fundo, uma unidade). PDF como `DocumentAttachmentCard`.
+  Lightbox via `/api/anexo/[mediaId]` (re-assina a view URL no clique, robusto ao TTL).
 - Admin: seção "Anexos" aceita imagem OU PDF (até 5), com validação antecipada no
-  cliente e remoção que também apaga o objeto no storage.
+  cliente e remoção que também apaga o objeto no storage. Card da lista mostra
+  capa (primeira imagem) em **4:3 `object-cover object-top`** (grade uniforme,
+  corte pela base) via `PostCover`; rascunho sem título aparece como tal.
 - Avatar: como não tem etapa de confirm, a rota `/api/media` passou a validar
   o tipo por namespace (avatar → só imagem; posts → imagem+PDF).
 - **Auto-rascunho (DP-19):** "Novo post" (`createOrReuseDraftAction`) cria/reaproveita
   um rascunho e leva direto à tela de compor (a antiga tela `novo/` foi removida —
   a de edição virou a única de composição). Órfãos tratados no DB:
   `findPristineDraftsByAdmin` + `deletePostsByIds` (reusa 1, apaga extras → ≤1 por
-  admin), `findPostsForAdminList` exclui pristine, `publishPostAction` exige título.
+  admin), `findPostsForAdminList` exclui pristine.
+- **Publicar salva junto:** "Salvar rascunho" e "Publicar" são dois submits do
+  MESMO form (`name=intent`); `updatePostAction` valida o título do **formulário**
+  (não do banco) e, se `intent=publish`, salva e publica na mesma operação — assim
+  "digitar título e Publicar" funciona sem salvar antes, e rascunho vazio não publica.
 
 ### Decisões tomadas durante a implementação
 - **Caminho presigned + validar-no-confirm** (em vez de proxy pelo servidor): o
