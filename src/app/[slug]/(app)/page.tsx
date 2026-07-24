@@ -17,7 +17,9 @@ import { findUnreadNotificationsForUser, markNotificationRead } from "@/lib/repo
 import { findPostsForFeed } from "@/lib/repositories/post.repository";
 import { findOpenJobOpeningsForEmployee } from "@/lib/repositories/job-opening.repository";
 import { findActiveBenefitsForEmployee } from "@/lib/repositories/benefit.repository";
-import { findTenantBranding } from "@/lib/repositories/tenant.repository";
+import { findTenantBranding, findTenantHomeBannerKey } from "@/lib/repositories/tenant.repository";
+import { signBrandingForDisplay } from "@/lib/branding/branding-display";
+import { mediaStorage } from "@/lib/storage/media-storage";
 import { buildFeedCards, FEED_PAGE_SIZE } from "@/lib/feed/build-feed-view";
 import { birthdayWindowMonthDays } from "@/lib/dates/birthday-window";
 import { buildBirthdayListView, buildTodaysBirthdayCards } from "@/lib/birthdays/build-birthday-view";
@@ -30,7 +32,7 @@ export default async function Home() {
   const session = await requireOnboardedSession();
   const now = new Date();
   const todayMonthDay = birthdayWindowMonthDays(now, 0);
-  const [{ user, notifications, feedPosts, birthdayRows, openJobs, benefits, pendingAnnouncements }, branding] = await Promise.all([
+  const [{ user, notifications, feedPosts, birthdayRows, openJobs, benefits, pendingAnnouncements }, branding, homeBannerKey] = await Promise.all([
     withTenant({ tenantId: session.tenantId }, async (tx) => ({
       user: await findUserById(tx, session.tenantId, session.userId),
       notifications: await findUnreadNotificationsForUser(tx, session.tenantId, session.userId),
@@ -46,8 +48,13 @@ export default async function Home() {
         await listAnnouncementsForUser(tx, session.tenantId, session.userId)
       ).items.filter((i) => i.state.awaitingAck),
     })),
-    findTenantBranding(session.tenantId),
+    findTenantBranding(session.tenantId).then(signBrandingForDisplay),
+    findTenantHomeBannerKey(session.tenantId),
   ]);
+
+  // Banner da home: key do tenant (assinada) ou fallback fixo — home nunca fica
+  // sem banner (INC-017).
+  const homeBannerSrc = homeBannerKey ? await mediaStorage.getViewUrl(homeBannerKey) : "/banners/home.png";
 
   const feedCards = await buildFeedCards(feedPosts, session.userId);
   const lastFeedCard = feedCards.at(-1);
@@ -74,8 +81,8 @@ export default async function Home() {
       </div>
 
       <HomeBanner
-        imageSrc="/banners/home.png"
-        imageAlt="Comunicação que conecta. Informação que transforma. Aqui a informação chega, a equipe se engaja e todos crescem juntos."
+        imageSrc={homeBannerSrc}
+        imageAlt={homeBannerKey ? "Banner da empresa" : "Comunicação que conecta. Informação que transforma. Aqui a informação chega, a equipe se engaja e todos crescem juntos."}
         title="Comunicação que conecta."
         subtitle="Informação que transforma."
       />

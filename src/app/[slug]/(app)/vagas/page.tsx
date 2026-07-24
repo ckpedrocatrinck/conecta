@@ -10,6 +10,7 @@ import { withTenant } from "@/lib/db/with-tenant";
 import { findBranchesByTenant } from "@/lib/repositories/branch.repository";
 import { findOpenJobOpeningsForEmployee, findMyJobApplications } from "@/lib/repositories/job-opening.repository";
 import { findTenantBranding } from "@/lib/repositories/tenant.repository";
+import { signBrandingForDisplay } from "@/lib/branding/branding-display";
 import { jobOpeningToCardData } from "@/lib/jobs/build-job-opening-view";
 
 export default async function VagasPage({
@@ -26,7 +27,7 @@ export default async function VagasPage({
       branches: await findBranchesByTenant(tx, session.tenantId),
       myApplications: await findMyJobApplications(tx, session.tenantId, session.userId),
     })),
-    findTenantBranding(session.tenantId),
+    findTenantBranding(session.tenantId).then(signBrandingForDisplay),
   ]);
 
   const appliedJobIds = new Set(myApplications.map((a) => a.jobOpeningId));

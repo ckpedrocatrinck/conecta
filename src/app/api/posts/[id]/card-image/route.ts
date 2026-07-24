@@ -7,6 +7,7 @@ import { findTenantBranding } from "@/lib/repositories/tenant.repository";
 import { buildFeedCards } from "@/lib/feed/build-feed-view";
 import { buildPostCardData } from "@/lib/cards/card-model";
 import { withAbsoluteMediaUrls } from "@/lib/cards/absolute-urls";
+import { inlineBrandingLogoForExport } from "@/lib/branding/branding-display";
 import { renderCardImage } from "@/lib/cards/render";
 import { CARD_IMAGE_HEIGHT, CARD_IMAGE_WIDTH } from "@/lib/cards/render/card-image-shell";
 import { CARD_FONTS } from "@/lib/cards/render/fonts";
@@ -38,7 +39,11 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
   if (result === null) return NextResponse.json({ error: "not found" }, { status: 404 });
   if (result === "forbidden") return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
-  const cardData = buildPostCardData(result.feedCard, result.branding);
+  // Logo embutido como data URI: satori roda sem cookie, entao a URL assinada
+  // de /api/media nao serve aqui (INC-017). O <img> do card nativo, no browser,
+  // usa a URL assinada normal — so' o export precisa deste tratamento.
+  const brandingForExport = await inlineBrandingLogoForExport(result.branding);
+  const cardData = buildPostCardData(result.feedCard, brandingForExport);
   if (!cardData) {
     return NextResponse.json({ error: "este tipo de post não tem card gerado" }, { status: 400 });
   }

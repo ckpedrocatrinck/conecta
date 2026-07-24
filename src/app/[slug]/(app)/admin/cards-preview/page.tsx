@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/lib/auth/session";
 import { findTenantBranding } from "@/lib/repositories/tenant.repository";
+import { signBrandingForDisplay } from "@/lib/branding/branding-display";
 import { buildBirthdayPreviewFixture, buildJobOpeningPreviewFixture } from "@/lib/cards/preview-fixtures";
 import { CardTemplate } from "@/components/cards/templates";
 
@@ -13,7 +14,7 @@ import { CardTemplate } from "@/components/cards/templates";
  */
 export default async function CardsPreviewPage() {
   const session = await requireAdmin();
-  const branding = await findTenantBranding(session.tenantId);
+  const branding = await signBrandingForDisplay(await findTenantBranding(session.tenantId));
 
   return (
     <div className="flex flex-col gap-6">

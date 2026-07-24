@@ -133,6 +133,19 @@ adicionar (o prazo conta a partir do desligamento, não do `updated_at` genéric
 ---
 
 ## Dependências externas (não são código — são suas)
+- **Ativar o R2 (storage real) — pré-requisito de PRODUÇÃO.** Em dev tudo roda no
+  mock local (`LocalMediaStorage`, `.local-media`, servido só via `/api/media`),
+  que **não sobrevive em serverless** (Vercel). Trocar o mock pela implementação
+  R2 (mesma interface `MediaStorage`) destrava, de uma vez, TUDO que é imagem:
+  - fotos de perfil / avatares (INC-003);
+  - anexos do feed — imagem + PDF (INC-016);
+  - **banner da home + logo do tenant (INC-017)** — sem R2, banner cai no
+    fallback fixo e o logo não carrega; **a cor de destaque NÃO depende de R2**
+    (é texto no banco, funciona no piloto);
+  - logos de benefício (fase 2, fora de escopo por ora).
+  É o item de deploy mais crítico: se o R2 falhar, avatar/anexo/banner/logo caem
+  juntos. Ao ativar, cumprir também os follow-ups já registrados: `delete(key)`
+  na anonimização (purga do blob) e o orphan-sweep de rascunhos (DP-19).
 - **Teste do push no iPhone** (INC-012, ainda 🟡): decide se o runbook precisa do
   plano B do WhatsApp. Fazer antes de fechar o Bloco D.
 - **Prazos de retenção LGPD** (DP-06): confirmar com jurídico. Não trava o código

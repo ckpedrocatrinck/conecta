@@ -11,6 +11,8 @@ import { formatDateTimeSaoPaulo } from "@/lib/dates/format-datetime";
 import { HomeBanner } from "@/components/home/home-banner";
 import { StatCard } from "@/components/admin/stat-card";
 import { Avatar } from "@/components/ui/avatar";
+import { findTenantHomeBannerKey } from "@/lib/repositories/tenant.repository";
+import { mediaStorage } from "@/lib/storage/media-storage";
 
 const RECENT_EVENTS_LIMIT = 6;
 
@@ -28,6 +30,11 @@ export default async function AdminHomePage() {
     ]);
     return { published, jobs, activeUsers, branches, summaries, recentLogs };
   });
+
+  // Banner da home admin: mesma regra da home do colaborador (INC-017) — key do
+  // tenant (assinada) ou fallback fixo.
+  const homeBannerKey = await findTenantHomeBannerKey(session.tenantId);
+  const homeBannerSrc = homeBannerKey ? await mediaStorage.getViewUrl(homeBannerKey) : "/banners/home.png";
 
   const pendingAcksTotal = data.summaries.reduce((sum, s) => sum + s.pendingCount, 0);
   const pendingComunicados = data.summaries.filter((s) => s.pendingCount > 0).length;
@@ -50,8 +57,8 @@ export default async function AdminHomePage() {
       </div>
 
       <HomeBanner
-        imageSrc="/banners/home.png"
-        imageAlt="Comunicação que conecta. Informação que transforma. Aqui a informação chega, a equipe se engaja e todos crescem juntos."
+        imageSrc={homeBannerSrc}
+        imageAlt={homeBannerKey ? "Banner da empresa" : "Comunicação que conecta. Informação que transforma. Aqui a informação chega, a equipe se engaja e todos crescem juntos."}
         title="Comunicação que conecta."
         subtitle="Informação que transforma."
       />

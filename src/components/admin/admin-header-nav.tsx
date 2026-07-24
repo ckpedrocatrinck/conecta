@@ -37,6 +37,7 @@ const ADMIN_NAV_PATHS: AdminNavPath[] = [
   { path: "/admin/beneficios", label: "Benefícios" },
   { path: "/admin/colaboradores", label: "Colaboradores" },
   { path: "/admin/filiais", label: "Filiais" },
+  { path: "/admin/aparencia", label: "Aparência" },
   { path: "/pendencias", label: "Pendências" },
   { path: "/admin/auditoria", label: "Auditoria" },
 ]
