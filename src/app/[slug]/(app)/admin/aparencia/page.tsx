@@ -43,10 +43,18 @@ export default async function AparenciaPage() {
             Sem um banner próprio, a arte padrão é usada.
           </p>
         </div>
+        <p className="rounded-[var(--radius-card)] border border-border bg-primary-subtle px-3 py-2 text-meta text-foreground-soft">
+          <span className="font-semibold text-foreground">Tamanho recomendado: 1920×1080px (16:9).</span>{" "}
+          Mantenha o essencial (texto, logo, pessoas) <span className="font-semibold">centralizado</span> —
+          áreas nas bordas podem ser cortadas em telas diferentes.
+        </p>
+        {/* Preview FIEL: mesmo object-cover + teto de 208px (max-h-52) da faixa
+            ao vivo (home-banner.tsx) — o admin ve o recorte real, nao a arte
+            inteira. */}
         <AppearanceUploader
           target="banner"
           currentUrl={bannerUrl ?? DEFAULT_BANNER_SRC}
-          previewClassName="h-auto w-full rounded-[var(--radius-card)] border border-border bg-muted object-contain"
+          previewClassName="h-auto max-h-52 w-full rounded-[var(--radius-card)] border border-border object-cover"
           buttonLabel={bannerUrl ? "Trocar banner" : "Enviar banner"}
         />
       </Card>
