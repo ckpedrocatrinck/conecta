@@ -6,32 +6,41 @@ import type { TenantBranding } from "@/lib/repositories/tenant.repository";
 import { POST_TYPE_LABEL } from "../../lib/posts/labels";
 import { formatCalendarDate } from "../../lib/dates/format-date";
 import type { FeedPostCard } from "../../lib/feed/build-feed-view";
+import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { DocumentAttachmentCard } from "./document-attachment-card";
 import { ReactionButton } from "./reaction-button";
 
-/** Anexos do post: imagens como thumbnails (toque abre em tamanho grande via
- * /api/anexo, que re-assina o link) e documentos (PDF) como cards empilhados.
- * Mobile 360px: grid de imagens quebra linha; documentos ocupam largura total. */
+/** Anexos do post no feed. Imagens em aspecto NATURAL (Solucao B): 1 imagem
+ * ocupa a largura do card e a altura acompanha a proporcao, com teto de 75vh
+ * (foto muito vertical nao vira card gigante — corte suave so' no limite);
+ * 2+ imagens viram uma grade 2-col de miniaturas. Qualquer imagem abre no
+ * lightbox pelo /api/anexo (re-assina no clique, robusto ao TTL). Documentos
+ * (PDF) seguem como card de documento. Empilhado, cabe em 360px. */
 function PostAttachments({ post }: { post: FeedPostCard }) {
-  const images = post.media.filter((m) => m.kind === "image");
+  const images = post.media.filter((m) => m.kind === "image" && m.viewUrl);
   const documents = post.media.filter((m) => m.kind === "document");
   if (images.length === 0 && documents.length === 0) return null;
 
   return (
     <div className="flex flex-col gap-2">
-      {images.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+      {images.length === 1 && (
+        <ImageLightbox
+          src={images[0].viewUrl as string}
+          fullSrc={`/api/anexo/${images[0].id}`}
+          triggerClassName="w-full"
+          className="max-h-[75vh] w-full rounded-lg"
+        />
+      )}
+      {images.length > 1 && (
+        <div className="grid grid-cols-2 gap-1">
           {images.map((media) => (
-            <a
+            <ImageLightbox
               key={media.id}
-              href={`/api/anexo/${media.id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-lg"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element -- URL assinada, curta duracao */}
-              <img src={media.viewUrl ?? ""} alt="" className="size-20 rounded-lg object-cover" />
-            </a>
+              src={media.viewUrl as string}
+              fullSrc={`/api/anexo/${media.id}`}
+              triggerClassName="aspect-square w-full"
+              className="size-full rounded-lg"
+            />
           ))}
         </div>
       )}

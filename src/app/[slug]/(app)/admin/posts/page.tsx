@@ -58,7 +58,7 @@ export default async function PostsPage() {
               href={`/${session.tenantSlug}/admin/posts/${post.id}`}
               className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-border bg-card p-4 shadow-[var(--shadow-card)] transition-colors hover:bg-muted"
             >
-              {post.coverUrl && <PostCover src={post.coverUrl} className="h-40" />}
+              {post.coverUrl && <PostCover src={post.coverUrl} />}
               <div className="flex items-center justify-between gap-2">
                 <Badge variant="label">{POST_TYPE_LABEL[post.type] ?? post.type}</Badge>
                 <span className="text-meta text-subtle-foreground">{formatCalendarDate(post.eventDate)}</span>
