@@ -55,7 +55,13 @@ export default async function PostDetailPage({
   const people = await resolvePickablePeoplePhotos(rawPeople);
 
   const existingMedia = await Promise.all(
-    post.media.map(async (m) => ({ id: m.id, viewUrl: await mediaStorage.getViewUrl(m.mediaUrl) })),
+    post.media.map(async (m) => ({
+      id: m.id,
+      kind: m.kind,
+      viewUrl: m.kind === "image" ? await mediaStorage.getViewUrl(m.mediaUrl) : null,
+      originalName: m.originalName,
+      sizeBytes: m.sizeBytes,
+    })),
   );
 
   return (
@@ -90,7 +96,8 @@ export default async function PostDetailPage({
       {ok && SUCCESS_MESSAGES[ok] && <p className="text-meta font-medium text-success">{SUCCESS_MESSAGES[ok]}</p>}
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-label uppercase text-subtle-foreground">Fotos</h2>
+        <h2 className="text-label uppercase text-subtle-foreground">Anexos</h2>
+        <p className="text-meta text-muted-foreground">Imagens (JPG, PNG, WEBP até 5 MB) e documentos PDF (até 10 MB).</p>
         <PostPhotoUpload postId={post.id} existingMedia={existingMedia} />
       </section>
 

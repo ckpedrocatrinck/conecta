@@ -6,7 +6,41 @@ import type { TenantBranding } from "@/lib/repositories/tenant.repository";
 import { POST_TYPE_LABEL } from "../../lib/posts/labels";
 import { formatCalendarDate } from "../../lib/dates/format-date";
 import type { FeedPostCard } from "../../lib/feed/build-feed-view";
+import { DocumentAttachmentCard } from "./document-attachment-card";
 import { ReactionButton } from "./reaction-button";
+
+/** Anexos do post: imagens como thumbnails (toque abre em tamanho grande via
+ * /api/anexo, que re-assina o link) e documentos (PDF) como cards empilhados.
+ * Mobile 360px: grid de imagens quebra linha; documentos ocupam largura total. */
+function PostAttachments({ post }: { post: FeedPostCard }) {
+  const images = post.media.filter((m) => m.kind === "image");
+  const documents = post.media.filter((m) => m.kind === "document");
+  if (images.length === 0 && documents.length === 0) return null;
+
+  return (
+    <div className="flex flex-col gap-2">
+      {images.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {images.map((media) => (
+            <a
+              key={media.id}
+              href={`/api/anexo/${media.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-lg"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element -- URL assinada, curta duracao */}
+              <img src={media.viewUrl ?? ""} alt="" className="size-20 rounded-lg object-cover" />
+            </a>
+          ))}
+        </div>
+      )}
+      {documents.map((media) => (
+        <DocumentAttachmentCard key={media.id} attachment={media} />
+      ))}
+    </div>
+  );
+}
 
 /** Layout basico pre-INC-009, mantido so' para o tipo "general" (sem
  * template dedicado no escopo do INC-009/ADR-004). Nunca confia num
@@ -38,14 +72,7 @@ function GeneralPostCard({ post }: { post: FeedPostCard }) {
         </div>
       )}
 
-      {post.media.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {post.media.map((media) => (
-            // eslint-disable-next-line @next/next/no-img-element -- URL assinada, curta duracao
-            <img key={media.id} src={media.viewUrl} alt="" className="size-20 rounded-lg object-cover" />
-          ))}
-        </div>
-      )}
+      <PostAttachments post={post} />
 
       <ReactionButton postId={post.id} initialReacted={post.reactedByMe} initialCount={post.reactionCount} />
     </Card>
@@ -59,14 +86,7 @@ export function PostCard({ post, branding }: { post: FeedPostCard; branding: Ten
   return (
     <div className="flex flex-col gap-2">
       <CardTemplate data={cardData} />
-      {post.media.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {post.media.map((media) => (
-            // eslint-disable-next-line @next/next/no-img-element -- URL assinada, curta duracao
-            <img key={media.id} src={media.viewUrl} alt="" className="size-20 rounded-lg object-cover" />
-          ))}
-        </div>
-      )}
+      <PostAttachments post={post} />
       <ReactionButton postId={post.id} initialReacted={post.reactedByMe} initialCount={post.reactionCount} />
     </div>
   );
