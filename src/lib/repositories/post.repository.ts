@@ -9,13 +9,55 @@ export function findPostById(tx: Prisma.TransactionClient, tenantId: string, id:
 }
 
 /** Lista do admin (mais recentes primeiro) — sem paginacao no MVP, mesmo
- * padrao de findAuditLogsForTenant/findAnnouncementsForAdminList. */
+ * padrao de findAuditLogsForTenant/findAnnouncementsForAdminList.
+ *
+ * Exclui rascunhos "pristine" (scaffolds do auto-rascunho do INC-016: draft
+ * sem titulo/texto/pessoas/midia) — eles nao sao conteudo, so' o esqueleto que
+ * o "Novo post" cria. `NOT pristine` expresso como OR de condicoes positivas
+ * (De Morgan) para evitar filtro de relacao dentro de NOT: publicado OU tem
+ * titulo OU tem texto OU tem alguem marcado OU tem anexo. */
 export function findPostsForAdminList(tx: Prisma.TransactionClient, tenantId: string) {
   return tx.post.findMany({
-    where: { tenantId },
+    where: {
+      tenantId,
+      OR: [
+        { status: "published" },
+        { title: { not: "" } },
+        { body: { not: null } },
+        { people: { some: {} } },
+        { media: { some: {} } },
+      ],
+    },
     include: { branch: { select: { name: true } } },
     orderBy: { createdAt: "desc" },
   });
+}
+
+/** Rascunhos "pristine" deste admin (auto-rascunho INC-016): draft sem titulo,
+ * texto, pessoas ou midia. Base do reaproveitamento (reusa o mais recente,
+ * apaga os demais) que mantem no maximo 1 scaffold por admin sem sweep. */
+export function findPristineDraftsByAdmin(tx: Prisma.TransactionClient, tenantId: string, adminUserId: string) {
+  return tx.post.findMany({
+    where: {
+      tenantId,
+      createdBy: adminUserId,
+      status: "draft",
+      title: "",
+      body: null,
+      people: { none: {} },
+      media: { none: {} },
+    },
+    orderBy: { createdAt: "desc" },
+    select: { id: true },
+  });
+}
+
+/** Remove posts por id (escopo de tenant). Usado so' para apagar scaffolds
+ * pristine extras do auto-rascunho — que por definicao nao tem midia, entao
+ * nao ha' objeto no storage a limpar. */
+export function deletePostsByIds(tx: Prisma.TransactionClient, tenantId: string, ids: string[]) {
+  if (ids.length === 0) return Promise.resolve({ count: 0 });
+  return tx.post.deleteMany({ where: { tenantId, id: { in: ids } } });
 }
 
 const POST_DETAIL_INCLUDE = {

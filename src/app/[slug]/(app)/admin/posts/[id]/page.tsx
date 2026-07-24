@@ -15,6 +15,7 @@ import { SubmitButton } from "@/components/ui/submit-button";
 
 const ERROR_MESSAGES: Record<string, string> = {
   obrigatorio: "Preencha tipo, título e data do evento.",
+  vazio: "Preencha ao menos o título antes de publicar.",
 };
 
 const SUCCESS_MESSAGES: Record<string, string> = {
@@ -68,7 +69,8 @@ export default async function PostDetailPage({
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-display text-foreground">
-          {post.title} <span className="text-body font-normal text-muted-foreground">({STATUS_LABEL[post.status]})</span>
+          {post.title || "Novo post"}{" "}
+          <span className="text-body font-normal text-muted-foreground">({STATUS_LABEL[post.status]})</span>
         </h1>
         <div className="flex items-center gap-2">
           {isPostCardKind(post.type) && (

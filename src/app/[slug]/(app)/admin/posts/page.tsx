@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { requireAdmin } from "@/lib/auth/session";
 import { withTenant } from "@/lib/db/with-tenant";
 import { findPostsForAdminList } from "@/lib/repositories/post.repository";
 import { POST_TYPE_LABEL } from "@/lib/posts/labels";
 import { formatCalendarDate } from "@/lib/dates/format-date";
+import { createOrReuseDraftAction } from "./actions";
 
 const STATUS_LABEL: Record<string, string> = {
   draft: "Rascunho",
@@ -27,10 +28,14 @@ export default async function PostsPage() {
             Reconhecimentos, avisos e cards automáticos exibidos aos colaboradores.
           </p>
         </div>
-        <Link href={`/${session.tenantSlug}/admin/posts/novo`} className={buttonVariants({ variant: "default", size: "touch" })}>
-          <Plus aria-hidden="true" />
-          Novo post
-        </Link>
+        {/* Auto-rascunho (INC-016): cria/reaproveita um rascunho e leva direto a
+            tela de compor — que ja' tem a secao Anexos. Ver createOrReuseDraftAction. */}
+        <form action={createOrReuseDraftAction}>
+          <SubmitButton size="touch" pendingLabel="Abrindo…">
+            <Plus aria-hidden="true" />
+            Novo post
+          </SubmitButton>
+        </form>
       </div>
 
       {posts.length === 0 ? (

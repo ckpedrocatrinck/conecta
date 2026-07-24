@@ -76,6 +76,13 @@ export async function publishPostAction(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   if (!id) redirect(`/${session.tenantSlug}/admin/posts`);
 
+  // Guard do auto-rascunho (INC-016): nunca publicar um rascunho vazio/pristine.
+  // A publicacao exige titulo — o resto (data) ja' vem preenchido (NOT NULL).
+  const post = await withTenant({ tenantId: session.tenantId }, (tx) => findPostById(tx, session.tenantId, id));
+  if (!post || post.title.trim() === "") {
+    redirect(`/${session.tenantSlug}/admin/posts/${id}?erro=vazio`);
+  }
+
   await withTenant({ tenantId: session.tenantId }, async (tx) => {
     await publishPost(tx, session.tenantId, id);
     await recordAuditLog(tx, {
