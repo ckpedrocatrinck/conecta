@@ -5,6 +5,7 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { requireAdmin } from "@/lib/auth/session";
 import { withTenant } from "@/lib/db/with-tenant";
 import { findPostsForAdminList } from "@/lib/repositories/post.repository";
+import { mediaStorage } from "@/lib/storage/media-storage";
 import { POST_TYPE_LABEL } from "@/lib/posts/labels";
 import { formatCalendarDate } from "@/lib/dates/format-date";
 import { createOrReuseDraftAction } from "./actions";
@@ -17,7 +18,15 @@ const STATUS_LABEL: Record<string, string> = {
 export default async function PostsPage() {
   const session = await requireAdmin();
 
-  const posts = await withTenant({ tenantId: session.tenantId }, (tx) => findPostsForAdminList(tx, session.tenantId));
+  const rawPosts = await withTenant({ tenantId: session.tenantId }, (tx) => findPostsForAdminList(tx, session.tenantId));
+  // Assina a URL da capa (primeira imagem) de cada post — chave crua nunca vai
+  // ao cliente (contrato de storage do INC-003).
+  const posts = await Promise.all(
+    rawPosts.map(async (post) => ({
+      ...post,
+      coverUrl: post.media[0] ? await mediaStorage.getViewUrl(post.media[0].mediaUrl) : null,
+    })),
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -48,11 +57,15 @@ export default async function PostsPage() {
               href={`/${session.tenantSlug}/admin/posts/${post.id}`}
               className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-border bg-card p-4 shadow-[var(--shadow-card)] transition-colors hover:bg-muted"
             >
+              {post.coverUrl && (
+                // eslint-disable-next-line @next/next/no-img-element -- URL assinada, curta duracao
+                <img src={post.coverUrl} alt="" className="h-28 w-full rounded-lg object-cover" />
+              )}
               <div className="flex items-center justify-between gap-2">
                 <Badge variant="label">{POST_TYPE_LABEL[post.type] ?? post.type}</Badge>
                 <span className="text-meta text-subtle-foreground">{formatCalendarDate(post.eventDate)}</span>
               </div>
-              <span className="text-card-title font-bold text-foreground">{post.title}</span>
+              <span className="text-card-title font-bold text-foreground">{post.title || "Rascunho sem título"}</span>
               <div className="flex items-center justify-between gap-2 text-meta text-muted-foreground">
                 <span>{STATUS_LABEL[post.status] ?? post.status}</span>
                 <span>{post.branch?.name ?? "Geral"}</span>

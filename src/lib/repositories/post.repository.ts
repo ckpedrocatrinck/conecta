@@ -28,7 +28,12 @@ export function findPostsForAdminList(tx: Prisma.TransactionClient, tenantId: st
         { media: { some: {} } },
       ],
     },
-    include: { branch: { select: { name: true } } },
+    include: {
+      branch: { select: { name: true } },
+      // Primeira imagem como capa do card da lista (INC-016) — so' a chave; a
+      // URL assinada e' resolvida na page. Documentos (PDF) nao viram capa.
+      media: { where: { kind: "image" }, orderBy: { sortOrder: "asc" }, take: 1, select: { mediaUrl: true } },
+    },
     orderBy: { createdAt: "desc" },
   });
 }
