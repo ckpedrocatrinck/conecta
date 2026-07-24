@@ -1,0 +1,12 @@
+-- INC-017 (Aparencia da empresa): a aplicacao passa a ESCREVER em tenants pela
+-- tela "Aparencia da empresa" (home_banner_key, logo_url, accent_color via
+-- updateTenantAppearance). Ate aqui conecta_app so' tinha SELECT em tenants
+-- (ver rls_and_triggers, migration de 2026-07-10) — nenhuma escrita da app
+-- nessa tabela existia; toda mudanca de tenant era manual/seed.
+--
+-- Concede SO' UPDATE (privilegio minimo): a app altera tenant existente, nunca
+-- cria nem apaga tenant (isso continua sendo operacao de owner/seed). tenants e'
+-- a raiz da hierarquia multi-tenant e NAO tem RLS — a autorizacao de "quem pode
+-- editar a aparencia" vive na camada de app (requireAdmin + tenant do contexto),
+-- nao em policy. Escrito a mao (ADR-008): GRANT puro nao tem diff de schema.
+GRANT UPDATE ON tenants TO conecta_app;

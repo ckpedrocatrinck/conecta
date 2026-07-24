@@ -53,22 +53,42 @@ export function AppearanceUploader({
     setPending(true);
     setError(null);
     try {
-      const { uploadUrl, key } = await requestBrandingUploadUrl(target);
-      const response = await fetch(uploadUrl, {
+      // Cada etapa tem sua propria mensagem: NAO colapsar tudo num "formato
+      // invalido" generico. Um 500 de servidor (ex.: falha de banco) nao e' um
+      // problema de formato — dizer "envie JPG/PNG" mandaria o usuario (e quem
+      // for diagnosticar) pro caminho errado, como ja custou tempo no INC-017.
+      // A rejeicao de VALIDACAO (tipo/tamanho reais) e' a unica que fala de
+      // formato, e vem do proprio servidor (confirmed.error).
+      let requested: Awaited<ReturnType<typeof requestBrandingUploadUrl>>;
+      try {
+        requested = await requestBrandingUploadUrl(target);
+      } catch {
+        setError("Erro ao preparar o envio. Tente novamente.");
+        return;
+      }
+
+      const response = await fetch(requested.uploadUrl, {
         method: "PUT",
         headers: { "Content-Type": file.type },
         body: file,
-      });
-      if (!response.ok) throw new Error("upload falhou");
+      }).catch(() => null);
+      if (!response || !response.ok) {
+        setError("Erro ao enviar o arquivo ao servidor. Verifique a conexão e tente novamente.");
+        return;
+      }
 
-      const confirmed = await confirmBrandingUploadAction(target, key);
+      let confirmed: Awaited<ReturnType<typeof confirmBrandingUploadAction>>;
+      try {
+        confirmed = await confirmBrandingUploadAction(target, requested.key);
+      } catch {
+        setError("Erro no servidor ao salvar a imagem. Tente novamente.");
+        return;
+      }
       if (!confirmed.ok) {
         setError(confirmed.error);
         return;
       }
       router.refresh();
-    } catch {
-      setError("Não foi possível enviar a imagem. Tente um arquivo JPG, PNG ou WEBP de até 5 MB.");
     } finally {
       setPending(false);
       event.target.value = "";
