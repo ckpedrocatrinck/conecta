@@ -22,8 +22,9 @@ const TENANT_A = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
 const TENANT_B = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
 
 describe("authorizeMediaKey — namespace branding/ (INC-017)", () => {
-  const bannerA = `branding/${TENANT_A}/banner`;
-  const logoA = `branding/${TENANT_A}/logo`;
+  // Key com uuid por upload (objeto novo a cada troca — ver authorize.ts).
+  const bannerA = `branding/${TENANT_A}/banner/11111111-1111-1111-1111-111111111111`;
+  const logoA = `branding/${TENANT_A}/logo/22222222-2222-2222-2222-222222222222`;
 
   it("colaborador do mesmo tenant PODE ver o banner e o logo", () => {
     const s = session(TENANT_A, "u1", "employee");
@@ -50,9 +51,13 @@ describe("authorizeMediaKey — namespace branding/ (INC-017)", () => {
     expect(authorizeMediaKey(logoA, "upload", session(TENANT_A, "u1", "manager"))).toBe(false);
   });
 
-  it("recusa sufixo de branding fora do conjunto {banner,logo}", () => {
+  it("recusa branding fora do formato {banner|logo}/{uuid}", () => {
     const s = session(TENANT_A, "u1", "admin");
-    expect(authorizeMediaKey(`branding/${TENANT_A}/tema`, "view", s)).toBe(false);
-    expect(authorizeMediaKey(`branding/${TENANT_A}/logo/extra`, "view", s)).toBe(false);
+    // tipo fora do conjunto {banner,logo}
+    expect(authorizeMediaKey(`branding/${TENANT_A}/tema/abc`, "view", s)).toBe(false);
+    // sem o segmento do objeto (uuid)
+    expect(authorizeMediaKey(`branding/${TENANT_A}/logo`, "view", s)).toBe(false);
+    // segmento extra (nao pode aninhar alem do objeto)
+    expect(authorizeMediaKey(`branding/${TENANT_A}/logo/a/b`, "view", s)).toBe(false);
   });
 });
