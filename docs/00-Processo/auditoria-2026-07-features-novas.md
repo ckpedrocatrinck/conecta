@@ -171,6 +171,13 @@ tenants                  SELECT,UPDATE          users                   INSERT,S
   `accent_color, ack_retention_months, created_at, home_banner_key, id, logo_url,
   name, plan, retention_months, slug, status, updated_at`. → **GAP-02**.
 
+  **Raio de alcance medido empiricamente** (ensaio em transação revertida,
+  assumindo a role `conecta_app` via `SET LOCAL ROLE`): hoje a role consegue
+  escrever **todas as 10 colunas testadas**, incluindo `slug`, `status`, `plan`,
+  `retention_months`, `name` e — o que eu não havia percebido na primeira
+  passada — **`id` (a própria chave primária) e `created_at`**. Ou seja, o alcance
+  é maior do que "colunas sensíveis": inclui reescrever a identidade da linha.
+
 ---
 
 ## 2. Upload / storage (superfície nova do INC-016/017)
@@ -574,7 +581,7 @@ Só o que de fato precisa de ação. Esforço: **P** ≈ até 2h · **M** ≈ me
 
 | # | Gap | Evidência | Esforço |
 | --- | --- | --- | --- |
-| **GAP-02** | **`GRANT UPDATE ON tenants` é table-wide** — cobre `slug`, `status`, `id`, `retention_months`, `ack_retention_months`, `plan`, `name`. `tenants` **não tem RLS** (por desenho), então a única barreira contra uma escrita cross-tenant ou em coluna sensível é a disciplina da camada de app. Um bug futuro que passe um id de formulário não teria backstop | `20260724170000_inc017_grant_update_tenants/migration.sql:12`; colunas confirmadas no banco; `tenant.repository.ts:78-84` | **P** — migration nova: `REVOKE UPDATE ON tenants` + `GRANT UPDATE (home_banner_key, logo_url, accent_color) ON tenants TO conecta_app`, mais um teste negativo (admin de A não altera B) |
+| **GAP-02** | **`GRANT UPDATE ON tenants` é table-wide** — cobre as 12 colunas, inclusive `slug`, `status`, `plan`, `retention_months`, **`id` e `created_at`** (medido, ver 1.4). `tenants` **não tem RLS** (por desenho), então a única barreira contra escrita cross-tenant ou em coluna sensível é a disciplina da camada de app. Um bug futuro que passe um id de formulário não teria backstop | `20260724170000_inc017_grant_update_tenants/migration.sql:12`; colunas confirmadas no banco; `tenant.repository.ts:78-84` | **P** — ver a migration verificada em §9 (**4 colunas, não 3**) + teste negativo |
 | **GAP-03** | **Avatar é o único upload sem sniff de magic number.** `confirmPhotoUploadAction` grava `photoUrl` sem ler um byte. Hoje o mock filtra pelo Content-Type **declarado**; com o R2 esse filtro some | `[slug]/(app)/perfil/actions.ts:47-53` vs. `aparencia/actions.ts:56` e `posts/[id]/actions.ts:160` | **P** — chamar `validateUploadedObject` + recusar não-imagem (5 linhas, o padrão já existe em 2 lugares) |
 | **GAP-04** | **Aparência incompleta em duas frentes:** (a) sem validação de contraste AA da cor de destaque, que o **DP-15 exigia explicitamente** — o admin pode escolher amarelo ilegível ou um laranja que viola a regra de ouro; (b) sem como **remover** banner/logo e voltar à arte padrão | (a) `aparencia/actions.ts:107` só valida hex; usado como cor de texto em `card-shell.tsx:40,44`; requisito em `05-Decisoes-Pendentes.md:55` — (b) `aparencia/page.tsx:58,73`, o repositório já aceita `null` (`tenant.repository.ts:72-76`) | **M** (a: função de contraste + aviso na UI; b: action + botão) |
 | **GAP-05** | **O uploader de anexos (INC-016) repete o anti-padrão que o INC-017 corrigiu ao lado:** erro genérico `"erro no envio"` para as 3 etapas, sem status HTTP; `<p>` de erro sem `role="alert"`; alvos destrutivos de **20px** e **24px**; `size="sm"` onde aparência usa `size="touch"` | `photo-upload.tsx:37-38, 101-103, 123, 154, 169, 192` — comparar com `appearance-uploader.tsx:62-96, 122, 137-138` | **M** — portar o tratamento de erro do INC-017 e subir os alvos |
@@ -606,9 +613,11 @@ altos numa tarde. Nada mais compete com isso em relação custo/risco.
 
 **Bloco 2 — o que é barato e fecha buraco real de código (½ dia).** Nesta ordem:
 GAP-03 (sniff no avatar — 5 linhas, o padrão já existe), GAP-05a (data URI no
-`photoUrl` do export — correção análoga já escrita ao lado), GAP-02 (migration de
-GRANT por coluna + teste negativo). Os três são pequenos, testáveis, e cada um
-remove uma dependência de disciplina humana.
+`photoUrl` do export — correção análoga já escrita ao lado), GAP-02 (**a migration
+de 4 colunas de §9** + teste negativo). Os três são pequenos, testáveis, e cada um
+remove uma dependência de disciplina humana. Para o GAP-02, o SQL e o teste já
+estão verificados em §9 — **não use a versão de 3 colunas**, ela quebra a tela de
+Aparência com 42501.
 
 **Bloco 3 — reconciliação de documentação (1–2h, sem código).** GAP-07 (redação do
 DP-19), GAP-04 parte (a) reabrindo formalmente o DP-15, GAP-08 (registrar o
@@ -625,6 +634,107 @@ no navegador.
 sessão), GAP-08, GAP-11 e a purga de blob na anonimização (INC-013 G1). É
 pré-requisito de produção e o item mais caro; entrar nele só depois do Bloco 3,
 com a lista de dívidas já consolidada.
+
+---
+
+## 9. GAP-02 — migration verificada (correção da proposta original)
+
+**A proposta original desta auditoria estava errada: 3 colunas quebram a
+feature.** Correção apontada pelo Pedro e confirmada empiricamente.
+
+### Por que 3 colunas não funcionam
+
+`Tenant.updatedAt` tem `@updatedAt` (`prisma/schema.prisma:132`), então o Prisma
+**injeta `updated_at` no SET de todo `tenant.update`**. O statement real, capturado
+do log de query do Prisma:
+
+```sql
+UPDATE "public"."tenants" SET "home_banner_key" = $1, "updated_at" = $2
+WHERE ("public"."tenants"."id" = $3 AND 1=1) RETURNING …
+```
+
+Com `GRANT UPDATE (home_banner_key, logo_url, accent_color)`, o Postgres nega o
+statement **inteiro** por falta de privilégio em `updated_at` — verificado:
+
+```
+3 colunas -> NEGADO  SQLSTATE=42501  ERROR: permission denied for table tenants
+4 colunas -> PASSOU
+```
+
+É o **mesmo 42501** que morde e que no INC-017 foi confundido com erro de formato.
+Um grant de 3 colunas transformaria o backstop do GAP-02 em quebra da própria
+feature que ele deveria proteger.
+
+*(Nota: o `RETURNING` do Prisma lê as 12 colunas, mas `conecta_app` tem `SELECT`
+em todas — então o grant por coluna no UPDATE não afeta o retorno.)*
+
+### Pré-requisito: nada mais escreve em `tenants` pela app
+
+Verificado no código (é onde mora a verdade — o banco só diz o que a role *pode*
+escrever, não o que a app escreve):
+
+| Verificação | Resultado |
+| --- | --- |
+| `.tenant.(update\|updateMany\|upsert\|create\|createMany)` em `src/` | **1 hit**: `tenant.repository.ts:83` (`tx.tenant.update`) |
+| SQL cru `UPDATE tenants SET` / `INSERT INTO tenants` em `src/` | **0 hits** |
+| Arquivos com `appDb` **e** `.tenant.` | apenas `tenant.repository.ts` (6 leituras + 1 escrita) |
+| Callers de `updateTenantAppearance` | 2, ambos em `aparencia/actions.ts:75,112`, passando só `homeBannerKey` \| `logoUrl` \| `accentColor` |
+| Writes em `tenant` fora de `src/` | 3, todos via **role owner** (`ownerDb`/`db` = `DATABASE_URL`): `tenant-resolution.test.ts:34`, `tenant-appearance.test.ts:27`, `seed-data.ts:39` — não passam por `conecta_app`, não afetam o grant |
+
+**Conclusão:** `name`, `status`, `plan`, `retention_months`, `ack_retention_months`
+**não têm nenhum write via `conecta_app`**. Não existe tela de "configurações da
+empresa", mudança de plano ou ajuste de retenção na aplicação — tudo isso é
+operação de owner/seed. **O grant de 4 colunas é seguro.**
+
+### A migration
+
+```sql
+-- INC-0XX (GAP-02 da auditoria 2026-07): reduz o GRANT UPDATE em `tenants` do
+-- INC-017 ao minimo real. tenants NAO tem RLS (raiz da hierarquia), entao o
+-- grant por coluna e' o unico backstop de banco possivel aqui.
+--
+-- updated_at ENTRA na lista por necessidade tecnica, nao por escolha: Tenant tem
+-- `updatedAt @updatedAt` (schema.prisma:132), logo o Prisma injeta `updated_at`
+-- no SET de todo tenant.update. Sem ele o Postgres nega o statement inteiro com
+-- 42501 e a tela de Aparencia para de salvar. Verificado empiricamente.
+--
+-- Fora da lista (e' o ponto): id, created_at, slug, status, plan,
+-- retention_months, ack_retention_months, name — nenhuma tem write pela app.
+REVOKE UPDATE ON tenants FROM conecta_app;
+GRANT UPDATE (home_banner_key, logo_url, accent_color, updated_at) ON tenants TO conecta_app;
+```
+
+### Verificação antes/depois
+
+```sql
+-- ANTES: UPDATE table-wide aparece aqui
+SELECT privilege_type FROM information_schema.role_table_grants
+WHERE grantee = 'conecta_app' AND table_name = 'tenants';
+
+-- DEPOIS: exatamente 4 linhas
+SELECT column_name, privilege_type FROM information_schema.column_privileges
+WHERE grantee='conecta_app' AND table_name='tenants' AND privilege_type='UPDATE'
+ORDER BY column_name;
+```
+
+### Teste negativo (é o que fecha o gap)
+
+Sem ele, um bump futuro de schema ou uma migration descuidada reintroduz o grant
+amplo sem ninguém perceber — e o GAP-02 volta silencioso. O teste deve, **na role
+`conecta_app`**:
+
+1. `UPDATE tenants SET status='suspended'` → espera **42501**. Idem para `slug`,
+   `plan`, `retention_months`, `name`, `id`, `created_at`.
+2. `updateTenantAppearance(tx, id, { homeBannerKey, logoUrl, accentColor })` →
+   **passa** (é o caminho real, com `updated_at` injetado pelo Prisma).
+
+`tests/integration/tenant-appearance.test.ts:38-70` já cobre o item 2 e já roda
+sob `conecta_app` (via `withTenant`) — basta somar o item 1 no mesmo arquivo.
+
+**Cuidado ao escrever o teste:** cada tentativa negada aborta a transação, e as
+seguintes devolvem `25P02` (*in_failed_sql_transaction*) em vez do `42501` real —
+foi o que aconteceu no meu primeiro ensaio e invalidou 4 dos 5 resultados. Use
+`SAVEPOINT` / `ROLLBACK TO SAVEPOINT` por tentativa, ou um `it()` por coluna.
 
 ---
 
