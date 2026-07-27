@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { inlineBrandingLogoForExport, signBrandingForDisplay } from "./branding-display";
 import { deleteMediaFile, writeMediaFile } from "@/lib/storage/local-media-fs";
 
@@ -17,6 +17,7 @@ async function writeLogo(): Promise<string> {
 
 afterEach(async () => {
   await Promise.all(writtenKeys.splice(0).map((k) => deleteMediaFile(k)));
+  vi.unstubAllEnvs();
 });
 
 describe("inlineBrandingLogoForExport (INC-017: logo no PNG exportavel)", () => {
@@ -48,6 +49,9 @@ describe("inlineBrandingLogoForExport (INC-017: logo no PNG exportavel)", () => 
 
 describe("signBrandingForDisplay (INC-017: logo no browser)", () => {
   it("assina a key numa URL /api/media de view; null continua null", async () => {
+    // getViewUrl assina com AUTH_SECRET (media-storage). No CI o .env nao e'
+    // carregado no job de unit, entao stubamos como o media-storage.test.ts.
+    vi.stubEnv("AUTH_SECRET", "segredo-teste");
     const signed = await signBrandingForDisplay({ logoUrl: "branding/t/logo/x", accentColor: "#333333" });
     expect(signed.logoUrl).toContain("/api/media/");
     expect(signed.logoUrl).toContain("mode=view");
