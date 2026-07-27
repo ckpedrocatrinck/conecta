@@ -48,6 +48,7 @@
 3. **Decisão nova = ADR novo.** Se a implementação exigir uma decisão de arquitetura não coberta, ela volta para o chat, vira ADR, e só então o INC continua.
 4. **Relatório de entrega é obrigatório.** Sem relatório, não há revisão; sem revisão, não há merge.
 5. **O vault vive no repositório.** A pasta `docs/` do repo Git é o próprio vault do Obsidian (ou um submódulo/pasta sincronizada). Documentação e código andam no mesmo versionamento.
+6. **Migration que cria tabela, ou feature que escreve num verbo novo, atualiza a matriz de GRANTs na MESMA branch.** A role de runtime `conecta_app` tem privilégio mínimo proposital e **não** há `ALTER DEFAULT PRIVILEGES` — tabela nova nasce sem nenhum GRANT. Concedeu-se o verbo exato na migration manual (ADR-008)? Então atualize o `EXPECTED` de `tests/integration/grants-matrix.test.ts` junto. O detector de drift falha o CI se houver GRANT faltando, GRANT sobrando ou tabela fora da matriz — foi instalado depois de o mesmo bug escapar duas vezes para produção (`GRANT UPDATE ON tenants` no INC-017; `GRANT DELETE ON branches` em 2026-07-27). Contexto completo em `docs/02-Arquitetura/infra-banco-dev-e-ci.md`.
 
 ## Formato do Relatório de Entrega (Claude Code preenche)
 
