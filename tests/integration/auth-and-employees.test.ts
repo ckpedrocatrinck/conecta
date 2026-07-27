@@ -6,7 +6,12 @@ import { cleanupTenant } from "../helpers/cleanup-tenant";
 import { hashCpf } from "../../src/lib/crypto/cpf-hash";
 import { verifyPassword } from "../../src/lib/crypto/password-hash";
 import { withTenant } from "../../src/lib/db/with-tenant";
-import { deleteBranch, findBranchesByTenant, countUsersInBranch } from "../../src/lib/repositories/branch.repository";
+import {
+  createBranch,
+  deleteBranch,
+  findBranchesByTenant,
+  countUsersInBranch,
+} from "../../src/lib/repositories/branch.repository";
 import { applyEmployeeCsvRow } from "../../src/lib/csv/employee-import";
 import {
   createSession,
@@ -211,15 +216,42 @@ describe("CRUD de colaborador nunca mexe em credenciais por acidente", () => {
   });
 });
 
-describe("filial: exclusao bloqueada quando ha colaborador vinculado", () => {
-  it("countUsersInBranch reporta uso e a filial sobrevive", async () => {
+describe("filial: exclusao", () => {
+  it("filial COM colaborador: a FK (onDelete: Restrict) barra na unha", async () => {
     await withTenant({ tenantId: tenant.tenant.id }, async (tx) => {
       const [branch] = await findBranchesByTenant(tx, tenant.tenant.id);
       const count = await countUsersInBranch(tx, tenant.tenant.id, branch.id);
       expect(count).toBeGreaterThan(0);
       // A acao real checa countUsersInBranch antes de chamar deleteBranch —
-      // aqui confirmamos que a FK (onDelete: Restrict) tambem barra na unha.
-      await expect(deleteBranch(tx, tenant.tenant.id, branch.id)).rejects.toThrow();
+      // aqui confirmamos que a FK tambem barra na unha. Assertar o CODIGO do
+      // erro, nao um toThrow() solto: por muito tempo este teste passou pelo
+      // motivo errado (faltava GRANT DELETE em branches, entao ele passava com
+      // 42501/permission denied em vez da FK) e por isso nao acusou o gap.
+      // Ver migration 20260727120000_grant_delete_branches.
+      await expect(deleteBranch(tx, tenant.tenant.id, branch.id)).rejects.toMatchObject({
+        code: "P2003", // Prisma: foreign key constraint failed (Postgres 23503)
+      });
+    });
+  });
+
+  it("filial VAZIA: remove de verdade (caminho que a acao real percorre)", async () => {
+    await withTenant({ tenantId: tenant.tenant.id }, async (tx) => {
+      // O fixture usa branchCount: 1 e poe todos os usuarios nela, entao a
+      // filial vazia tem de nascer aqui. Este e' o UNICO caminho em que
+      // deleteBranchAction chega a chamar o DELETE (ela retorna "em-uso" antes,
+      // quando ha colaborador) — e o caminho que exige GRANT DELETE.
+      const empty = await createBranch(tx, {
+        tenantId: tenant.tenant.id,
+        name: "Filial Vazia",
+        code: `FV-${randomUUID().slice(0, 4)}`,
+      });
+      expect(await countUsersInBranch(tx, tenant.tenant.id, empty.id)).toBe(0);
+
+      const result = await deleteBranch(tx, tenant.tenant.id, empty.id);
+      expect(result.count).toBe(1);
+
+      const remaining = await findBranchesByTenant(tx, tenant.tenant.id);
+      expect(remaining.map((b) => b.id)).not.toContain(empty.id);
     });
   });
 });

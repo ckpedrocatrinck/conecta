@@ -1,0 +1,23 @@
+-- Correcao de GRANT faltando (auditoria de permissoes 2026-07-27): a tela
+-- "Filiais" do admin JA' oferece remover filial (deleteBranchAction ->
+-- deleteBranch -> branch.deleteMany), mas conecta_app so' tinha
+-- SELECT/INSERT/UPDATE em branches (ver rls_and_triggers, migration de
+-- 2026-07-10). Resultado: remover filial falhava com
+-- "permission denied for table branches" (42501).
+--
+-- Por que passou batido: deleteBranchAction so' chama o delete DEPOIS de
+-- confirmar countUsersInBranch = 0. Nesse caminho — o unico que a app percorre
+-- — a FK users.branch_id (onDelete: Restrict) nao barra nada; quem barrava era
+-- a ausencia deste GRANT. O teste existente exercitava filial COM colaborador
+-- e afirmava apenas `rejects.toThrow()`, entao passava pelo motivo errado (FK)
+-- e nunca cobria a filial vazia. Corrigido junto, em auth-and-employees.test.ts.
+--
+-- Concede SO' DELETE (privilegio minimo): INSERT/UPDATE/SELECT ja existiam e a
+-- app nunca da TRUNCATE. A autorizacao de "quem pode remover filial" continua
+-- na camada de app (requireAdmin + countUsersInBranch), nao em policy. A policy
+-- `tenant_isolation` de branches e' FOR ALL com USING e WITH CHECK, portanto ja
+-- cobre DELETE — nada a alterar nela.
+--
+-- Escrito a mao (ADR-008): GRANT puro nao tem diff de schema, aplicar com
+-- `prisma migrate deploy`, nunca `prisma migrate dev`.
+GRANT DELETE ON branches TO conecta_app;
