@@ -73,4 +73,35 @@ Nenhuma tabela nova, nenhum verbo de escrita novo: `announcements` já tem `S I 
 
 ## Registro de conclusão
 
-_(preencher no fechamento)_
+- **Concluído em:** 2026-07-27
+- **Branch:** `inc-018-comunicado-acoes-na-criacao`
+- **Migrações:** nenhuma. Sem tabela nova e sem verbo de escrita novo — a matriz
+  `EXPECTED` do detector de drift de GRANTs não mudou (`grants-matrix.test.ts`
+  verde sem edição).
+- **Invariante "sem rascunho órfão" (item 3):** implementada pela opção
+  **preferida** — `createAnnouncementDraft` + `publishAnnouncement` numa
+  **transação Prisma única**. Compôs sem fallback porque `publishAnnouncement()`
+  já recebia um `Prisma.TransactionClient` externo e `withTenant()` já é uma
+  transação: `git diff main -- src/lib/announcements/publish.ts
+  src/lib/repositories/announcement-sequence.repository.ts` é **vazio**.
+- **Testes:** suíte verde, 271 → **292 testes** (53 → 55 arquivos). Novos: a
+  composição create+publish/schedule contra o banco real, incluindo os dois
+  caminhos de rollback do "sem rascunho órfão" e concorrência de comunicados
+  novos (`announcement-create-and-publish.test.ts`); as Server Actions
+  ponta-a-ponta com validação pós-sanitização e rejeição de data no passado, com
+  contagem antes/depois provando que **nada** é criado
+  (`announcement-create-actions.test.ts`); `fromDatetimeLocalSaoPaulo`
+  (`format-datetime.test.ts`).
+- **Sem teste de componente para a trava de confirmação:** o projeto não tem
+  jsdom/testing-library e o DP-21 impede instalar dependência na máquina de dev.
+  A confirmação foi validada manualmente; as Server Actions por baixo dela estão
+  cobertas.
+- **Dívidas registradas no relatório de entrega:** bug de fuso no
+  `datetime-local` da tela `[id]` e em `vagas` (`new Date(valor)` grava 3h
+  adiantado em runtime UTC — fora do escopo deste INC, candidato a DP); público-
+  alvo não validado contra o tenant (exposição pré-existente, sem vazamento
+  entre tenants); `pending-panel-performance.test.ts` mais perto do orçamento de
+  1s com a carga dos 2 arquivos novos.
+- **Pendência operacional (não-código):** confirmar o Vercel Cron batendo em
+  `GET /api/cron/publish-announcements` com `CRON_SECRET` em produção — sem
+  isso, "Agendar" grava um `scheduled` que nunca publica.
