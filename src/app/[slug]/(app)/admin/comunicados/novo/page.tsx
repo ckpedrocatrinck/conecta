@@ -5,6 +5,10 @@ import { NewAnnouncementForm } from "./form";
 
 const ERROR_MESSAGES: Record<string, string> = {
   obrigatorio: "Preencha título, corpo, categoria e criticidade.",
+  "data-invalida": "Informe uma data e hora válidas para o agendamento.",
+  "data-no-passado": "A data de agendamento precisa estar no futuro.",
+  "falha-publicacao": "Não foi possível publicar. Nada foi criado — tente novamente.",
+  "falha-agendamento": "Não foi possível agendar. Nada foi criado — tente novamente.",
 };
 
 export default async function NovoComunicadoPage({
