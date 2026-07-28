@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getSaoPauloYear, toDatetimeLocalSaoPaulo } from "./format-datetime";
+import { fromDatetimeLocalSaoPaulo, getSaoPauloYear, toDatetimeLocalSaoPaulo } from "./format-datetime";
 
 describe("getSaoPauloYear — ano do CI NN/AAAA em America/Sao_Paulo, nao UTC (A4-4)", () => {
   it("na virada de ano, com UTC ja em Janeiro mas BRT ainda em 31/dez, usa o ano ANTERIOR", () => {
@@ -24,5 +24,32 @@ describe("toDatetimeLocalSaoPaulo — pre-preenche datetime-local em horario de 
   it("na virada de ano, a data em SP fica no dia anterior mesmo com UTC ja no ano seguinte", () => {
     const date = new Date("2027-01-01T01:30:00Z");
     expect(toDatetimeLocalSaoPaulo(date)).toBe("2026-12-31T22:30");
+  });
+});
+
+describe("fromDatetimeLocalSaoPaulo — datetime-local e' horario de PAREDE de SP, nao UTC (INC-018 item 5)", () => {
+  it("08:00 digitado no input vira 11:00Z no banco (SP = UTC-3)", () => {
+    const parsed = fromDatetimeLocalSaoPaulo("2026-08-14T08:00");
+    expect(parsed?.toISOString()).toBe("2026-08-14T11:00:00.000Z");
+    // confirma que o bug (new Date(valor) com TZ=UTC no runtime) gravaria 08:00Z
+    expect(parsed?.toISOString()).not.toBe("2026-08-14T08:00:00.000Z");
+  });
+
+  it("round-trip com toDatetimeLocalSaoPaulo preserva o horario digitado", () => {
+    const value = "2026-12-31T22:30";
+    const parsed = fromDatetimeLocalSaoPaulo(value);
+    expect(parsed).not.toBeNull();
+    expect(toDatetimeLocalSaoPaulo(parsed as Date)).toBe(value);
+  });
+
+  it("22:30 de 31/dez em SP cai no ano seguinte em UTC — o instante gravado reflete isso", () => {
+    expect(fromDatetimeLocalSaoPaulo("2026-12-31T22:30")?.toISOString()).toBe("2027-01-01T01:30:00.000Z");
+  });
+
+  it("formato invalido, vazio ou data inexistente devolvem null", () => {
+    expect(fromDatetimeLocalSaoPaulo("")).toBeNull();
+    expect(fromDatetimeLocalSaoPaulo("14/08/2026 08:00")).toBeNull();
+    expect(fromDatetimeLocalSaoPaulo("2026-08-14")).toBeNull();
+    expect(fromDatetimeLocalSaoPaulo("2026-02-30T08:00")).toBeNull();
   });
 });

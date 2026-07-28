@@ -14,3 +14,19 @@ export function sanitizeAnnouncementBody(html: string): string {
     disallowedTagsMode: "discard",
   });
 }
+
+/**
+ * "Tem corpo de verdade?" — checado SEMPRE sobre o HTML ja' sanitizado
+ * (INC-018 item 4: validacao de publicacao nunca confia no cliente). Um
+ * `body.trim().length > 0` cru nao serve: o editor devolve "<p></p>" quando o
+ * admin nao digitou nada, e um corpo que era so' `<script>` fica como string
+ * nao-vazia de tags apos a sanitizacao.
+ */
+export function announcementBodyHasContent(sanitizedHtml: string): boolean {
+  const text = sanitizedHtml
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return text.length > 0;
+}
