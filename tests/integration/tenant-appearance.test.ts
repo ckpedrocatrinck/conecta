@@ -4,8 +4,10 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { cleanupTenant } from "../helpers/cleanup-tenant";
 import { withTenant } from "../../src/lib/db/with-tenant";
 import {
+  findTenantBeneficiosBannerKey,
   findTenantBranding,
   findTenantHomeBannerKey,
+  findTenantVagasBannerKey,
   updateTenantAppearance,
 } from "../../src/lib/repositories/tenant.repository";
 
@@ -67,5 +69,22 @@ describe("updateTenantAppearance — escrita em tenants sob conecta_app (INC-017
     expect(branding.accentColor).toBe("#00ff00");
     // homeBannerKey nao foi passado => intacto (undefined nao apaga).
     expect(banner).toBe(before);
+  });
+
+  it("grava vagasBannerKey e beneficiosBannerKey (INC-019, colunas novas)", async () => {
+    const vagasKey = `branding/${tenantId}/vagas-banner/${randomUUID()}`;
+    const beneficiosKey = `branding/${tenantId}/beneficios-banner/${randomUUID()}`;
+
+    await withTenant({ tenantId }, (tx) =>
+      updateTenantAppearance(tx, tenantId, {
+        vagasBannerKey: vagasKey,
+        beneficiosBannerKey: beneficiosKey,
+      }),
+    );
+
+    // Prova que o GRANT UPDATE ja concedido no INC-017 cobre as colunas novas
+    // sem GRANT extra (mesmo proposito do teste acima, para banner/logo/cor).
+    expect(await findTenantVagasBannerKey(tenantId)).toBe(vagasKey);
+    expect(await findTenantBeneficiosBannerKey(tenantId)).toBe(beneficiosKey);
   });
 });

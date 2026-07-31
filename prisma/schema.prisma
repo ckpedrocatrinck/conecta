@@ -125,9 +125,19 @@ model Tenant {
   // homeBannerKey: key do MediaStorage (branding/{tenantId}/banner) do banner da
   //   home. Nulo => fallback para o asset fixo public/banners/home.png (home
   //   nunca fica quebrada). Texto do banner e' a propria imagem (sem campo).
-  logoUrl       String? @map("logo_url")
-  homeBannerKey String? @map("home_banner_key")
-  accentColor   String? @map("accent_color") @db.VarChar(7)
+  // vagasBannerKey/beneficiosBannerKey (INC-019, banner por secao): mesma
+  //   natureza do homeBannerKey — key branding/{tenantId}/{vagas-banner|
+  //   beneficios-banner}/{uuid}. Colunas fixas por decisao (nao tabela Banner):
+  //   tenants nao tem RLS e o UPDATE ja concedido no INC-017 ja cobre, sem
+  //   GRANT/policy nova. vagasBannerKey nulo => fallback fixo
+  //   public/banners/vagas.png; beneficiosBannerKey nulo => SEM fallback de
+  //   imagem (HomeBanner cai no bloco de texto — nao ha asset fixo proprio de
+  //   Beneficios, decisao de escopo, nao pendencia).
+  logoUrl             String? @map("logo_url")
+  homeBannerKey       String? @map("home_banner_key")
+  vagasBannerKey      String? @map("vagas_banner_key")
+  beneficiosBannerKey String? @map("beneficios_banner_key")
+  accentColor         String? @map("accent_color") @db.VarChar(7)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 

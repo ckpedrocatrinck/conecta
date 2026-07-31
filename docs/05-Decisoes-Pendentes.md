@@ -12,6 +12,15 @@
 - **Login (contradição do kickoff).** ✅ Resolvida no **ADR-006**: login por CPF completo + senha; `cpf_hash` determinístico com pepper. "CPF parcial" eliminado do escopo.
 - **Pendências de modelagem** (User desligado / AnnouncementRead). ✅ Resolvidas no **ADR-006**.
 
+## ✅ Resolvidas em 2026-07-24
+
+- **DP-15 — Tela de admin para logo/cor do tenant.** ✅ Implementado no **INC-017**:
+  tela "Aparência da empresa" (`/{slug}/admin/aparencia`), com upload de
+  banner/logo e seletor de cor de destaque, escrita em `Tenant.logoUrl`/
+  `accentColor`/`homeBannerKey` sob `requireAdmin`. **Ressalva:** a validação de
+  contraste AA mencionada no texto original desta DP não foi implementada —
+  registrada separadamente como **DP-22**.
+
 ## ✅ Resolvidas em 2026-07-13
 
 - **DP-11 — Comunicado arquivado com pendência de ciência aberta absolve a pendência.** ✅ Implementado no **INC-006**: o painel de pendências (`src/lib/announcements/pending-panel.ts`, `isArchivedWithPendency`) sinaliza comunicados `requires_ack` arquivados cujo público-alvo ativo ainda não confirmou ciência — alerta destacado (vermelho) na lista e no detalhe, coberto por teste (`tests/integration/pending-panel.test.ts`). A absolvição silenciosa continua existindo para o colaborador (decisão aceita para o MVP), mas deixou de ser invisível para o RH.
@@ -52,8 +61,8 @@
 **DP-17 — Envio de push acoplado à transação da cobrança (escala).** O INC-012 implementou `PushNotificationChannel.send(tx, input)` fazendo a chamada de rede (VAPID/Web Push) **dentro** da mesma transação Prisma de `remindPendingUsers` — exigência do contrato `NotificationChannel.send(tx, input)` do INC-007, que o INC-012 não altera. Aceito conscientemente para o piloto (poucos pendentes por cobrança, erros de rede são capturados dentro do canal e nunca abortam a transação). **Se o produto escalar** (cobranças com centenas/milhares de pendentes), isso vira gargalo real: uma transação de banco mantida aberta por N chamadas de rede sequenciais. Nesse cenário, desacoplar o envio de push da transação (ex.: gravar a intenção de notificar dentro da transação e enviar de fato fora dela) passa a ser necessário — hoje é dívida controlada, não um bug.
 **Responsável:** Pedro (reavaliar quando o volume de pendentes por cobrança crescer).
 
-**DP-15 — Tela de admin para logo/cor do tenant.** O INC-009 adicionou `Tenant.logoUrl`/`Tenant.accentColor` ao schema, mas sem UI para editar — no piloto, configurado direto no banco. Antes da fase comercial (onboarding de novos clientes sem acesso ao banco), precisa de uma tela de admin (provavelmente super-admin, não o admin de tenant) para upload de logo + escolha da cor de destaque, com validação de contraste AA contra `--background`/`--card` (o design-system exige AA em toda combinação texto/fundo nova).
-**Responsável:** Pedro (priorizar quando o segundo cliente entrar).
+**DP-22 — Cor de destaque do tenant sem validação de contraste AA.** A tela "Aparência da empresa" (INC-017) valida a cor de destaque (`Tenant.accentColor`) só pelo formato hex `#RRGGBB` (`updateAccentColorAction`, regex `HEX_COLOR`) — não há cálculo de contraste contra `--background`/`--card`, embora a DP-15 original (resolvida no INC-017) pedisse essa validação. Um tenant pode hoje escolher uma cor que quebra a legibilidade nos cards gerados. Achado no levantamento read-only que precedeu o INC-019 (banner por seção). Só registro — não implementar sem decisão explícita (ex.: qual fórmula de contraste, bloquear salvar vs. avisar).
+**Responsável:** Pedro (priorizar quando decidir).
 
 **DP-18 — Site institucional (raiz do domínio, ex.: `conecta.com.br`).** Página de marketing/institucional na raiz do domínio, **separada** do app (o app fica em subdomínio/rota própria). **Decisão de escopo: é projeto SEPARADO e pós-piloto** — não faz parte do produto Conecta nem de nenhum INC atual; registrado aqui só para não se perder. Depende de DP-02 (nome/domínio definitivo).
 **Responsável:** Pedro (pós-piloto).

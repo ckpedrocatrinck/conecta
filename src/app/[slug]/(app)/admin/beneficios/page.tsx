@@ -6,6 +6,8 @@ import { HomeBanner } from "@/components/home/home-banner";
 import { requireAdmin } from "@/lib/auth/session";
 import { withTenant } from "@/lib/db/with-tenant";
 import { findBenefitsForAdminList } from "@/lib/repositories/benefit.repository";
+import { findTenantBeneficiosBannerKey } from "@/lib/repositories/tenant.repository";
+import { resolveBeneficiosBannerSrc } from "@/lib/branding/section-banner-display";
 import { BENEFIT_CATEGORY_LABELS, BENEFIT_CATEGORY_ORDER } from "@/lib/benefits/category-labels";
 
 const SUCCESS_MESSAGES: Record<string, string> = {
@@ -16,9 +18,11 @@ export default async function BenefitsAdminPage({ searchParams }: { searchParams
   const session = await requireAdmin();
   const { ok } = await searchParams;
 
-  const benefits = await withTenant({ tenantId: session.tenantId }, (tx) =>
-    findBenefitsForAdminList(tx, session.tenantId),
-  );
+  const [benefits, beneficiosBannerKey] = await Promise.all([
+    withTenant({ tenantId: session.tenantId }, (tx) => findBenefitsForAdminList(tx, session.tenantId)),
+    findTenantBeneficiosBannerKey(session.tenantId),
+  ]);
+  const beneficiosBannerSrc = await resolveBeneficiosBannerSrc(beneficiosBannerKey);
 
   // Agrupa na ordem canonica de categorias; so' renderiza categoria com itens.
   const byCategory = BENEFIT_CATEGORY_ORDER.map((cat) => ({
@@ -42,7 +46,7 @@ export default async function BenefitsAdminPage({ searchParams }: { searchParams
         </Link>
       </div>
 
-      <HomeBanner imageSrc="/banners/home.png" imageAlt="" title="Clube de Benefícios" />
+      <HomeBanner imageSrc={beneficiosBannerSrc} imageAlt="" title="Clube de Benefícios" />
 
       {ok && SUCCESS_MESSAGES[ok] && <p className="text-meta font-medium text-success">{SUCCESS_MESSAGES[ok]}</p>}
 

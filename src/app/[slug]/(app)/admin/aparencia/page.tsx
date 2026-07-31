@@ -1,8 +1,10 @@
 import { Card } from "@/components/ui/card";
 import { requireAdmin } from "@/lib/auth/session";
 import {
+  findTenantBeneficiosBannerKey,
   findTenantBranding,
   findTenantHomeBannerKey,
+  findTenantVagasBannerKey,
 } from "@/lib/repositories/tenant.repository";
 import { mediaStorage } from "@/lib/storage/media-storage";
 import { DEFAULT_ACCENT_COLOR } from "@/lib/cards/brand-tokens";
@@ -12,16 +14,39 @@ import { AccentColorField } from "./accent-color-field";
 // Arte fixa servida quando o tenant nao configurou banner (mesma usada na home
 // do colaborador — ver page.tsx da home). Preview mostra o que o colaborador ve.
 const DEFAULT_BANNER_SRC = "/banners/home.png";
+// Idem, para Vagas (INC-019) — a arte fixa que /vagas usa quando o tenant nao
+// configurou banner proprio.
+const DEFAULT_VAGAS_BANNER_SRC = "/banners/vagas.png";
+
+const BANNER_SIZE_HINT = (
+  <p className="rounded-[var(--radius-card)] border border-border bg-primary-subtle px-3 py-2 text-meta text-foreground-soft">
+    <span className="font-semibold text-foreground">Tamanho recomendado: 1920×1080px (16:9).</span>{" "}
+    Mantenha o essencial (texto, logo, pessoas) <span className="font-semibold">centralizado</span> —
+    áreas nas bordas podem ser cortadas em telas diferentes.
+  </p>
+);
+
+// Preview FIEL: mesmo object-cover + teto de 208px (max-h-52) da faixa ao vivo
+// (home-banner.tsx) nas 3 secoes — o admin ve o recorte real, nao a arte inteira.
+const BANNER_PREVIEW_CLASSNAME =
+  "h-auto max-h-52 w-full rounded-[var(--radius-card)] border border-border object-cover";
 
 export default async function AparenciaPage() {
   const session = await requireAdmin();
 
-  const [branding, bannerKey] = await Promise.all([
+  const [branding, bannerKey, vagasBannerKey, beneficiosBannerKey] = await Promise.all([
     findTenantBranding(session.tenantId),
     findTenantHomeBannerKey(session.tenantId),
+    findTenantVagasBannerKey(session.tenantId),
+    findTenantBeneficiosBannerKey(session.tenantId),
   ]);
 
+  // Preview do admin: mostra a key REAL do tenant (ou nada) — nunca a arte
+  // fixa de outra secao como se fosse a configurada (diferente da resolucao
+  // usada nas telas publicas, que cai no fallback certo de cada secao).
   const bannerUrl = bannerKey ? await mediaStorage.getViewUrl(bannerKey) : null;
+  const vagasBannerUrl = vagasBannerKey ? await mediaStorage.getViewUrl(vagasBannerKey) : null;
+  const beneficiosBannerUrl = beneficiosBannerKey ? await mediaStorage.getViewUrl(beneficiosBannerKey) : null;
   const logoUrl = branding.logoUrl ? await mediaStorage.getViewUrl(branding.logoUrl) : null;
   const accentColor = branding.accentColor ?? DEFAULT_ACCENT_COLOR;
 
@@ -30,8 +55,8 @@ export default async function AparenciaPage() {
       <div className="flex flex-col gap-0.5">
         <h1 className="text-display text-foreground">Aparência da empresa</h1>
         <p className="text-meta text-muted-foreground">
-          Banner da home, logo e cor de destaque da sua empresa. Cada mudança é
-          salva ao concluir.
+          Banners de cada tela, logo e cor de destaque da sua empresa. Cada
+          mudança é salva ao concluir.
         </p>
       </div>
 
@@ -43,19 +68,48 @@ export default async function AparenciaPage() {
             Sem um banner próprio, a arte padrão é usada.
           </p>
         </div>
-        <p className="rounded-[var(--radius-card)] border border-border bg-primary-subtle px-3 py-2 text-meta text-foreground-soft">
-          <span className="font-semibold text-foreground">Tamanho recomendado: 1920×1080px (16:9).</span>{" "}
-          Mantenha o essencial (texto, logo, pessoas) <span className="font-semibold">centralizado</span> —
-          áreas nas bordas podem ser cortadas em telas diferentes.
-        </p>
-        {/* Preview FIEL: mesmo object-cover + teto de 208px (max-h-52) da faixa
-            ao vivo (home-banner.tsx) — o admin ve o recorte real, nao a arte
-            inteira. */}
+        {BANNER_SIZE_HINT}
         <AppearanceUploader
           target="banner"
           currentUrl={bannerUrl ?? DEFAULT_BANNER_SRC}
-          previewClassName="h-auto max-h-52 w-full rounded-[var(--radius-card)] border border-border object-cover"
+          previewClassName={BANNER_PREVIEW_CLASSNAME}
           buttonLabel={bannerUrl ? "Trocar banner" : "Enviar banner"}
+        />
+      </Card>
+
+      <Card className="gap-4">
+        <div className="flex flex-col gap-0.5">
+          <h2 className="text-card-title font-bold text-foreground">Banner de Vagas</h2>
+          <p className="text-meta text-muted-foreground">
+            Imagem exibida no topo da tela de Vagas internas (colaborador e
+            admin). Sem um banner próprio, a arte padrão do produto é usada.
+          </p>
+        </div>
+        {BANNER_SIZE_HINT}
+        <AppearanceUploader
+          target="vagas-banner"
+          currentUrl={vagasBannerUrl ?? DEFAULT_VAGAS_BANNER_SRC}
+          previewClassName={BANNER_PREVIEW_CLASSNAME}
+          buttonLabel={vagasBannerUrl ? "Trocar banner" : "Enviar banner"}
+        />
+      </Card>
+
+      <Card className="gap-4">
+        <div className="flex flex-col gap-0.5">
+          <h2 className="text-card-title font-bold text-foreground">Banner de Benefícios</h2>
+          <p className="text-meta text-muted-foreground">
+            Imagem exibida no topo da tela de Clube de Benefícios (colaborador e
+            admin). Sem um banner próprio, a tela mostra só o título — não há
+            arte padrão para esta seção.
+          </p>
+        </div>
+        {BANNER_SIZE_HINT}
+        <AppearanceUploader
+          target="beneficios-banner"
+          currentUrl={beneficiosBannerUrl}
+          previewClassName={BANNER_PREVIEW_CLASSNAME}
+          buttonLabel={beneficiosBannerUrl ? "Trocar banner" : "Enviar banner"}
+          emptyLabel="Sem imagem — a tela mostra só o texto"
         />
       </Card>
 

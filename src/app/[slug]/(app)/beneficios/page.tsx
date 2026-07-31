@@ -5,14 +5,18 @@ import { HomeBanner } from "@/components/home/home-banner";
 import { requireOnboardedSession } from "@/lib/auth/session";
 import { withTenant } from "@/lib/db/with-tenant";
 import { findActiveBenefitsForEmployee } from "@/lib/repositories/benefit.repository";
+import { findTenantBeneficiosBannerKey } from "@/lib/repositories/tenant.repository";
+import { resolveBeneficiosBannerSrc } from "@/lib/branding/section-banner-display";
 import { BENEFIT_CATEGORY_LABELS, BENEFIT_CATEGORY_ORDER } from "@/lib/benefits/category-labels";
 
 export default async function BeneficiosPage() {
   const session = await requireOnboardedSession();
 
-  const benefits = await withTenant({ tenantId: session.tenantId }, (tx) =>
-    findActiveBenefitsForEmployee(tx, session.tenantId),
-  );
+  const [benefits, beneficiosBannerKey] = await Promise.all([
+    withTenant({ tenantId: session.tenantId }, (tx) => findActiveBenefitsForEmployee(tx, session.tenantId)),
+    findTenantBeneficiosBannerKey(session.tenantId),
+  ]);
+  const beneficiosBannerSrc = await resolveBeneficiosBannerSrc(beneficiosBannerKey);
 
   // Agrupa na ordem canonica; so' categorias com pelo menos um beneficio ativo.
   const groups = BENEFIT_CATEGORY_ORDER.map((category) => ({
@@ -29,7 +33,12 @@ export default async function BeneficiosPage() {
         </p>
       </div>
 
-      <HomeBanner title="Clube de Benefícios" subtitle="Descontos e vantagens para colaboradores." />
+      <HomeBanner
+        imageSrc={beneficiosBannerSrc}
+        imageAlt=""
+        title="Clube de Benefícios"
+        subtitle="Descontos e vantagens para colaboradores."
+      />
 
       {groups.length === 0 ? (
         <EmptyState

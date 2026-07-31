@@ -12,21 +12,37 @@ import {
 
 const ACCEPTED_TYPES = "image/jpeg,image/png,image/webp";
 
-/** Upload de uma imagem de branding (banner ou logo, INC-017). Reusa o fluxo do
- * INC-016: pede a URL assinada, envia DIRETO ao storage (PUT presigned) e
- * confirma (o servidor valida o tipo REAL por magic number). O banner/logo
- * atual so' e' trocado no confirm aprovado — um envio invalido nao apaga o
- * que ja' estava configurado. */
+// Rotulo de sucesso e de "campo vazio" variam por secao — sobretudo Beneficios,
+// que ao contrario dos outros 3 nao tem arte fixa (o vazio cai em modo texto,
+// nao numa "arte padrao" que nao existe para essa secao).
+const SAVED_LABEL: Record<BrandingTarget, string> = {
+  banner: "Banner atualizado.",
+  logo: "Logo atualizado.",
+  "vagas-banner": "Banner de Vagas atualizado.",
+  "beneficios-banner": "Banner de Benefícios atualizado.",
+};
+
+const DEFAULT_EMPTY_LABEL = "Sem imagem — usando a arte padrão";
+
+/** Upload de uma imagem de branding (banner, logo ou banner de secao — INC-017
+ * + INC-019). Reusa o fluxo do INC-016: pede a URL assinada, envia DIRETO ao
+ * storage (PUT presigned) e confirma (o servidor valida o tipo REAL por magic
+ * number). O banner/logo atual so' e' trocado no confirm aprovado — um envio
+ * invalido nao apaga o que ja' estava configurado. */
 export function AppearanceUploader({
   target,
   currentUrl,
   previewClassName,
   buttonLabel,
+  emptyLabel = DEFAULT_EMPTY_LABEL,
 }: {
   target: BrandingTarget;
   currentUrl: string | null;
   previewClassName: string;
   buttonLabel: string;
+  /** Texto do estado sem imagem — default assume arte fixa; Beneficios (sem
+   * arte propria) passa algo como "usa so' o texto" (ver page.tsx). */
+  emptyLabel?: string;
 }) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -34,7 +50,7 @@ export function AppearanceUploader({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const savedLabel = target === "banner" ? "Banner atualizado." : "Logo atualizado.";
+  const savedLabel = SAVED_LABEL[target];
 
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -111,7 +127,7 @@ export function AppearanceUploader({
         <div
           className={`flex items-center justify-center bg-muted text-meta text-muted-foreground ${previewClassName}`}
         >
-          Sem imagem — usando a arte padrão
+          {emptyLabel}
         </div>
       )}
 

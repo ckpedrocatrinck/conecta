@@ -6,7 +6,9 @@
 
 ```
 Tenant        id, name, slug, status, plan,
-              logo_url?, accent_color?                       -- identidade visual dos cards (INC-009); sem UI de edição no piloto (DP-15)
+              logo_url?, home_banner_key?,                   -- identidade visual dos cards (INC-009) e banner da home (INC-017)
+              vagas_banner_key?, beneficios_banner_key?,      -- banner por seção (INC-019); nulo = arte fixa (vagas) ou modo texto (benefícios)
+              accent_color?                                  -- cor de destaque (INC-017); editável na tela "Aparência da empresa" (DP-15 resolvida)
 Branch        id, tenant_id, name, code                     -- filial
 User          id, tenant_id, branch_id, role(admin|manager|employee),
               full_name, registration_code,                 -- matrícula: identificador interno, NÃO login
