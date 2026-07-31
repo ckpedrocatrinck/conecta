@@ -1,6 +1,6 @@
 # INC-018 — Comunicados: publicar/agendar direto na tela de criação
 
-**Status:** 📝 Especificado (aguardando execução)
+**Status:** ✅ Concluído
 **Fase:** 2 — Núcleo jurídico
 **Depende de:** INC-004 (CRUD + versionamento + publish/schedule/cron), INC-005 (fuso America/Sao_Paulo)
 **ADRs relevantes:** 001
@@ -33,7 +33,7 @@ Na tela de criação (`/admin/comunicados/novo`), o admin escolhe o destino do c
    - (fallback) dois passos sequenciais commitados, onde uma falha na publicação deixa um **rascunho válido e re-publicável** (não um estado corrompido).
    - Claude Code deve **reportar qual das duas usou e por quê** — em especial se a assinatura atual de `publishAnnouncement` não aceitar uma transação externa e por isso a opção 1 não compôs limpo.
 
-4. **Validação server-side nos caminhos de publicar/agendar.** Título e corpo obrigatórios (verificados **depois** da sanitização server-side, nunca confiando no cliente); público-alvo resolvido. Rascunho continua tolerante como hoje (pode salvar incompleto).
+4. **Validação server-side nos caminhos de publicar/agendar.** Título e corpo obrigatórios (verificados **depois** da sanitização server-side, nunca confiando no cliente); público-alvo resolvido. Rascunho segue exigindo título/corpo/categoria, como já era — a descrição original deste item ("rascunho continua tolerante, pode salvar incompleto") estava errada; `createAnnouncementDraftAction` já rejeitava campo faltante antes deste INC (achado na reconciliação de vault pós-INC-018).
 
 5. **Agendar — `publish_at`.** Obrigatório e **no futuro** (validação server-side; rejeitar data/hora no passado com mensagem clara). UI em America/Sao_Paulo, persistência em UTC — mesmo tratamento de fuso do INC-005. Não reaproveitar a semântica "passado = publica no próximo sweep" do teste do INC-004: aqui, passado é erro do usuário.
 
@@ -96,12 +96,16 @@ Nenhuma tabela nova, nenhum verbo de escrita novo: `announcements` já tem `S I 
   jsdom/testing-library e o DP-21 impede instalar dependência na máquina de dev.
   A confirmação foi validada manualmente; as Server Actions por baixo dela estão
   cobertas.
-- **Dívidas registradas no relatório de entrega:** bug de fuso no
-  `datetime-local` da tela `[id]` e em `vagas` (`new Date(valor)` grava 3h
-  adiantado em runtime UTC — fora do escopo deste INC, candidato a DP); público-
-  alvo não validado contra o tenant (exposição pré-existente, sem vazamento
-  entre tenants); `pending-panel-performance.test.ts` mais perto do orçamento de
-  1s com a carga dos 2 arquivos novos.
+- **Dívidas registradas no relatório de entrega — reportadas como follow-up,
+  NÃO corrigidas neste INC** (registradas como DP na reconciliação de vault
+  pós-INC-018):
+  - **DP-23** — bug de fuso no `datetime-local` da tela `[id]` e em `vagas`
+    (`new Date(valor)` grava 3h adiantado em runtime UTC).
+  - **DP-24** — público-alvo (`branchIds`) não validado contra o tenant da
+    sessão (exposição pré-existente, sem vazamento entre tenants).
+  - **DP-25** — `pending-panel-performance.test.ts` cada vez mais perto do
+    orçamento de 1s com a carga dos 2 arquivos de teste novos deste INC (risco
+    de flakiness).
 - **Pendência operacional (não-código):** confirmar o Vercel Cron batendo em
   `GET /api/cron/publish-announcements` com `CRON_SECRET` em produção — sem
   isso, "Agendar" grava um `scheduled` que nunca publica.
