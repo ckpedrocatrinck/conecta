@@ -29,6 +29,11 @@ jobs:
       APP_DATABASE_URL: postgresql://conecta_app:conecta_ci_app@localhost:5432/conecta_test
       CPF_HASH_PEPPER: conecta_ci_pepper
       CRON_SECRET: conecta_ci_cron_secret
+      # Dummy, so' para o `npm run build`: `next build` roda com
+      # NODE_ENV=production e importa toda rota (inclusive /api/auth), e o
+      # Auth.js espera um segredo em producao. Valor inerte — a CI nao serve
+      # request nenhuma.
+      AUTH_SECRET: conecta_ci_auth_secret
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

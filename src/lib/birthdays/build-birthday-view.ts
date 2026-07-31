@@ -3,17 +3,14 @@ import type { UpcomingBirthdayRow } from "../repositories/user.repository";
 import type { TenantBranding } from "../repositories/tenant.repository";
 import { mediaStorage } from "../storage/media-storage";
 import { buildBirthdayCardData, type BirthdayCardData } from "../cards/card-model";
+import type { BirthdayListEntry } from "./birthday-list-entry";
 
-export type BirthdayListEntry = {
-  userId: string;
-  fullName: string;
-  photoUrl: string | null;
-  branchId: string;
-  /** 0 = hoje (em America/Sao_Paulo), 1..N = dias a partir de hoje. */
-  offsetDays: number;
-  month: number;
-  day: number;
-};
+// SERVER-ONLY por construcao: `mediaStorage` acima puxa `node:fs/promises`.
+// O tipo `BirthdayListEntry` e o helper de rotulo `birthdayDayLabel` moram em
+// ./birthday-list-entry (modulo puro) justamente para que client components
+// possam consumi-los sem arrastar esse grafo — ver DP-20. Nao reexportamos
+// `birthdayDayLabel` daqui de proposito: reexportar reabriria a armadilha.
+export type { BirthdayListEntry };
 
 function offsetFor(row: { month: number; day: number }, monthDays: MonthDay[]): number {
   // A query (findUpcomingBirthdays) so' retorna linhas cujo (mes,dia) esta em
@@ -46,15 +43,6 @@ export async function buildBirthdayListView(
   );
 
   return entries.sort((a, b) => a.offsetDays - b.offsetDays || a.fullName.localeCompare(b.fullName, "pt-BR"));
-}
-
-/** Rotulo curto pra tela de aniversariantes ("claro em 30s" — design-system
- * §0). So' os 3 primeiros dias ganham rotulo relativo; do 4o em diante a data
- * numerica e' mais clara que "em 5 dias". */
-export function birthdayDayLabel(offsetDays: number, month: number, day: number): string {
-  if (offsetDays === 0) return "Hoje";
-  if (offsetDays === 1) return "Amanhã";
-  return `${String(day).padStart(2, "0")}/${String(month).padStart(2, "0")}`;
 }
 
 /** Card grande (template do INC-009) so' para quem faz aniversario HOJE — usa
