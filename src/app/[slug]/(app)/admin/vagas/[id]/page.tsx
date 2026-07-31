@@ -7,6 +7,7 @@ import {
   findJobOpeningWithDetails,
 } from "@/lib/repositories/job-opening.repository";
 import { toApplicantView } from "@/lib/jobs/build-job-opening-view";
+import { normalizeWhatsappNumber } from "@/lib/jobs/whatsapp-contact";
 import { formatDateTimeSaoPaulo } from "@/lib/dates/format-datetime";
 import { Button } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -25,6 +26,23 @@ const STATUS_LABEL: Record<string, string> = {
   open: "Aberta",
   closed: "Fechada",
 };
+
+function ApplicantPhoneContact({ phone }: { phone: string | null }) {
+  if (!phone) {
+    return <span className="text-meta text-muted-foreground">Sem telefone cadastrado</span>;
+  }
+
+  const { waLink } = normalizeWhatsappNumber(phone);
+  if (!waLink) {
+    return <span className="text-meta text-muted-foreground">{phone}</span>;
+  }
+
+  return (
+    <a href={waLink} target="_blank" rel="noopener noreferrer" className="text-meta font-medium text-primary underline">
+      {phone} · abrir no WhatsApp
+    </a>
+  );
+}
 
 export default async function JobOpeningDetailPage({
   params,
@@ -106,6 +124,7 @@ export default async function JobOpeningDetailPage({
                 <span className="text-meta text-muted-foreground">
                   Matrícula {a.registrationCode} · {a.branchName}
                 </span>
+                <ApplicantPhoneContact phone={a.phone} />
                 {a.note && <p className="text-foreground">{a.note}</p>}
               </div>
             ))}

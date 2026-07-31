@@ -8,9 +8,11 @@ import {
   createJobApplication,
   createJobOpening,
   closeJobOpeningManually,
+  findApplicantsForJobOpening,
   findJobApplication,
   findOpenJobOpeningsForEmployee,
 } from "../../src/lib/repositories/job-opening.repository";
+import { toApplicantView } from "../../src/lib/jobs/build-job-opening-view";
 import { buildJobApplicationExportCsv } from "../../src/lib/csv/job-application-export";
 import { isJobOpeningAcceptingApplications } from "../../src/lib/jobs/is-open";
 
@@ -170,6 +172,8 @@ describe("export de candidatos (CSV)", () => {
     const applicantA = tenant.users[4];
     const applicantB = tenant.users[5];
 
+    await ownerDb.user.update({ where: { id: applicantA.id }, data: { phone: "(22) 99999-9999" } });
+
     await withTenant({ tenantId: tenant.tenant.id }, (tx) =>
       createJobApplication(tx, tenant.tenant.id, job.id, applicantA.id, "quero muito"),
     );
@@ -186,5 +190,35 @@ describe("export de candidatos (CSV)", () => {
     expect(csvExport?.csv).toContain(applicantA.fullName);
     expect(csvExport?.csv).toContain(applicantB.fullName);
     expect(csvExport?.csv).toContain("quero muito");
+    // INC-021: coluna Telefone presente; candidato sem telefone gera celula vazia, nao "null".
+    expect(csvExport?.csv).toContain("Telefone");
+    expect(csvExport?.csv).toContain("(22) 99999-9999");
+  });
+});
+
+describe("candidatos trazem o telefone via join com User (INC-021)", () => {
+  it("findApplicantsForJobOpening + toApplicantView propagam o phone (null quando o colaborador nao tem)", async () => {
+    const job = await createJob({ title: "Vaga para telefone" });
+    const withPhone = tenant.users[6];
+    const withoutPhone = tenant.users[7];
+
+    await ownerDb.user.update({ where: { id: withPhone.id }, data: { phone: "22988887777" } });
+    await ownerDb.user.update({ where: { id: withoutPhone.id }, data: { phone: null } });
+
+    await withTenant({ tenantId: tenant.tenant.id }, (tx) =>
+      createJobApplication(tx, tenant.tenant.id, job.id, withPhone.id, null),
+    );
+    await withTenant({ tenantId: tenant.tenant.id }, (tx) =>
+      createJobApplication(tx, tenant.tenant.id, job.id, withoutPhone.id, null),
+    );
+
+    const applicants = await withTenant({ tenantId: tenant.tenant.id }, (tx) =>
+      findApplicantsForJobOpening(tx, tenant.tenant.id, job.id),
+    );
+    const branchNameById = new Map(tenant.branches.map((b) => [b.id, b.name]));
+    const views = applicants.map((a) => toApplicantView(a, branchNameById));
+
+    expect(views.find((v) => v.userId === withPhone.id)?.phone).toBe("22988887777");
+    expect(views.find((v) => v.userId === withoutPhone.id)?.phone).toBeNull();
   });
 });
