@@ -37,6 +37,7 @@
 | 017 | Aparência da empresa (banner + logo + cor) | pré-piloto (resolve DP-15) | ✅ | 016 · banner/logo dependem de R2 em PRODUÇÃO (cor não) |
 | 018 | Comunicados: publicar/agendar direto na criação | 2 (núcleo jurídico) | ✅ | 004, 005 · cron de agendamento precisa estar ativo em PRODUÇÃO |
 | 019 | Banner por seção (Vagas, Benefícios) | pré-piloto (paridade Aparência) | ✅ | 017 · banners de Vagas/Benefícios dependem de R2 em PRODUÇÃO |
+| 020 | Fuso do datetime-local (agendamento/prazo) | 2 (núcleo jurídico / correção) | ✅ | 018, 005, 011 · resolve DP-23 |
 | 013 | Hardening pré-piloto: LGPD checklist, backup/restore, seeds reais | 5 | ⬜ | todos, 014 |
 
 Observações:

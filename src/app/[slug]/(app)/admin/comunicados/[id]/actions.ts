@@ -16,6 +16,7 @@ import { createAnnouncementVersion } from "@/lib/repositories/announcement-versi
 import { replaceAnnouncementAudience } from "@/lib/repositories/announcement-audience.repository";
 import { publishAnnouncement } from "@/lib/announcements/publish";
 import { recordAuditLog } from "@/lib/repositories/audit-log.repository";
+import { fromDatetimeLocalSaoPaulo } from "@/lib/dates/format-datetime";
 
 const VALID_CRITICALITY = new Set(["info", "requires_ack"]);
 
@@ -92,8 +93,11 @@ export async function scheduleAnnouncementAction(formData: FormData) {
   const session = await requireAdmin();
   const id = String(formData.get("id") ?? "");
   const publishAtRaw = String(formData.get("publishAt") ?? "");
-  const publishAt = publishAtRaw ? new Date(publishAtRaw) : null;
-  if (!id || !publishAt || Number.isNaN(publishAt.getTime())) {
+  // Input manda horario de parede de Sao Paulo; new Date(publishAtRaw) cru
+  // interpretava como TZ do processo, gravando 3h adiantado em runtime UTC
+  // (INC-020 / DP-23).
+  const publishAt = publishAtRaw ? fromDatetimeLocalSaoPaulo(publishAtRaw) : null;
+  if (!id || !publishAt) {
     redirect(`/${session.tenantSlug}/admin/comunicados/${id}?erro=data-invalida`);
   }
 
