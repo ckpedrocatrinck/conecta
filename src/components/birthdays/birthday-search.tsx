@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Avatar } from "@/components/ui/avatar";
-import { birthdayDayLabel } from "@/lib/birthdays/build-birthday-view";
-import type { BirthdayListEntry } from "@/lib/birthdays/build-birthday-view";
+// Modulo PURO de proposito (DP-20): importar `birthdayDayLabel` de
+// build-birthday-view arrastava `mediaStorage` -> `node:fs/promises` para o
+// chunk do cliente e quebrava o `next build`.
+import { birthdayDayLabel, type BirthdayListEntry } from "@/lib/birthdays/birthday-list-entry";
 
 /**
  * Busca por nome dentro da tela de aniversariantes — filtra SO' sobre
