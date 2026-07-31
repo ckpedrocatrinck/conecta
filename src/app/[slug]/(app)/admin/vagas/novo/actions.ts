@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/auth/session";
 import { withTenant } from "@/lib/db/with-tenant";
 import { createJobOpening } from "@/lib/repositories/job-opening.repository";
 import { recordAuditLog } from "@/lib/repositories/audit-log.repository";
+import { fromDatetimeLocalSaoPaulo } from "@/lib/dates/format-datetime";
 
 export async function createJobOpeningAction(formData: FormData) {
   const session = await requireAdmin();
@@ -16,9 +17,12 @@ export async function createJobOpeningAction(formData: FormData) {
   const requirements = String(formData.get("requirements") ?? "").trim();
   const deadlineRaw = String(formData.get("deadline") ?? "");
 
-  const deadline = deadlineRaw ? new Date(deadlineRaw) : null;
+  // Input manda horario de parede de Sao Paulo; new Date(deadlineRaw) cru
+  // interpretava como TZ do processo, gravando 3h adiantado em runtime UTC
+  // (INC-020 / DP-23).
+  const deadline = deadlineRaw ? fromDatetimeLocalSaoPaulo(deadlineRaw) : null;
 
-  if (!title || !description || !deadline || Number.isNaN(deadline.getTime())) {
+  if (!title || !description || !deadline) {
     redirect(`/${session.tenantSlug}/admin/vagas/novo?erro=obrigatorio`);
   }
 

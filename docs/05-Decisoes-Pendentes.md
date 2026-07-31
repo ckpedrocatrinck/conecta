@@ -12,6 +12,19 @@
 - **Login (contradição do kickoff).** ✅ Resolvida no **ADR-006**: login por CPF completo + senha; `cpf_hash` determinístico com pepper. "CPF parcial" eliminado do escopo.
 - **Pendências de modelagem** (User desligado / AnnouncementRead). ✅ Resolvidas no **ADR-006**.
 
+## ✅ Resolvidas em 2026-07-31
+
+- **DP-23 — Bug de fuso horário no `datetime-local` da tela `[id]` (comunicados)
+  e em Vagas.** ✅ Implementado no **INC-020**: as 3 gravações que usavam
+  `new Date(valorCru)` (`scheduleAnnouncementAction` em
+  `comunicados/[id]/actions.ts`; `createJobOpeningAction` em
+  `vagas/novo/actions.ts`; `updateJobOpeningAction` em `vagas/[id]/actions.ts`)
+  agora usam `fromDatetimeLocalSaoPaulo` (INC-018) — não só a tela `[id]` de
+  comunicados citada no texto original desta DP, as 3 telas afetadas foram
+  corrigidas. Provado por round-trip **através da Server Action** (não só da
+  util isolada, já coberta desde o INC-018) sob `TZ=UTC` de processo — o
+  cenário de produção/CI que escondia o bug.
+
 ## ✅ Resolvidas em 2026-07-24
 
 - **DP-15 — Tela de admin para logo/cor do tenant.** ✅ Implementado no **INC-017**:
@@ -75,9 +88,6 @@
 
 **DP-21 — `package-lock.json` gerado no Windows quebra o `npm ci` do CI (dependências opcionais multiplataforma).** Qualquer `npm install` rodado na máquina Windows do dev **poda** as entradas top-level `@emnapi/core@1.11.2` e `@emnapi/runtime@1.11.2` do lock — entradas exigidas pelo bloco `overrides` do `package.json` e necessárias no Linux, onde o npm instala o fallback wasm `@tailwindcss/oxide-wasm32-wasi`. O `npm ci` do CI então falha com `Missing: @emnapi/runtime@1.11.2 from lock file` **antes de rodar qualquer teste**. Reproduzido: foi exatamente assim que a branch `hardening/deps-cve` nasceu vermelha (`9d56cbc`). Os flags `--os=linux --cpu=x64 --libc=glibc` **não** resolvem; `npm install --package-lock-only` também poda. **Workaround verificado:** gerar o lock num container Linux — `docker run --rm -v <dir>:/app -w /app node:22 npm install --package-lock-only` — que restaura as entradas e produz um diff mínimo. **Decisão pendente:** adotar esse comando como procedimento oficial de mexer em dependência (documentar em `convencoes-git.md`/`infra-banco-dev-e-ci.md`), ou remover os `overrides` de `@emnapi/*` se eles não forem mais necessários (entraram por CVE transitiva — reavaliar).
 **Responsável:** Pedro (decidir o procedimento).
-
-**DP-23 — Bug de fuso horário no `datetime-local` da tela `[id]` (comunicados) e em Vagas.** Identificado durante o INC-018 (2026-07-27), fora do escopo do incremento — reportado como follow-up, não corrigido. `new Date(valor)` interpreta o valor do input `datetime-local` (sem timezone, horário local do navegador) como se já fosse UTC, gravando o instante 3h adiantado em runtime UTC (America/Sao_Paulo é UTC-3). Afeta o reagendamento de `publish_at` em `/admin/comunicados/[id]` e o campo de prazo (`deadline`) em Vagas — os dois usam `new Date(valor)` direto em vez do helper `fromDatetimeLocalSaoPaulo` que o próprio INC-018 introduziu para a tela `novo` (`format-datetime.ts`). Correção: trocar as duas ocorrências pelo mesmo helper.
-**Responsável:** Pedro (priorizar — data errada em produção é silenciosa, ninguém percebe até comparar o horário).
 
 **DP-24 — Público-alvo (`branchIds`) de comunicado não validado contra o tenant da sessão.** Identificado durante o INC-018 (2026-07-27), pré-existente (não introduzido por ele) — reportado como follow-up, não corrigido. `replaceAnnouncementAudience` (`announcement-audience.repository.ts`) grava os `branchIds` recebidos do formulário direto, sem confirmar que cada `branchId` pertence ao tenant da sessão. Como a linha de `AnnouncementAudience` é gravada com o `tenantId` correto do comunicado, isso **não vaza dado entre tenants** (RLS continua isolando a leitura) — mas um `branchId` de outro tenant (ou inexistente) cria uma audiência que não corresponde a nenhuma filial real, restringindo o público a zero pessoas silenciosamente, sem erro. Correção: validar `branchIds` contra `findBranchesByTenant(tenantId)` antes de gravar.
 **Responsável:** Pedro (priorizar — mesma classe de bug de outros achados de validação de tenant, mesmo sem vazamento).
