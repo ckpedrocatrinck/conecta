@@ -4,9 +4,12 @@ import { randomUUID } from "node:crypto";
 import { requireAdmin } from "@/lib/auth/session";
 import { withTenant } from "@/lib/db/with-tenant";
 import {
+  findTenantBeneficiosBannerKey,
   findTenantBranding,
   findTenantHomeBannerKey,
+  findTenantVagasBannerKey,
   updateTenantAppearance,
+  type TenantAppearanceUpdate,
 } from "@/lib/repositories/tenant.repository";
 import { recordAuditLog } from "@/lib/repositories/audit-log.repository";
 import { mediaStorage } from "@/lib/storage/media-storage";
@@ -14,9 +17,27 @@ import { uploadRejectMessage, validateUploadedObject } from "@/lib/storage/valid
 
 // Aparencia da empresa (INC-017): banner da home + logo (imagens no storage,
 // mesmo fluxo do INC-016: presigned + magic number no confirm) + cor de
-// destaque (texto, sem R2). Admin-only.
+// destaque (texto, sem R2). INC-019 estende para banner por secao (Vagas,
+// Beneficios) — mesmo fluxo, so' mais 2 targets. Admin-only.
 
-export type BrandingTarget = "banner" | "logo";
+export type BrandingTarget = "banner" | "logo" | "vagas-banner" | "beneficios-banner";
+
+// Campo do Tenant que cada target grava, e como ler a key ANTERIOR (para
+// apagar o objeto velho so' depois do commit). Uma entrada por target — trocar
+// um target so' mexe na sua propria entrada, nunca nas dos outros 3.
+const FIELD_BY_TARGET = {
+  banner: "homeBannerKey",
+  logo: "logoUrl",
+  "vagas-banner": "vagasBannerKey",
+  "beneficios-banner": "beneficiosBannerKey",
+} as const satisfies Record<BrandingTarget, keyof TenantAppearanceUpdate>;
+
+const PREVIOUS_KEY_BY_TARGET = {
+  banner: findTenantHomeBannerKey,
+  logo: (tenantId: string) => findTenantBranding(tenantId).then((b) => b.logoUrl),
+  "vagas-banner": findTenantVagasBannerKey,
+  "beneficios-banner": findTenantBeneficiosBannerKey,
+} as const satisfies Record<BrandingTarget, (tenantId: string) => Promise<string | null>>;
 
 function brandingKey(tenantId: string, target: BrandingTarget): string {
   // uuid por upload: cada troca e' um objeto NOVO — o banner/logo atual nunca e'
@@ -65,12 +86,9 @@ export async function confirmBrandingUploadAction(
     return { ok: false, error: "Envie uma imagem (JPG, PNG ou WEBP)." };
   }
 
-  const field = target === "banner" ? "homeBannerKey" : "logoUrl";
+  const field = FIELD_BY_TARGET[target];
   const previousKey = await withTenant({ tenantId: session.tenantId }, async (tx) => {
-    const previous =
-      target === "banner"
-        ? await findTenantHomeBannerKey(session.tenantId)
-        : (await findTenantBranding(session.tenantId)).logoUrl;
+    const previous = await PREVIOUS_KEY_BY_TARGET[target](session.tenantId);
 
     await updateTenantAppearance(tx, session.tenantId, { [field]: key });
     await recordAuditLog(tx, {

@@ -9,8 +9,9 @@ import { requireOnboardedSession } from "@/lib/auth/session";
 import { withTenant } from "@/lib/db/with-tenant";
 import { findBranchesByTenant } from "@/lib/repositories/branch.repository";
 import { findOpenJobOpeningsForEmployee, findMyJobApplications } from "@/lib/repositories/job-opening.repository";
-import { findTenantBranding } from "@/lib/repositories/tenant.repository";
+import { findTenantBranding, findTenantVagasBannerKey } from "@/lib/repositories/tenant.repository";
 import { signBrandingForDisplay } from "@/lib/branding/branding-display";
+import { resolveVagasBannerSrc } from "@/lib/branding/section-banner-display";
 import { jobOpeningToCardData } from "@/lib/jobs/build-job-opening-view";
 
 export default async function VagasPage({
@@ -21,14 +22,16 @@ export default async function VagasPage({
   const session = await requireOnboardedSession();
   const { filial } = await searchParams;
 
-  const [{ jobs, branches, myApplications }, branding] = await Promise.all([
+  const [{ jobs, branches, myApplications }, branding, vagasBannerKey] = await Promise.all([
     withTenant({ tenantId: session.tenantId }, async (tx) => ({
       jobs: await findOpenJobOpeningsForEmployee(tx, session.tenantId, { branchId: filial || undefined }),
       branches: await findBranchesByTenant(tx, session.tenantId),
       myApplications: await findMyJobApplications(tx, session.tenantId, session.userId),
     })),
     findTenantBranding(session.tenantId).then(signBrandingForDisplay),
+    findTenantVagasBannerKey(session.tenantId),
   ]);
+  const vagasBannerSrc = await resolveVagasBannerSrc(vagasBannerKey);
 
   const appliedJobIds = new Set(myApplications.map((a) => a.jobOpeningId));
 
@@ -39,7 +42,7 @@ export default async function VagasPage({
         <p className="text-meta text-muted-foreground">Toque em uma vaga para ver os requisitos e se candidatar.</p>
       </div>
 
-      <HomeBanner imageSrc="/banners/vagas.png" imageAlt="" title="Vagas internas" />
+      <HomeBanner imageSrc={vagasBannerSrc} imageAlt="" title="Vagas internas" />
 
       {branches.length > 1 && (
         <div className="flex flex-wrap gap-2">

@@ -64,13 +64,36 @@ export async function findTenantHomeBannerKey(tenantId: string): Promise<string 
   return tenant?.homeBannerKey ?? null;
 }
 
-/** Campos da tela "Aparencia da empresa" (INC-017). Atualizacao parcial: so'
- * grava as chaves presentes (undefined = nao mexe). `logoUrl`/`homeBannerKey`
+/** Banner de Vagas (INC-019): key do MediaStorage ou null (=> fallback fixo
+ * public/banners/vagas.png). */
+export async function findTenantVagasBannerKey(tenantId: string): Promise<string | null> {
+  const tenant = await appDb.tenant.findUnique({
+    where: { id: tenantId },
+    select: { vagasBannerKey: true },
+  });
+  return tenant?.vagasBannerKey ?? null;
+}
+
+/** Banner de Beneficios (INC-019): key do MediaStorage ou null (=> sem
+ * imagem — HomeBanner cai no bloco de texto, nao ha asset fixo proprio). */
+export async function findTenantBeneficiosBannerKey(tenantId: string): Promise<string | null> {
+  const tenant = await appDb.tenant.findUnique({
+    where: { id: tenantId },
+    select: { beneficiosBannerKey: true },
+  });
+  return tenant?.beneficiosBannerKey ?? null;
+}
+
+/** Campos da tela "Aparencia da empresa" (INC-017; INC-019 estende com banner
+ * por secao). Atualizacao parcial: so' grava as chaves presentes (undefined =
+ * nao mexe). `logoUrl`/`homeBannerKey`/`vagasBannerKey`/`beneficiosBannerKey`
  * sao keys de storage; `accentColor` e' hex `#RRGGBB` (validado na action).
  * tenants nao tem RLS — o update passa pelo tx do withTenant so' para casar com
  * o registro de auditoria na mesma operacao. */
 export type TenantAppearanceUpdate = {
   homeBannerKey?: string | null;
+  vagasBannerKey?: string | null;
+  beneficiosBannerKey?: string | null;
   logoUrl?: string | null;
   accentColor?: string | null;
 };

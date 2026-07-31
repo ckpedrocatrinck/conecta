@@ -6,6 +6,8 @@ import { HomeBanner } from "@/components/home/home-banner";
 import { requireAdmin } from "@/lib/auth/session";
 import { withTenant } from "@/lib/db/with-tenant";
 import { findJobOpeningsForAdminList } from "@/lib/repositories/job-opening.repository";
+import { findTenantVagasBannerKey } from "@/lib/repositories/tenant.repository";
+import { resolveVagasBannerSrc } from "@/lib/branding/section-banner-display";
 import { formatDateTimeSaoPaulo } from "@/lib/dates/format-datetime";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -16,7 +18,11 @@ const STATUS_LABEL: Record<string, string> = {
 export default async function JobOpeningsPage() {
   const session = await requireAdmin();
 
-  const jobs = await withTenant({ tenantId: session.tenantId }, (tx) => findJobOpeningsForAdminList(tx, session.tenantId));
+  const [jobs, vagasBannerKey] = await Promise.all([
+    withTenant({ tenantId: session.tenantId }, (tx) => findJobOpeningsForAdminList(tx, session.tenantId)),
+    findTenantVagasBannerKey(session.tenantId),
+  ]);
+  const vagasBannerSrc = await resolveVagasBannerSrc(vagasBannerKey);
 
   return (
     <div className="flex flex-col gap-6">
@@ -31,7 +37,7 @@ export default async function JobOpeningsPage() {
         </Link>
       </div>
 
-      <HomeBanner imageSrc="/banners/vagas.png" imageAlt="" title="Vagas internas" />
+      <HomeBanner imageSrc={vagasBannerSrc} imageAlt="" title="Vagas internas" />
 
       {jobs.length === 0 ? (
         <p className="text-meta text-muted-foreground">Nenhuma vaga criada ainda.</p>
