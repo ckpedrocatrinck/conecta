@@ -123,7 +123,7 @@ export function closeJobOpeningManually(tx: Prisma.TransactionClient, tenantId: 
 export function findApplicantsForJobOpening(tx: Prisma.TransactionClient, tenantId: string, jobOpeningId: string) {
   return tx.jobApplication.findMany({
     where: { jobOpeningId, tenantId },
-    include: { user: { select: { fullName: true, registrationCode: true, branchId: true } } },
+    include: { user: { select: { fullName: true, registrationCode: true, branchId: true, phone: true } } },
     orderBy: { createdAt: "desc" },
   });
 }

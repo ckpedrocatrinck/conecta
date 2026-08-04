@@ -49,6 +49,7 @@ export async function buildJobApplicationExportCsv(
       Colaborador: a.fullName,
       Matrícula: a.registrationCode,
       Filial: a.branchName,
+      Telefone: a.phone ?? "",
       "Candidatura em": formatDateTimeSaoPaulo(a.createdAt),
       Observação: a.note ?? "",
     }));

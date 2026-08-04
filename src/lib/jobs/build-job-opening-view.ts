@@ -30,7 +30,7 @@ export type ApplicantRow = {
   userId: string;
   note: string | null;
   createdAt: Date;
-  user: { fullName: string; registrationCode: string; branchId: string };
+  user: { fullName: string; registrationCode: string; branchId: string; phone: string | null };
 };
 
 export type ApplicantView = {
@@ -38,6 +38,7 @@ export type ApplicantView = {
   fullName: string;
   registrationCode: string;
   branchName: string;
+  phone: string | null;
   note: string | null;
   createdAt: Date;
 };
@@ -51,6 +52,7 @@ export function toApplicantView(applicant: ApplicantRow, branchNameById: Map<str
     fullName: applicant.user.fullName,
     registrationCode: applicant.user.registrationCode,
     branchName: branchNameById.get(applicant.user.branchId) ?? "",
+    phone: applicant.user.phone,
     note: applicant.note,
     createdAt: applicant.createdAt,
   };
