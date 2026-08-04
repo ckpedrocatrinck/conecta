@@ -1,8 +1,55 @@
 # INC-013 — Hardening pré-piloto
 
-**Status:** ⬜ Não iniciado
+**Status:** 🔄 Em andamento
 **Fase:** 5 — Piloto (o último INC de substância antes do go-live)
 **Depende de:** todos os anteriores (INC-013.5 mergeado)
+
+## Estado real em 2026-08-04
+
+Este INC estava marcado "⬜ Não iniciado" enquanto **metade dele já estava
+mergeada na `main`** — em quatro branches (`inc-013-bloco-b-seguranca`,
+`inc-013-g1-anonimizacao`, `inc-013-g11-g12-qualidade`,
+`inc-013-g3-runbook-restore`). Esta seção existe para que nenhuma sessão futura
+reconstrua o que já existe, o que o próprio "Princípio de trabalho" abaixo
+manda evitar.
+
+**Já feito (com evidência no repositório):**
+
+- **Bloco A — checklist LGPD percorrido:** `docs/00-Processo/auditoria-conformidade-lgpd-2026-07.md`.
+- **Bloco B — headers de segurança:** HSTS, CSP e `X-Content-Type-Options`
+  em `next.config.ts`, cobertos por `next.config.test.ts`.
+- **Bloco B — rate limit:** `src/lib/security/rate-limit.ts` (fixed-window em
+  memória; usado no login e, desde o INC-022, no coletor de erro client).
+- **Bloco B — mídia não pública:** servida via `/api/media` com token, nunca
+  por URL adivinhável.
+- **Bloco C / G1 — anonimização de desligados:** `src/lib/users/anonymize-sweep.ts`
+  (com dry-run, idempotência e `anonymized_at`).
+
+**Falta de verdade:**
+
+- **Execução do teste de restore.** Só o **roteiro** existe
+  (`docs/00-Processo/runbook-teste-de-restore.md`); nenhuma evidência de
+  execução está no vault. Travado em M2 (confirmar backup ativo/cifrado).
+  ⚠️ Além de não executado, o roteiro **está desatualizado desde o ADR-011**:
+  o "Caminho A ← recomendado" usa PITR/branch do Neon, que saiu do caminho de
+  produção, e o RPO anunciado está errado (com dump diário é ~24h, não
+  segundos–minutos — ADR-011 §11/§20.3). Reconciliar antes de executar.
+- **Métricas do piloto.** Nenhuma query, doc ou painel existe ainda.
+- **Runbook de go-live**, com plano de rollback e plano B de push. Não existe
+  (o único runbook no vault é o de restore). O plano B depende do teste de
+  push no iPhone — a mesma execução que trava o INC-012 e o critério 6 do
+  INC-022.
+- **Seed de produção** com dados reais: os seeds de dev existem
+  (`prisma/seed.ts`, `prisma/seed-data.ts`), o import real depende dos dados
+  e da autorização do Vale Verde.
+
+> As "Dependências externas" mais abaixo neste arquivo ainda estão escritas
+> sobre a infraestrutura antiga (ativar o R2, "não sobrevive em serverless
+> (Vercel)"). O **ADR-011 (Aceito em 2026-08-04)** substituiu isso por MinIO em
+> VPS com disco persistente — a razão de trocar o mock passa a ser
+> backup/portabilidade/`delete(key)`, não "o disco some". Reconciliação
+> pendente, listada no ADR-011 §18; não corrigida aqui para não misturar
+> escopos.
 
 ## Objetivo
 Sistema pronto para dados reais de pessoas reais. NÃO é construir features — é
