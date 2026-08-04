@@ -16,5 +16,73 @@ services:
       timeout: 5s
       retries: 10
 
+  # Agendador (INC-023). Os handlers de `/api/cron/*` sao autenticados por
+  # Bearer `CRON_SECRET` e NAO tem gatilho proprio: sempre esperaram um
+  # disparador externo (ver comentario em publish-announcements/route.ts).
+  # Faltava o disparador — comunicado agendado ficava `scheduled` para sempre.
+  # ADR-011 fixa VPS unica com Docker Compose, entao o agendador mora aqui.
+  #
+  # PERFIL `scheduler` (nao sobe com `docker compose up` puro, de proposito):
+  # o servico `app` de APP_INTERNAL_URL ainda NAO existe neste compose — hoje
+  # ele so' tem o postgres que serve o dev local (`npm run dev` roda fora do
+  # Compose). Sem `app`, o agendador so' produziria linhas FALHA a cada 5 min.
+  # Em producao/VPS, com o servico `app` presente:
+  #   docker compose --profile scheduler up -d
+  #
+  # Log: uma linha por chamada em stdout, no formato
+  #   <timestamp UTC> OK|FALHA GET <rota> -> <status HTTP>
+  # Qualquer resposta nao-2xx (incluindo 000 = nao conectou) sai como FALHA:
+  #   docker compose logs scheduler | grep FALHA
+  scheduler:
+    image: curlimages/curl:8.11.1
+    restart: unless-stopped
+    profiles: ["scheduler"]
+    environment:
+      # Mesmo `.env` da app (Compose interpola daqui) — o agendador nao tem
+      # segredo proprio, ele so' repassa o Bearer que o handler ja' exige.
+      CRON_SECRET: ${CRON_SECRET}
+      # Nome do servico da app na rede interna do Compose. NUNCA localhost:
+      # dentro deste container, localhost e' o proprio agendador.
+      APP_INTERNAL_URL: ${APP_INTERNAL_URL:-http://app:3000}
+      # Intervalo do sweep de publicacao agendada, em segundos (5 min).
+      PUBLISH_INTERVAL_SECONDS: ${SCHEDULER_PUBLISH_INTERVAL_SECONDS:-300}
+      # Hora UTC (2 digitos, com zero a esquerda) da anonimizacao diaria.
+      # 03 UTC = meia-noite em America/Sao_Paulo.
+      ANONYMIZE_AT_HOUR_UTC: ${SCHEDULER_ANONYMIZE_AT_HOUR_UTC:-03}
+    entrypoint: ["/bin/sh", "-c"]
+    # Lista de UM item de proposito: `command` em string escalar passa pelo
+    # shlex do Compose ("invalid command line string" num script multi-linha).
+    # `$$` = `$` literal (Compose interpola `$` antes do shell ver a string).
+    command:
+      - |
+        set -u
+        log() { echo "$$(date -u '+%Y-%m-%dT%H:%M:%SZ') $$*"; }
+        call() {
+          path="$$1"
+          status=$$(curl -sS -o /dev/null -w '%{http_code}' -m 30 \
+            -H "Authorization: Bearer $${CRON_SECRET}" \
+            "$${APP_INTERNAL_URL}$${path}" || true)
+          [ -n "$${status}" ] || status=000
+          case "$${status}" in
+            2??) log "OK GET $${path} -> $${status}" ;;
+            *)   log "FALHA GET $${path} -> $${status}" ;;
+          esac
+        }
+        last_anon_day=""
+        log "scheduler iniciado (app=$${APP_INTERNAL_URL} publish=$${PUBLISH_INTERVAL_SECONDS}s anonimizacao=$${ANONYMIZE_AT_HOUR_UTC}h UTC)"
+        while true; do
+          if [ -z "$${CRON_SECRET}" ]; then
+            log "ERRO CRON_SECRET vazio no ambiente do agendador - nenhuma chamada feita"
+          else
+            call /api/cron/publish-announcements
+            today=$$(date -u '+%Y-%m-%d')
+            if [ "$${today}" != "$${last_anon_day}" ] && [ "$$(date -u '+%H')" = "$${ANONYMIZE_AT_HOUR_UTC}" ]; then
+              call /api/cron/anonymize-users
+              last_anon_day="$${today}"
+            fi
+          fi
+          sleep "$${PUBLISH_INTERVAL_SECONDS}"
+        done
+
 volumes:
   conecta_pgdata:
