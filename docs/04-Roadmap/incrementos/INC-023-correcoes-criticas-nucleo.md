@@ -1,6 +1,6 @@
 # INC-023 — Correções críticas do núcleo jurídico (reabertura de pendência + agendamento)
 
-**Status:** ⬜ Não iniciado
+**Status:** 🟡 Código completo (2026-08-04) — aguarda o serviço `app` no `docker-compose.yml` (ADR-011) para validação end-to-end do agendador dentro do Compose
 **Fase:** correção (pré-piloto)
 **Origem:** teste manual real de 2026-08-04 (Pedro). Dois comportamentos do núcleo jurídico reportados como quebrados:
 - INC-005, escopo item 4 / critério "Pendência reaberta por versão material aparece para quem já tinha confirmado" (checkbox nunca marcado no arquivo do INC).
@@ -64,8 +64,8 @@ docker compose logs -f scheduler
 - [x] `GET /api/cron/publish-announcements` com `Authorization: Bearer <CRON_SECRET>` correto publica um comunicado agendado com `publishAt` no passado — verificado via HTTP real em 2026-08-04 (`{"publishedCount":1}`).
 - [x] O mesmo endpoint sem header, ou com secret errado, continua respondendo 401 — verificado via HTTP real; coberto por `route.test.ts`.
 - [x] `/api/cron/anonymize-users` com o mesmo tratamento e o mesmo teste de 401 — verificado via HTTP real; coberto por `route.test.ts`.
-- [ ] Serviço de agendamento no `docker-compose.yml` chamando os dois endpoints, com log grep-ável de sucesso/falha; `docker compose config` válido.
-- [ ] `npm run lint && npm run typecheck && npm run test && npm run build` verdes.
+- [x] Serviço de agendamento no `docker-compose.yml` chamando os dois endpoints, com log grep-ável de sucesso/falha; `docker compose config` válido.
+- [x] `npm run lint && npm run typecheck && npm run test && npm run build` verdes.
 
 ## Como testar manualmente (Pedro, antes de aceitar)
 1. **Reabertura de pendência** (já validado em 2026-08-04, repetir se quiser): comunicado `requires_ack` → colaborador A confirma → admin edita marcando "mudança material" → republicar. Confirmar A de volta no painel de pendências e o aviso de atualização na tela dele. Colaborador B (nunca confirmou) segue pendente, sem mudança.
@@ -75,4 +75,47 @@ docker compose logs -f scheduler
 3. **Agendamento em produção (com Compose, quando o serviço `app` existir):** `docker compose --profile scheduler up -d`, depois `docker compose logs -f scheduler` — uma linha `OK GET /api/cron/publish-announcements -> 200` a cada 5 min. Derrubar a app e confirmar que aparece `FALHA`; `docker compose logs scheduler | grep FALHA` deve listar.
 
 ## Registro de conclusão
-_(preencher)_
+
+**Data:** 2026-08-04
+**Branch:** `inc-023-correcoes-criticas`
+**Merge em main:** _(pendente — não mergeado)_
+
+### O que foi implementado
+
+**Parte 1 — nada.** A investigação mostrou que o comportamento já existia e estava correto em todas as superfícies. Os critérios foram marcados como satisfeitos, não implementados aqui. O único artefato desta parte é documental (correção da premissa do spec + DP-32).
+
+**Parte 2 — serviço `scheduler` no `docker-compose.yml`** (`e96ce03`). Imagem `curlimages/curl:8.11.1`, `restart: unless-stopped`, loop `sh` com `sleep`:
+- `GET /api/cron/publish-announcements` a cada `SCHEDULER_PUBLISH_INTERVAL_SECONDS` (default 300s).
+- `GET /api/cron/anonymize-users` uma vez por dia, quando a hora UTC bate `SCHEDULER_ANONYMIZE_AT_HOUR_UTC` (default `03` = meia-noite em São Paulo) e o dia mudou desde a última execução.
+- `Authorization: Bearer $CRON_SECRET`, interpolado do mesmo `.env` da app pelo Compose.
+- Log por chamada: `<timestamp UTC> OK|FALHA GET <rota> -> <status>`; `curl -sS` deixa o erro de rede também visível no stderr do container.
+
+**Documentação:** nota do A2-1 corrigida no INC-012.5 (`cd1bff0`), este arquivo reescrito com os achados reais (`d7f218b`), DP-32 registrada (`bfb5593`).
+
+### Decisões tomadas
+
+1. **Não excluir `api/cron` do matcher, porque já estava excluído.** O spec original mandava fazer isso; aplicar seria no-op. O matcher exclui `api/auth|api/cron|_next/static|_next/image|favicon.ico` desde o INC-012.5 (`443c4da`), em `src/middleware.ts` e no `MIDDLEWARE_MATCHER` espelhado. A autenticação Bearer dentro dos handlers não foi tocada.
+2. **Agendador como serviço do Compose, não `node-cron` in-process.** In-process duplicaria o disparo com múltiplas réplicas e mudaria a arquitetura da app; cron no host do VPS não teria paridade com dev nem versionamento no repo. O Compose é o que o ADR-011 já fixa como ambiente de produção.
+3. **Loop `sh` em vez de `crond` do busybox.** `crond` exigiria montar um crontab por volume e ainda redirecionar log para stdout; o loop dá timestamp, status HTTP e o prefixo `FALHA` diretamente, sem arquivo extra.
+4. **Perfil `scheduler` (não sobe com `docker compose up` puro).** O serviço `app` de `APP_INTERNAL_URL` ainda não existe neste compose — hoje ele só tem o `postgres` que serve o dev local. Sem o perfil, `docker compose up` em dev passaria a subir um container gritando `FALHA` a cada 5 min. **Custo aceito:** em produção é obrigatório subir com `--profile scheduler`, senão o agendador não roda. Remover o perfil quando o serviço `app` entrar.
+5. **`command` como lista de um item.** Em string escalar, o Compose passa o valor pelo shlex e rejeita script multi-linha (`invalid command line string`). Todos os `$` do script estão escapados como `$$` porque o Compose interpola antes do shell.
+6. **Nenhum env novo obrigatório.** Os três overrides têm default no próprio compose; `CRON_SECRET` já era documentado no `.env.example` desde o INC-004.
+
+### Como testar
+
+Ver a seção "Como testar manualmente" acima. Resumo: em dev, `curl` manual contra `localhost:3000` (o agendador não participa); em produção, `docker compose --profile scheduler up -d` + `docker compose logs -f scheduler`.
+
+### Verificações feitas
+
+- `docker compose --profile scheduler config` — válido (Compose v5.1.3).
+- Lógica do script exercitada fora do Docker com `sh`, cobrindo os três ramos: `200 → OK`, `401 → FALHA`, host inalcançável → `FALHA 000`; `grep FALHA` retorna exatamente as duas falhas.
+- `npm run lint && npm run typecheck && npm run test && npm run build` — verdes (61 arquivos, 327 testes).
+- Endpoints de cron verificados por HTTP real em 2026-08-04: `200 {"publishedCount":1}` com o secret correto, `401` sem header e com secret errado, nos dois endpoints.
+
+### Pendências
+
+- **Serviço `app` no `docker-compose.yml`** (Dockerfile + entrada no compose) — pendência de infraestrutura do ADR-011, fora deste INC. Até existir, o agendador está pronto mas não tem o que chamar, e o teste end-to-end dentro do Compose não pode ser feito.
+- **`.env.example` não recebeu os três overrides opcionais** (`APP_INTERNAL_URL`, `SCHEDULER_PUBLISH_INTERVAL_SECONDS`, `SCHEDULER_ANONYMIZE_AT_HOUR_UTC`). Nenhum é obrigatório (todos têm default no compose), mas a regra 5 do CLAUDE.md pede documentar env novo — a edição do arquivo está bloqueada pelas permissões de ferramenta do agente. **Ação do Pedro:** acrescentar as três linhas comentadas.
+- **`docker compose config` imprime o `CRON_SECRET` em claro** no YAML normalizado. Não colar a saída desse comando em log, issue ou relatório.
+- **GAP-15 (deadlock 40P01 intermitente na limpeza de testes)** continua aberto — reproduzido 1 de 2 rodadas paralelas na linha de base de hoje, antes de qualquer mudança deste INC. **DP-25** (orçamento de 1s do teste de performance do painel) mediu 267,2ms, confortável. Este INC não acrescentou teste nesse caminho de código, então não moveu nenhum dos dois.
+- **DP-32** — padrão de checkbox Base UI em `<label>` sem `htmlFor`; risco teórico, não reproduzido.
