@@ -39,6 +39,7 @@
 | 019 | Banner por seção (Vagas, Benefícios) | pré-piloto (paridade Aparência) | ✅ | 017 · banners de Vagas/Benefícios dependem de R2 em PRODUÇÃO |
 | 020 | Fuso do datetime-local (agendamento/prazo) | 2 (núcleo jurídico / correção) | ✅ | 018, 005, 011 · resolve DP-23 |
 | 021 | Contato do candidato (telefone + WhatsApp) na lista de vaga | 2 (vagas / engajamento operacional) | ✅ | 011, 003/006 |
+| 022 | Client-error reporter para depuração mobile | transversal (diagnóstico, não feature) | 🟡 código completo (2026-08-04) — aguarda o critério 6 (reprodução no iPhone com a flag ativa) | nenhum — isolado, só instrumentação |
 | 013 | Hardening pré-piloto: LGPD checklist, backup/restore, seeds reais | 5 | ⬜ | todos, 014 |
 
 Observações:
