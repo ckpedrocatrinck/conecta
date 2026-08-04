@@ -124,6 +124,9 @@
 **DP-31 — GAP-14: Next 16 deprecia middleware.ts em favor de proxy.ts; migração não documentada.** Se o bump do GAP-01a/DP-28 acontecer, essa migração provavelmente é necessária junto.
 **Responsável:** Pedro (revisar quando a DP-21 destravar o bump do next).
 
+**DP-32 — Padrão de checkbox (Base UI + `<label>` sem `htmlFor`) com risco teórico de dupla ativação.** Identificado durante investigação do INC-023: o checkbox de "mudança material" (`admin/comunicados/[id]/form.tsx`) e os de consentimento no perfil (`perfil/page.tsx:117,121`) usam Base UI dentro de `<label>` sem `htmlFor` explícito — padrão que pode causar dupla ativação do clique em alguns navegadores. Não reproduzido em teste manual de 2026-08-04 (funcionou corretamente). Registrado como observação preventiva, não como bug confirmado.
+**Responsável:** Pedro (investigar só se o sintoma "clico e não marca" reaparecer).
+
 ---
 
 ## Bloqueadores e dependências do go-live do piloto (INC-013)
