@@ -1,6 +1,8 @@
 # Stack Técnica
 
 > Status: **Proposta** — vira Aceita quando o ADR-005 for aceito por Pedro. O Claude Code não inicia o INC-001 antes disso.
+>
+> **Nota de infraestrutura (ADR-011):** as escolhas de storage, hospedagem, banco e região abaixo foram atualizadas pela decisão do ADR-011 (VPS único no Brasil, MinIO no lugar de R2). Onde houver divergência, o ADR-011 prevalece.
 
 ## Aplicação
 
@@ -12,7 +14,7 @@
 | ORM | **Prisma** | Migrations versionadas (auditável), tipagem ponta a ponta |
 | Auth | **Auth.js (credentials) + sessões em banco** | Login por matrícula+senha sem depender de e-mail; controle total LGPD |
 | Push | **Web Push (VAPID)** via service worker do PWA | Sem custo, padrão aberto; fallback = badge in-app |
-| Storage de mídia | **S3-compatível (Cloudflare R2)** | Fotos de posts/perfil; barato, sem egress caro |
+| Storage de mídia | **MinIO** (S3-compatível, auto-hospedado no VPS) — portável para R2/S3 pela interface `MediaStorage`. Ver **ADR-011**. | Fotos de posts/perfil; dado no Brasil, sem transferência internacional; sem custo de serviço externo no piloto |
 | Geração de cards | **Templates HTML/CSS renderizados** (satori/og-image ou screenshot server-side) | Custo zero por card (ADR-004) |
 | E-mail transacional | Nenhum no MVP | Colaborador não tem e-mail corporativo; reavaliar na fase 2 |
 
@@ -26,9 +28,9 @@
 
 | Item | Escolha |
 |---|---|
-| Hospedagem app | Vercel (dev/piloto) — reavaliar custo em produção multi-cliente |
-| Banco gerenciado | Neon ou Supabase (Postgres gerenciado, tier gratuito no piloto) |
-| Região | **Preferir região no Brasil ou us-east** com documentação de transferência internacional no aviso de privacidade (ver LGPD) |
+| Hospedagem app | **Produção: VPS Hostinger, São Paulo** (Docker Compose). Vercel apenas para demo/homologação (Fase 2). Ver **ADR-011**. |
+| Banco | **PostgreSQL no próprio VPS** (Docker, mesmo Compose da app). Neon/Supabase descartados como caminho de produção. Ver **ADR-011**. |
+| Região | **São Paulo, Brasil** — app, banco e mídia no país, sem transferência internacional (simplifica o aviso de privacidade). Ver **ADR-011**. |
 | CI | GitHub Actions: lint + typecheck + testes em todo push de branch de INC |
 | Monitoramento | Sentry (erros) + logs da plataforma no MVP |
 
