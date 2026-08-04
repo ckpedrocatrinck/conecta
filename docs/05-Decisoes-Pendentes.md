@@ -112,8 +112,17 @@
 **DP-27 — Branch de seed de senha padrão parada por footgun de segurança.** A branch `chore/seed-senha-padrao` (13/07, não mergeada) padroniza a senha de seed para `12345678` e adiciona `prisma/reset-seed-passwords.ts` + `npm run db:reset-passwords`. A troca de senha de seed em si é contida (só usada por seed/testes). O problema é o script novo: sem guarda de ambiente (`NODE_ENV`, confirmação), usa a role owner (bypassa RLS de propósito) e faz `updateMany` na senha de **todos os usuários do tenant**, com slug default `vale-verde` — o tenant do piloto. Rodar com `DATABASE_URL` de produção reseta a senha de todo colaborador real para `12345678`. Não mergear sem adicionar a guarda (mínimo: recusar rodar se `NODE_ENV=production` ou o slug bater com o do piloto). Também tem conflito com a main em `package.json` e `infra-banco-dev-e-ci.md`.
 **Responsável:** Pedro (decidir se resgata a branch ou reimplementa quando precisar).
 
-**DP-28 — GAP-01a: next.js desatualizado (4 CVEs altos), bump bloqueado por execução paralela de testes.** `next` está em 16.2.10; a auditoria de 2026-07-27 pede 16.2.12 por 4 CVEs altos. Bloqueado pelo mesmo problema de fundo da DP-25 (suíte precisa rodar serial pra dar sinal determinístico antes de trocar dependência sensível). Já estava no radar; agora tem registro formal.
-**Responsável:** Pedro (priorizar quando a execução serial dos testes for resolvida).
+**DP-28 — GAP-01a: next.js desatualizado (4 CVEs altos), bump bloqueado pela DP-21.** `next` está em 16.2.10; a auditoria de 2026-07-27 pede 16.2.12 por 4 CVEs altos. O bloqueador real é a **DP-21**: `npm install` na máquina do Pedro (Windows) poda as entradas `@emnapi/*` do lock, e `npm ci` no CI falha antes de rodar qualquer teste — foi por isso que o INC-022 não pôde adicionar `jsdom`. A **DP-25** (orçamento de 1s do teste de performance, sensível a contenção paralela) é um motivo adicional para querer sinal determinístico antes de trocar dependência sensível, mas não é o que impede o `npm install` de rodar — essa é a DP-21.
+**Responsável:** Pedro (resolver DP-21 primeiro; o bump do next segue essa ordem).
+
+**DP-29 — GAP-03: avatar é o único upload sem sniff de magic number.** Validação de tipo por conteúdo (não extensão) falta na foto de perfil. Fecha sozinho quando a consolidação de upload + upload direto do ADR-011 §20.2 entrarem (a decisão já devolve validação server-side a todos os tipos, avatar incluso). Até lá é o único ponto sem essa checagem.
+**Responsável:** Pedro (sem ação isolada — resolve junto da consolidação de upload).
+
+**DP-30 — GAP-09: sem error.tsx no subtree /[slug].** Erro nessa árvore (rotas multi-tenant por slug) cai no padrão genérico do Next em inglês — quebra a regra anti-padrão do portal legado de nunca mostrar erro cru.
+**Responsável:** Pedro (candidato ao próximo balde de correções tipo INC-012.5, junto do Q1 que já cobre error.tsx/not-found.tsx na raiz).
+
+**DP-31 — GAP-14: Next 16 deprecia middleware.ts em favor de proxy.ts; migração não documentada.** Se o bump do GAP-01a/DP-28 acontecer, essa migração provavelmente é necessária junto.
+**Responsável:** Pedro (revisar quando a DP-21 destravar o bump do next).
 
 ---
 
