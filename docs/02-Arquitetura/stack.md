@@ -1,7 +1,5 @@
 # Stack Técnica
 
-> Status: **Proposta** — vira Aceita quando o ADR-005 for aceito por Pedro. O Claude Code não inicia o INC-001 antes disso.
->
 > **Nota de infraestrutura (ADR-011):** as escolhas de storage, hospedagem, banco e região abaixo foram atualizadas pela decisão do ADR-011 (VPS único no Brasil, MinIO no lugar de R2). Onde houver divergência, o ADR-011 prevalece.
 
 ## Aplicação

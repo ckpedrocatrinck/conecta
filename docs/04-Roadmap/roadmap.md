@@ -40,7 +40,7 @@
 | 020 | Fuso do datetime-local (agendamento/prazo) | 2 (núcleo jurídico / correção) | ✅ | 018, 005, 011 · resolve DP-23 |
 | 021 | Contato do candidato (telefone + WhatsApp) na lista de vaga | 2 (vagas / engajamento operacional) | ✅ | 011, 003/006 |
 | 022 | Client-error reporter para depuração mobile | transversal (diagnóstico, não feature) | 🟡 código completo (2026-08-04) — aguarda o critério 6 (reprodução no iPhone com a flag ativa) | nenhum — isolado, só instrumentação |
-| 013 | Hardening pré-piloto: LGPD checklist, backup/restore, seeds reais | 5 | ⬜ | todos, 014 |
+| 013 | Hardening pré-piloto: LGPD checklist, backup/restore, seeds reais | 5 | 🔄 em andamento — Bloco A (checklist LGPD), Bloco B (headers, rate limit, mídia com token) e G1 (anonimização) já na `main`; faltam execução do teste de restore, métricas do piloto e runbook de go-live (ver "Estado real em 2026-08-04" no arquivo do INC) | todos, 014 |
 
 Observações:
 - 008-011 podem rodar após a fase 2 em qualquer ordem; a ordem acima é a recomendada (engajamento antes de vagas para o go-live ter feed vivo).
