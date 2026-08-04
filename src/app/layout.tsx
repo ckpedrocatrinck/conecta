@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Figtree } from "next/font/google";
 import { BRAND_TOKENS } from "@/lib/cards/brand-tokens";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
+import { ClientErrorReporter } from "@/components/debug/client-error-reporter";
 import "./globals.css";
 
 const figtree = Figtree({
@@ -35,6 +36,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <ServiceWorkerRegister />
+        <ClientErrorReporter />
         {children}
       </body>
     </html>
