@@ -153,19 +153,32 @@ export default async function Home() {
         </div>
       )}
 
-      {todaysBirthdayCards.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <h2 className="text-card-title font-bold text-foreground">Aniversariantes de hoje</h2>
-            <Link href={`/${session.tenantSlug}/aniversariantes`} className="text-meta font-semibold text-primary underline-offset-4 hover:underline">
-              Ver todos
-            </Link>
-          </div>
-          {todaysBirthdayCards.map(({ userId, card }) => (
-            <CardTemplate key={userId} data={card} />
-          ))}
+      {/* INC-024 (Parte 1): o link para /aniversariantes fica FORA da condicional
+          dos cards. Antes ele vivia dentro do bloco de aniversariantes de hoje
+          (janela de 0 dias), então em qualquer dia sem aniversariante a rota
+          ficava sem nenhum caminho de navegação — o bottom nav não a lista
+          (ADR-009, 5 slots ocupados) e nada mais aponta para ela. O cabeçalho
+          muda de texto conforme haja ou não card do dia; a linha em si é fixa.
+          O rótulo NÃO é "do mês" (texto sugerido no INC): a rota de destino
+          lista "hoje e os próximos 7 dias" (`WINDOW_DAYS = 7`), então "do mês"
+          prometeria uma janela que a tela não entrega. Mudar a janela para o mês
+          é decisão de produto, registrada no INC-024 como pendência. */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-card-title font-bold text-foreground">
+            {todaysBirthdayCards.length > 0 ? "Aniversariantes de hoje" : "Aniversariantes"}
+          </h2>
+          <Link
+            href={`/${session.tenantSlug}/aniversariantes`}
+            className="shrink-0 text-meta font-semibold text-primary underline-offset-4 hover:underline"
+          >
+            Ver próximos aniversários
+          </Link>
         </div>
-      )}
+        {todaysBirthdayCards.map(({ userId, card }) => (
+          <CardTemplate key={userId} data={card} />
+        ))}
+      </div>
 
       <div className="flex flex-col gap-3">
         <h2 className="text-card-title font-bold text-foreground">Feed</h2>
