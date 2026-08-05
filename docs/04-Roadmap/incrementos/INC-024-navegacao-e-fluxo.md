@@ -75,9 +75,21 @@ Ao anexar foto durante a criação de um post, ela sobe/fica pública imediatame
 **Branch:** `inc-024-navegacao-e-fluxo`
 **Merge em main:** _(não mergeado — Pedro pediu para não fazer merge neste fechamento)_
 
+### Situação final deste fechamento (2026-08-05)
+| Parte | Situação |
+|---|---|
+| **1 — link de aniversariantes** | ✅ concluída |
+| **2 — `error.tsx` do tenant** | ✅ concluída (resolve a DP-30, com a premissa dela corrigida) |
+| **3 — card de vaga no feed** | ⏸️ **aguardando decisão de produto do Pedro** — 4 caminhos mapeados (A denormalizar / B união na query / C injetar na 1ª página / D atender pela seção atual e corrigir o texto do INC-011). Nada tocado em código. |
+| **4 — foto do post** | ⏸️ **bloqueada por dependência de storage real** — é a DP-19 (staging por sessão + rekey exige o R2). Nada tocado em código; 2 achados novos registrados como **DP-33** e **DP-34**. |
+
+Sem merge na `main`: a Parte 3 depende da decisão acima.
+
 ### O que foi entregue
 - **Parte 1 (`d17dad6`)** — link para `/{slug}/aniversariantes` fixo na Home. Antes ele existia só dentro do bloco de aniversariantes de hoje (janela de 0 dias): em qualquer dia sem aniversariante, a rota ficava **sem nenhum caminho de navegação** (o bottom nav não a lista — ADR-009, 5 slots ocupados — e nada mais aponta para ela). O cabeçalho alterna entre "Aniversariantes de hoje" e "Aniversariantes"; a linha do link é fixa. Sem elemento visual novo: reusa o padrão de cabeçalho + link das seções Vagas/Benefícios da própria Home.
 - **Parte 2 (`7285370`)** — `src/app/[slug]/error.tsx`, Client Component em pt-BR com `ErrorState` + "Tentar novamente" (`reset()`), reporte opcional ao log do servidor pela flag do INC-022, e link de saída para `/{slug}` (não para `/`). **DP-30 movida para "Resolvidas em 2026-08-05"** com a premissa corrigida.
+- **Fora das 4 partes, mas achado por este INC (`93f80f5`)** — correção do agendador do INC-023 no `docker-compose.yml`: `date -u '+%H'` sempre devolve 2 dígitos, então comparar direto com `ANONYMIZE_AT_HOUR_UTC` quebrava com `3` (o valor que o próprio `.env.example` documenta) — a anonimização diária nunca rodaria **e nunca logaria FALHA**, porque a chamada não era nem tentada. Normalizado com `pad2` (um char → prefixa zero) aplicado uma vez no boot. Verificado fora do container com o script **real** extraído do compose e relógio stubbado: com `3` e com `03`, às 03 UTC as duas chamadas saem; às 02 UTC só a de publicação. Matriz auxiliar de 11 casos (`0`/`00`, `3`/`03`, `10`, `23`) toda ok; `docker compose --profile scheduler config` segue válido.
+- **DP-33 e DP-34 (`17d1a9d`)** — os dois achados adjacentes da Parte 4 registrados como DP próprias (antes estavam só descritos aqui).
 
 ### Decisões e correções de premissa
 1. **A premissa da Parte 2 estava errada** (mesmo padrão do INC-023): o boundary da raiz já cobria `/{slug}` — `error.tsx` captura os segmentos filhos. O ganho real do arquivo novo é ser tenant-aware, e foi entregue com essa justificativa, não com a de "erro cru em inglês".
@@ -86,12 +98,13 @@ Ao anexar foto durante a criação de um post, ela sobe/fica pública imediatame
 4. **Parte 4 parada** sem tocar em código: é a **DP-19**, escolha temporária consciente e bloqueada no R2. Mexer aqui desfaria arquitetura já registrada.
 
 ### Verificações
-- Gate completo verde em 2026-08-05: `lint` limpo, `typecheck` limpo, **61 arquivos / 327 testes** passando (21,2s), `build` concluído.
+- Gate completo verde em 2026-08-05: `lint` limpo, `typecheck` limpo, **61 arquivos / 327 testes** passando (21,2s), `build` concluído. Repetido no fechamento parcial (após a correção do agendador e as DPs): lint e typecheck limpos, 61/327 verdes, build concluído.
+- **Flake observado no fechamento parcial (não é regressão):** na primeira rodada, `tests/integration/immutability-triggers.test.ts` falhou com `40P01 deadlock detected` — o teste de TRUNCATE pede `AccessExclusiveLock` enquanto outro arquivo em paralelo segura `RowExclusiveLock`. Passou na repetição imediata (61/327). Nada do commit podia causar isso (as mudanças foram `docker-compose.yml` + docs) e havia um `npm run dev` ativo no mesmo banco, somando contenção. É um mecanismo **diferente** do que o A7-1 do INC-012.5 estabilizou (lá era `session_replication_role` na limpeza; aqui é lock de TRUNCATE contra escritor concorrente) — vale registrar como DP se reaparecer no CI.
 - Boundary do tenant verificado em **build de produção** (não em dev — em dev o overlay do Next mascara qual boundary responde): erro real forçado dentro de `/{slug}/login`, exception registrada no servidor e o chunk do boundary novo (string exclusiva "Algo deu errado ao carregar esta página") presente na resposta da rota que falhou. A rota temporária de teste foi removida e a alteração temporária do `login/page.tsx` revertida — nada disso entrou em commit.
 - **Limite da verificação:** o boundary do App Router é renderizado no cliente após a hidratação, e não há navegador headless no repo (sem jsdom/Playwright — ver DP-21/DP-28). A confirmação **visual** (tela em pt-BR + clique no "Tentar novamente") depende de um teste manual do Pedro.
 
 ### Pendências que este INC deixa registradas
 - **Parte 3** — Pedro escolher entre os caminhos A/B/C/D. Se for **D**, o item 5 do INC-011 precisa ter o texto corrigido (hoje promete "no feed" e isso nunca existiu).
-- **Parte 4** — segue na DP-19, quitável junto do R2. Dois achados adjacentes a decidir se viram DP: **(a)** `authorizeMediaKey` libera `view` de mídia de post por tenant, sem olhar o `status` do post; **(b)** rascunho abandonado **com** anexo nunca é limpo (a varredura só apaga rascunhos *pristine*), deixando foto de pessoa persistida sem nunca ter sido publicada — questão de minimização/retenção da LGPD.
+- **Parte 4** — segue na DP-19, quitável junto do R2. Os dois achados adjacentes deixaram de ser observação e viraram registro próprio: **DP-33** (`authorizeMediaKey` libera `view` de mídia de post por tenant, sem olhar o `status` do post) e **DP-34** (rascunho abandonado **com** anexo nunca é limpo — a varredura só apaga rascunhos *pristine* —, deixando foto de pessoa persistida sem nunca ter sido publicada; minimização/retenção da LGPD).
 - **Janela da tela de aniversariantes**: 7 dias vs. mês corrente.
-- **⚠️ `.env.example` — `SCHEDULER_ANONYMIZE_AT_HOUR_UTC=3` não funciona como está.** As 3 linhas do agendador foram acrescentadas manualmente pelo Pedro e entraram neste INC **sem edição**, como pedido. Mas o `docker-compose.yml` do INC-023 compara a hora como **string de 2 dígitos** (`[ "$(date -u '+%H')" = "${ANONYMIZE_AT_HOUR_UTC}" ]`, default `03`): com `3`, a comparação **nunca** dá match, a anonimização diária **nunca roda** e — pior — **não gera log de FALHA**, porque a chamada nem é tentada. Ou seja, é exatamente o "cron mudo" que o INC-023 quis evitar. Conserto: `=03` no `.env`/`.env.example`, **ou** tornar a comparação tolerante no compose (normalizar zero à esquerda nos dois lados). Não alterado aqui por estar fora do escopo deste INC e por instrução explícita de não editar o conteúdo das linhas.
+- ~~**⚠️ `.env.example` — `SCHEDULER_ANONYMIZE_AT_HOUR_UTC=3` não funciona como está.**~~ ✅ **Resolvido em `93f80f5`** (fechamento parcial de 2026-08-05), pelo lado do compose: a comparação passou a normalizar a hora para 2 dígitos (`pad2`), então `3` e `03` funcionam igual e as 3 linhas do `.env.example` seguem válidas como o Pedro as escreveu. O risco original era o pior tipo: a anonimização diária **nunca rodaria e nunca logaria FALHA**, porque a chamada não era nem tentada — o "cron mudo" que o INC-023 existe para evitar.
