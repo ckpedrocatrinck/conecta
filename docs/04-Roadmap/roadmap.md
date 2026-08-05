@@ -41,6 +41,7 @@
 | 021 | Contato do candidato (telefone + WhatsApp) na lista de vaga | 2 (vagas / engajamento operacional) | ✅ | 011, 003/006 |
 | 022 | Client-error reporter para depuração mobile | transversal (diagnóstico, não feature) | 🟡 código completo (2026-08-04) — aguarda o critério 6 (reprodução no iPhone com a flag ativa) | nenhum — isolado, só instrumentação |
 | 023 | Correções críticas do núcleo jurídico (agendador de cron no Compose; reabertura de pendência por mudança material verificada como já funcionando) | correção (pré-piloto) | 🟡 código completo (2026-08-04) — aguarda o serviço `app` no compose (ADR-011) para validação end-to-end do agendador | 004, 005 · ADR-011 |
+| 024 | Correções de navegação e fluxo (Módulo B): link de aniversariantes, `error.tsx` do tenant, card de vaga no feed, foto do post | correção (pré-piloto) | ⬜ | 008, 010, 011 |
 | 013 | Hardening pré-piloto: LGPD checklist, backup/restore, seeds reais | 5 | 🔄 em andamento — Bloco A (checklist LGPD), Bloco B (headers, rate limit, mídia com token) e G1 (anonimização) já na `main`; faltam execução do teste de restore, métricas do piloto e runbook de go-live (ver "Estado real em 2026-08-04" no arquivo do INC) | todos, 014 |
 
 Observações:
