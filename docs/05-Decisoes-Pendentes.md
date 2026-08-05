@@ -12,6 +12,24 @@
 - **Login (contradição do kickoff).** ✅ Resolvida no **ADR-006**: login por CPF completo + senha; `cpf_hash` determinístico com pepper. "CPF parcial" eliminado do escopo.
 - **Pendências de modelagem** (User desligado / AnnouncementRead). ✅ Resolvidas no **ADR-006**.
 
+## ✅ Resolvidas em 2026-08-05
+
+- **DP-30 — GAP-09: sem `error.tsx` no subtree `/[slug]`.** ✅ Implementado no
+  **INC-024 (Parte 2)**: `src/app/[slug]/error.tsx`, Client Component com
+  mensagem em pt-BR, botão "Tentar novamente" (`reset()`) e `ErrorState` — o
+  mesmo padrão do boundary da raiz (`src/app/error.tsx`, Q1 do INC-012.5).
+  **Correção da premissa desta DP:** o texto original dizia que um erro nessa
+  árvore "cai no padrão genérico do Next em inglês" — isso **não** era verdade.
+  O boundary da raiz já cobria o subtree `/{slug}` (contrato do App Router:
+  `error.tsx` captura os segmentos filhos, não só os irmãos). Verificado em
+  build de produção com um erro real forçado dentro de `/{slug}/login`
+  (2026-08-05): o servidor registrou a exception e a resposta veio com o shell
+  do app + o chunk do boundary **em pt-BR**, sem nenhum "Application error".
+  O ganho real do arquivo novo é ser **tenant-aware**: o link de saída volta
+  para `/{slug}` (home da empresa) em vez de `/`, que para um colaborador logado
+  é um beco. Ou seja: a DP está quitada, mas nunca foi o risco de "erro cru em
+  inglês" que ela descrevia.
+
 ## ✅ Resolvidas em 2026-07-31
 
 - **DP-20 — 🔴 (era) BLOQUEADOR DE DEPLOY: `npm run build` quebrado por vazamento
@@ -117,9 +135,6 @@
 
 **DP-29 — GAP-03: avatar é o único upload sem sniff de magic number.** Validação de tipo por conteúdo (não extensão) falta na foto de perfil. Fecha sozinho quando a consolidação de upload + upload direto do ADR-011 §20.2 entrarem (a decisão já devolve validação server-side a todos os tipos, avatar incluso). Até lá é o único ponto sem essa checagem.
 **Responsável:** Pedro (sem ação isolada — resolve junto da consolidação de upload).
-
-**DP-30 — GAP-09: sem error.tsx no subtree /[slug].** Erro nessa árvore (rotas multi-tenant por slug) cai no padrão genérico do Next em inglês — quebra a regra anti-padrão do portal legado de nunca mostrar erro cru.
-**Responsável:** Pedro (candidato ao próximo balde de correções tipo INC-012.5, junto do Q1 que já cobre error.tsx/not-found.tsx na raiz).
 
 **DP-31 — GAP-14: Next 16 deprecia middleware.ts em favor de proxy.ts; migração não documentada.** Se o bump do GAP-01a/DP-28 acontecer, essa migração provavelmente é necessária junto.
 **Responsável:** Pedro (revisar quando a DP-21 destravar o bump do next).
