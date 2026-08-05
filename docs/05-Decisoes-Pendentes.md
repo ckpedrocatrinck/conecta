@@ -12,6 +12,24 @@
 - **Login (contradição do kickoff).** ✅ Resolvida no **ADR-006**: login por CPF completo + senha; `cpf_hash` determinístico com pepper. "CPF parcial" eliminado do escopo.
 - **Pendências de modelagem** (User desligado / AnnouncementRead). ✅ Resolvidas no **ADR-006**.
 
+## ✅ Resolvidas em 2026-08-05
+
+- **DP-30 — GAP-09: sem `error.tsx` no subtree `/[slug]`.** ✅ Implementado no
+  **INC-024 (Parte 2)**: `src/app/[slug]/error.tsx`, Client Component com
+  mensagem em pt-BR, botão "Tentar novamente" (`reset()`) e `ErrorState` — o
+  mesmo padrão do boundary da raiz (`src/app/error.tsx`, Q1 do INC-012.5).
+  **Correção da premissa desta DP:** o texto original dizia que um erro nessa
+  árvore "cai no padrão genérico do Next em inglês" — isso **não** era verdade.
+  O boundary da raiz já cobria o subtree `/{slug}` (contrato do App Router:
+  `error.tsx` captura os segmentos filhos, não só os irmãos). Verificado em
+  build de produção com um erro real forçado dentro de `/{slug}/login`
+  (2026-08-05): o servidor registrou a exception e a resposta veio com o shell
+  do app + o chunk do boundary **em pt-BR**, sem nenhum "Application error".
+  O ganho real do arquivo novo é ser **tenant-aware**: o link de saída volta
+  para `/{slug}` (home da empresa) em vez de `/`, que para um colaborador logado
+  é um beco. Ou seja: a DP está quitada, mas nunca foi o risco de "erro cru em
+  inglês" que ela descrevia.
+
 ## ✅ Resolvidas em 2026-07-31
 
 - **DP-20 — 🔴 (era) BLOQUEADOR DE DEPLOY: `npm run build` quebrado por vazamento
@@ -118,14 +136,22 @@
 **DP-29 — GAP-03: avatar é o único upload sem sniff de magic number.** Validação de tipo por conteúdo (não extensão) falta na foto de perfil. Fecha sozinho quando a consolidação de upload + upload direto do ADR-011 §20.2 entrarem (a decisão já devolve validação server-side a todos os tipos, avatar incluso). Até lá é o único ponto sem essa checagem.
 **Responsável:** Pedro (sem ação isolada — resolve junto da consolidação de upload).
 
-**DP-30 — GAP-09: sem error.tsx no subtree /[slug].** Erro nessa árvore (rotas multi-tenant por slug) cai no padrão genérico do Next em inglês — quebra a regra anti-padrão do portal legado de nunca mostrar erro cru.
-**Responsável:** Pedro (candidato ao próximo balde de correções tipo INC-012.5, junto do Q1 que já cobre error.tsx/not-found.tsx na raiz).
-
 **DP-31 — GAP-14: Next 16 deprecia middleware.ts em favor de proxy.ts; migração não documentada.** Se o bump do GAP-01a/DP-28 acontecer, essa migração provavelmente é necessária junto.
 **Responsável:** Pedro (revisar quando a DP-21 destravar o bump do next).
 
 **DP-32 — Padrão de checkbox (Base UI + `<label>` sem `htmlFor`) com risco teórico de dupla ativação.** Identificado durante investigação do INC-023: o checkbox de "mudança material" (`admin/comunicados/[id]/form.tsx`) e os de consentimento no perfil (`perfil/page.tsx:117,121`) usam Base UI dentro de `<label>` sem `htmlFor` explícito — padrão que pode causar dupla ativação do clique em alguns navegadores. Não reproduzido em teste manual de 2026-08-04 (funcionou corretamente). Registrado como observação preventiva, não como bug confirmado.
 **Responsável:** Pedro (investigar só se o sintoma "clico e não marca" reaparecer).
+
+**DP-33 — `authorizeMediaKey` não verifica status de publicação do post.** A checagem de acesso a mídia de posts (`posts/{tenant}/{postId}/*`) libera qualquer sessão do mesmo tenant, sem considerar se o post está publicado ou ainda em rascunho. Não é diretamente explorável hoje (chave é UUID, não linkada em nenhuma tela para rascunhos de outros usuários), mas o princípio de autorização deveria ser "post publicado do meu tenant", não "qualquer objeto do meu tenant". Encontrado durante investigação do INC-024, Parte 4.
+**Responsável:** Pedro (avaliar prioridade; relacionado à DP-19).
+
+**DP-34 — Rascunho de post abandonado com foto anexada nunca é limpo (retenção/LGPD).** A varredura de rascunhos abandonados só remove rascunhos "pristine" (sem anexo); anexar um arquivo tira o rascunho dessa condição, então um rascunho nunca publicado, mas com foto de pessoa anexada, persiste indefinidamente sem nunca ter sido de fato publicado. A DP-19 já prevê orphan-sweep para objetos não confirmados; este caso é diferente — o objeto está confirmado, mas o post nunca saiu do rascunho. Encontrado durante investigação do INC-024, Parte 4.
+**Responsável:** Pedro (avaliar se entra no mesmo escopo da DP-19 ou é item próprio).
+
+**DP-35 — Deadlock 40P01 (TRUNCATE CASCADE vs escrita concorrente) reincidente em `immutability-triggers.test.ts`: o fechamento do GAP-15 como "flakiness não reproduzível" está errado.** O deadlock (TRUNCATE CASCADE pedindo `AccessExclusiveLock` contra `RowExclusiveLock` de INSERT concorrente, sob execução paralela de testes) apareceu de novo em `immutability-triggers.test.ts` durante o INC-024 (2026-08-05) — a segunda reincidência documentada, depois da linha de base do INC-023 (1 de 2 rodadas paralelas, 2026-08-04). Padrão possível: qualquer tabela com trigger de imutabilidade que seja alvo de TRUNCATE de limpeza de teste, correndo em paralelo com escrita em outro arquivo, pode reproduzir — hoje `announcement_versions` (`immutability-triggers.test.ts:88`), `audit_logs` (`:112`) e `announcement_acks` (`tenant-isolation.test.ts:250`) estão nessa condição. Não bloqueou nada (passou na segunda tentativa), mas sinaliza que o problema é mais amplo do que um par de tabelas específico.
+> **Correção de atribuição (2026-08-05).** O texto original desta DP dizia que o deadlock estava "antes só documentado em `pending-panel-performance.test.ts`" e que `immutability-triggers.test.ts` seria um "segundo arquivo" — as duas coisas não batem com o vault: (a) `pending-panel-performance.test.ts` é a **DP-25**, que é risco de **orçamento de tempo** (1s), não deadlock — o 40P01 nunca foi atribuído a ele em doc nenhuma; (b) `immutability-triggers` é justamente **um dos dois arquivos que o GAP-15 já nomeava** (junto de `pending-count-badge`), então não é arquivo novo. O que a reincidência derruba é a **conclusão** do GAP-15: a auditoria de 2026-07-27 registrou "não reproduzida em 5 rodadas → **atualizar/remover o registro**" (`auditoria-2026-07-features-novas.md:533,603`), e desde então reproduziu duas vezes. **Ou seja: o registro de flakiness não deve ser removido — deve ser reaberto, agora com o mecanismo identificado.** Nota adicional: a equação "GAP-15 = deadlock 40P01" só existe no registro do INC-023 (`:120`); no texto da auditoria, GAP-15 é o item "o registro de flakiness está desatualizado". Vale alinhar os dois quando isto for tratado.
+
+**Responsável:** Pedro (avaliar se vale investigar a causa sistêmica agora ou esperar reincidência).
 
 ---
 
