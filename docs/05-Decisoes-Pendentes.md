@@ -174,6 +174,9 @@
 
 **Responsável:** Pedro (avaliar se vale investigar a causa sistêmica agora ou esperar reincidência).
 
+**DP-36 — `/icon` e `/apple-icon` (convenção de metadata do Next) redirecionam 307 por causa do regex de slug do middleware.** `SLUG_RE` em `slug-path.ts` casa esses dois caminhos sem extensão como candidato a tenant, redirecionando antes do Route Handler responder — diferente de `icon-192.png`/`icon-512.png`/`icon-512-maskable.png` (caminhos fixos com extensão, referenciados pelo manifest, confirmados 200 com magic number PNG real). Impacto real depende de o `<head>` de fato emitir `<link rel="apple-touch-icon" href="/apple-icon...">` — não verificado (Docker Desktop caiu durante a investigação, dev server não subiu). Se confirmado, a correção é excluir `/icon` e `/apple-icon` do regex de slug, mesmo padrão de exceção que `favicon.ico`/`icon-192.png` já têm.
+**Responsável:** Pedro (verificar o `<head>` renderizado quando testar instalação hoje — o teste de Android que já está na sua lista serve pra isso também).
+
 ---
 
 ## Bloqueadores e dependências do go-live do piloto (INC-013)
