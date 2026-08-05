@@ -78,7 +78,7 @@ docker compose logs -f scheduler
 
 **Data:** 2026-08-04
 **Branch:** `inc-023-correcoes-criticas`
-**Merge em main:** _(pendente — não mergeado)_
+**Merge em main:** 2026-08-04 (`--no-ff`; commit de merge `ff9f822`)
 
 ### O que foi implementado
 
