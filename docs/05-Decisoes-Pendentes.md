@@ -30,6 +30,29 @@
   é um beco. Ou seja: a DP está quitada, mas nunca foi o risco de "erro cru em
   inglês" que ela descrevia.
 
+- **DP-21 — `package-lock.json` gerado no Windows quebra o `npm ci` do CI.**
+  ✅ **Opção A adotada:** o comando em container Linux passa a ser o
+  procedimento oficial para toda alteração de dependência —
+  `docker run --rm -v <dir>:/app -w /app node:22 npm install --package-lock-only`.
+  Documentado em `docs/00-Processo/convencoes-git.md` (regra 6) e
+  `docs/02-Arquitetura/infra-banco-dev-e-ci.md` (seção própria, com mecanismo,
+  o que já foi testado e não funciona, e o teste de verificação).
+  **Procedimento verificado em 2026-08-05 sem mexer em dependência nenhuma:**
+  regenerado o lock do estado atual → `git diff package-lock.json` **vazio**
+  (md5 idêntico antes e depois), entradas top-level `@emnapi/core@1.11.2` e
+  `@emnapi/runtime@1.11.2` presentes, e `rm -rf node_modules && npm ci`
+  (comando exato do CI) instalou 743 pacotes sem erro. O lock que já estava
+  commitado, portanto, é um lock de Linux válido — a regeneração é idempotente.
+  **Opção B não escolhida:** remover os `overrides` de `@emnapi/*` resolveria o
+  sintoma, mas eles entraram para fechar uma CVE transitiva do Tailwind, e
+  tirá-los reabriria essa CVE sem uma reavaliação própria de segurança. Fica
+  registrada como **alternativa conhecida e não explorada, não como pendência**
+  — se algum dia os overrides forem revisados, é por uma decisão de segurança
+  própria, não como efeito colateral de encanamento de lockfile.
+  **Destrava:** a DP-28 (bump do `next` 16.2.10 → 16.2.12, 4 CVEs altos) e a
+  parte da DP-21 que bloqueava adicionar `jsdom` (tentado no INC-022). Ambas
+  seguem abertas por mérito próprio, mas não mais por este impedimento.
+
 ## ✅ Resolvidas em 2026-07-31
 
 - **DP-20 — 🔴 (era) BLOQUEADOR DE DEPLOY: `npm run build` quebrado por vazamento
@@ -115,9 +138,6 @@
 **DP-19 — Auto-rascunho é solução TEMPORÁRIA para anexos "postar com tudo junto" (INC-016).** Para o admin anexar imagem/PDF na mesma tela em que escreve o post, o "Novo post" cria/reaproveita um rascunho automaticamente e leva direto à tela de compor — porque a chave do storage do anexo (`posts/{tenant}/{postId}/…`) precisa do `postId`, que só existe depois do rascunho nascer. O tratamento de órfãos atual (reusar 1 rascunho pristine por admin + apagar extras + não listar pristine + guard de publicação) resolve o custo de escala **sem sweep e sem R2** (é 100% DB), mas o modelo continua sendo "criar linha antes de ter conteúdo". A **solução limpa é staging por sessão**: o upload vai para uma área temporária (`_staging/{sessão}/…`) e é *rekeyada* para o post no momento do salvar — assim nenhum rascunho nasce só para hospedar anexo. Ela **depende do R2 real**, porque rekeyar = **mover objetos no storage** (copy+delete / rename de chave), operação que o mock local de disco não expõe de forma production-safe. **Quitar quando o R2 for ativado**, junto do **conjunto de dívidas do R2**: orphan-sweep de objetos não-confirmados, `delete(key)` na anonimização (INC-013 G1), logos de benefício (INC-015 fase 2) e o banner (INC-017). Ver `docs/04-Roadmap/incrementos/INC-016-anexos-no-feed.md`.
 **Responsável:** Pedro (quitar na ativação do R2).
 
-**DP-21 — `package-lock.json` gerado no Windows quebra o `npm ci` do CI (dependências opcionais multiplataforma).** Qualquer `npm install` rodado na máquina Windows do dev **poda** as entradas top-level `@emnapi/core@1.11.2` e `@emnapi/runtime@1.11.2` do lock — entradas exigidas pelo bloco `overrides` do `package.json` e necessárias no Linux, onde o npm instala o fallback wasm `@tailwindcss/oxide-wasm32-wasi`. O `npm ci` do CI então falha com `Missing: @emnapi/runtime@1.11.2 from lock file` **antes de rodar qualquer teste**. Reproduzido: foi exatamente assim que a branch `hardening/deps-cve` nasceu vermelha (`9d56cbc`). Os flags `--os=linux --cpu=x64 --libc=glibc` **não** resolvem; `npm install --package-lock-only` também poda. **Workaround verificado:** gerar o lock num container Linux — `docker run --rm -v <dir>:/app -w /app node:22 npm install --package-lock-only` — que restaura as entradas e produz um diff mínimo. **Decisão pendente:** adotar esse comando como procedimento oficial de mexer em dependência (documentar em `convencoes-git.md`/`infra-banco-dev-e-ci.md`), ou remover os `overrides` de `@emnapi/*` se eles não forem mais necessários (entraram por CVE transitiva — reavaliar).
-**Responsável:** Pedro (decidir o procedimento).
-
 **DP-24 — Público-alvo (`branchIds`) de comunicado não validado contra o tenant da sessão.** Identificado durante o INC-018 (2026-07-27), pré-existente (não introduzido por ele) — reportado como follow-up, não corrigido. `replaceAnnouncementAudience` (`announcement-audience.repository.ts`) grava os `branchIds` recebidos do formulário direto, sem confirmar que cada `branchId` pertence ao tenant da sessão. Como a linha de `AnnouncementAudience` é gravada com o `tenantId` correto do comunicado, isso **não vaza dado entre tenants** (RLS continua isolando a leitura) — mas um `branchId` de outro tenant (ou inexistente) cria uma audiência que não corresponde a nenhuma filial real, restringindo o público a zero pessoas silenciosamente, sem erro. Correção: validar `branchIds` contra `findBranchesByTenant(tenantId)` antes de gravar.
 **Responsável:** Pedro (priorizar — mesma classe de bug de outros achados de validação de tenant, mesmo sem vazamento).
 
@@ -131,13 +151,13 @@
 **Responsável:** Pedro (decidir se resgata a branch ou reimplementa quando precisar).
 
 **DP-28 — GAP-01a: next.js desatualizado (4 CVEs altos), bump bloqueado pela DP-21.** `next` está em 16.2.10; a auditoria de 2026-07-27 pede 16.2.12 por 4 CVEs altos. O bloqueador real é a **DP-21**: `npm install` na máquina do Pedro (Windows) poda as entradas `@emnapi/*` do lock, e `npm ci` no CI falha antes de rodar qualquer teste — foi por isso que o INC-022 não pôde adicionar `jsdom`. A **DP-25** (orçamento de 1s do teste de performance, sensível a contenção paralela) é um motivo adicional para querer sinal determinístico antes de trocar dependência sensível, mas não é o que impede o `npm install` de rodar — essa é a DP-21.
-**Responsável:** Pedro (resolver DP-21 primeiro; o bump do next segue essa ordem).
+**Responsável:** Pedro (o bump em si). ⚠️ **Atualização 2026-08-05:** a DP-21 foi **resolvida** (procedimento Docker oficializado, ver seção de resolvidas) — este item não está mais bloqueado, só não priorizado. O lock do bump precisa ser gerado pelo container Linux.
 
 **DP-29 — GAP-03: avatar é o único upload sem sniff de magic number.** Validação de tipo por conteúdo (não extensão) falta na foto de perfil. Fecha sozinho quando a consolidação de upload + upload direto do ADR-011 §20.2 entrarem (a decisão já devolve validação server-side a todos os tipos, avatar incluso). Até lá é o único ponto sem essa checagem.
 **Responsável:** Pedro (sem ação isolada — resolve junto da consolidação de upload).
 
 **DP-31 — GAP-14: Next 16 deprecia middleware.ts em favor de proxy.ts; migração não documentada.** Se o bump do GAP-01a/DP-28 acontecer, essa migração provavelmente é necessária junto.
-**Responsável:** Pedro (revisar quando a DP-21 destravar o bump do next).
+**Responsável:** Pedro (revisar junto do bump do next — a DP-21 já foi resolvida em 2026-08-05, então o gatilho agora é a DP-28 ser priorizada).
 
 **DP-32 — Padrão de checkbox (Base UI + `<label>` sem `htmlFor`) com risco teórico de dupla ativação.** Identificado durante investigação do INC-023: o checkbox de "mudança material" (`admin/comunicados/[id]/form.tsx`) e os de consentimento no perfil (`perfil/page.tsx:117,121`) usam Base UI dentro de `<label>` sem `htmlFor` explícito — padrão que pode causar dupla ativação do clique em alguns navegadores. Não reproduzido em teste manual de 2026-08-04 (funcionou corretamente). Registrado como observação preventiva, não como bug confirmado.
 **Responsável:** Pedro (investigar só se o sintoma "clico e não marca" reaparecer).

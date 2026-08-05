@@ -42,3 +42,12 @@ git push
 3. A pasta `docs/` (vault) é commitada junto — mudança de documentação relacionada ao INC entra na mesma branch com prefixo `docs:`.
 4. Merge só após INC marcado como aprovado na revisão do chat.
 5. Merge de INC (ou de qualquer branch) na `main` sempre com `--no-ff` — nunca fast-forward. Um commit de merge de verdade dispara o CI na `main` (o workflow roda em todo `push`, inclusive na `main`) e deixa no histórico exatamente onde cada INC entrou, em vez de diluir os commits da branch na linha reta da `main`.
+6. **`package-lock.json` só é regenerado dentro de um container Linux, nunca por `npm install` na máquina Windows.** Toda alteração de dependência (adicionar, remover ou bumpar em `package.json`) commita o lock gerado por:
+
+   ```bash
+   docker run --rm -v <dir-do-repo>:/app -w /app node:22 npm install --package-lock-only
+   ```
+
+   `npm install` (ou `npm install --package-lock-only`) rodado no Windows **poda** as entradas top-level `@emnapi/core@1.11.2` e `@emnapi/runtime@1.11.2` do lock, que o Linux exige — e o `npm ci` do CI falha com `Missing: @emnapi/runtime@1.11.2 from lock file` antes de rodar um único teste. Origem da decisão: **DP-21** (`docs/05-Decisoes-Pendentes.md`, resolvida em 2026-08-05). Mecanismo completo, alternativa descartada e comando de verificação em `docs/02-Arquitetura/infra-banco-dev-e-ci.md`.
+
+   > No Git Bash, prefixe `MSYS_NO_PATHCONV=1` — sem isso o MSYS reescreve o `-w /app` para um caminho do Windows e o `docker run` falha.
