@@ -1,6 +1,6 @@
 # INC-024 — Correções de navegação e fluxo (Módulo B)
 
-**Status:** 🟡 Partes 1 e 2 entregues (2026-08-05) — Partes 3 e 4 paradas na investigação, aguardando decisão do Pedro
+**Status:** ✅ Concluído (2026-08-05) — Partes 1 e 2 implementadas, Parte 3 resolvida por decisão de produto + correção de doc, Parte 4 transferida para a DP-19
 **Fase:** correção (pré-piloto)
 **Origem:** teste manual real de 2026-08-04/05 (Pedro)
 **Depende de:** INC-008, INC-010, INC-011
@@ -44,6 +44,10 @@ INC-011, item 5, especifica: "Vaga publicada gera card (template INC-009) no fee
 > | **D. Não fazer** — considerar o item 5 atendido pela seção "Vagas abertas" | zero | exige **corrigir o texto do INC-011**, que hoje promete "no feed" |
 >
 > Nenhum desses é escolha de executor (regra 1 do CLAUDE.md). **Aguardando o Pedro escolher** — só depois dá para escrever o critério de aceite real desta parte.
+>
+> ---
+>
+> **✅ DECIDIDO (Pedro, 2026-08-05): caminho D.** Vaga **não** entra na timeline do feed de posts; o item 5 do INC-011 passa a ser atendido pela seção "Vagas abertas" da Home + `/vagas`, que é o que já existe e funciona. **Motivo:** o custo de arquitetura dos caminhos A e B não se justifica sem evidência de que descoberta *no feed* importa mais que a seção dedicada. **Consequência:** zero mudança de código — a correção é de documentação, no texto do item 5 do `INC-011-vagas-internas.md`, que prometia "no feed" e nunca foi implementado assim. Se o piloto trouxer evidência de que a seção não gera descoberta suficiente, a decisão pode ser revisitada com A/B/C ainda na mesa.
 
 ### Parte 4 — Upload de foto no post publica direto, sem confirmação (investigar antes)
 Ao anexar foto durante a criação de um post, ela sobe/fica pública imediatamente, sem esperar a publicação do post. Investigar o fluxo atual: o attach persiste algo do post prematuramente? Existe estado de rascunho sendo pulado? Qual o comportamento hoje vs. o esperado. Se envolver decisão de UX não óbvia (ex.: introduzir estado de rascunho onde não existia), PARAR e reportar antes de implementar.
@@ -66,24 +70,31 @@ Ao anexar foto durante a criação de um post, ela sobe/fica pública imediatame
 ## Critérios de aceite
 - [x] Link de aniversariantes aparece na Home todos os dias, independente de haver aniversariante hoje. (`src/app/[slug]/(app)/page.tsx` — link fora da condicional dos cards do dia; rótulo "Ver próximos aniversários", ver desvio na Parte 1.)
 - [x] Erro de runtime real dentro de `/{slug}/*` mostra tela em pt-BR com botão de tentar novamente, não a tela genérica em inglês. (`src/app/[slug]/error.tsx`; verificado em build de produção com erro forçado — ver Parte 2, incluindo a correção da premissa.)
-- [ ] ~~Vaga publicada gera card visível no feed~~ — **🛑 bloqueado por decisão de produto/arquitetura do Pedro** (ver Parte 3). Não há defeito: o requisito nunca foi implementado *no feed*, e implementar exige escolher entre 4 caminhos com consequências distintas. Critério real fica em branco até a escolha.
-- [ ] ~~Anexar foto durante criação de post não a torna pública/permanente antes da publicação~~ — **🛑 bloqueado: é a DP-19**, cujo conserto limpo (staging por sessão + rekey) depende do R2 real (ver Parte 4).
+- [x] ~~Vaga publicada gera card visível no feed~~ → **critério substituído pela decisão de produto (caminho D, Pedro, 2026-08-05):** vaga gera card na Home (seção "Vagas abertas") e em `/vagas`, **não** na timeline do feed de posts. Isso já era o comportamento real; o que estava errado era o texto do item 5 do INC-011, corrigido nesta rodada. Sem mudança de código.
+- [ ] ~~Anexar foto durante criação de post não a torna pública/permanente antes da publicação~~ — **transferido para a DP-19** (não é pendência deste INC): o conserto limpo (staging por sessão + rekey) depende do R2 real. Achados adjacentes promovidos a **DP-33** e **DP-34** (ver Parte 4).
 - [x] `npm run lint && npm run typecheck && npm run test && npm run build` verdes.
 
 ## Registro de conclusão
 **Data:** 2026-08-05
 **Branch:** `inc-024-navegacao-e-fluxo`
-**Merge em main:** _(não mergeado — Pedro pediu para não fazer merge neste fechamento)_
+**Merge em main:** `--no-ff` em 2026-08-05 (hash preenchido no commit seguinte ao merge)
 
-### Situação final deste fechamento (2026-08-05)
+### Situação final — as 4 partes fechadas
 | Parte | Situação |
 |---|---|
-| **1 — link de aniversariantes** | ✅ concluída |
-| **2 — `error.tsx` do tenant** | ✅ concluída (resolve a DP-30, com a premissa dela corrigida) |
-| **3 — card de vaga no feed** | ⏸️ **aguardando decisão de produto do Pedro** — 4 caminhos mapeados (A denormalizar / B união na query / C injetar na 1ª página / D atender pela seção atual e corrigir o texto do INC-011). Nada tocado em código. |
-| **4 — foto do post** | ⏸️ **bloqueada por dependência de storage real** — é a DP-19 (staging por sessão + rekey exige o R2). Nada tocado em código; 2 achados novos registrados como **DP-33** e **DP-34**. |
+| **1 — link de aniversariantes** | ✅ **implementada** (`d17dad6`) |
+| **2 — `error.tsx` do tenant** | ✅ **implementada** (`7285370`) — resolve a **DP-30**, com a premissa dela corrigida |
+| **3 — card de vaga no feed** | ✅ **resolvida por correção de documentação** — decisão do Pedro pelo caminho **D** (2026-08-05): o comportamento atual (seção "Vagas abertas" + `/vagas`) é o correto; o texto do item 5 do `INC-011-vagas-internas.md` foi corrigido, porque prometia "no feed" e isso nunca existiu. **Sem mudança de código.** |
+| **4 — foto do post** | ⏭️ **transferida para a DP-19** — não é pendência deste INC. O conserto limpo (staging por sessão + rekey) depende do R2 real; 2 achados adjacentes promovidos a **DP-33** e **DP-34**. |
 
-Sem merge na `main`: a Parte 3 depende da decisão acima.
+### DPs movimentadas nesta rodada
+| DP | Movimento |
+|---|---|
+| **DP-30** | ✅ **resolvida** (Parte 2), movida para "Resolvidas em 2026-08-05" com a premissa corrigida |
+| **DP-33** | 🆕 aberta — `authorizeMediaKey` libera `view` de mídia de post por tenant sem olhar o `status` do post |
+| **DP-34** | 🆕 aberta — rascunho abandonado **com** anexo nunca é limpo (foto de pessoa persistida sem nunca ter sido publicada; retenção/LGPD) |
+| **DP-35** | 🆕 aberta — deadlock 40P01 (`TRUNCATE CASCADE` vs escrita concorrente) reincidente; **reabre a conclusão do GAP-15**, que a auditoria de 2026-07-27 havia fechado como "não reproduzível" |
+| **DP-19** | permanece aberta e passa a ser a dona da Parte 4 |
 
 ### O que foi entregue
 - **Parte 1 (`d17dad6`)** — link para `/{slug}/aniversariantes` fixo na Home. Antes ele existia só dentro do bloco de aniversariantes de hoje (janela de 0 dias): em qualquer dia sem aniversariante, a rota ficava **sem nenhum caminho de navegação** (o bottom nav não a lista — ADR-009, 5 slots ocupados — e nada mais aponta para ela). O cabeçalho alterna entre "Aniversariantes de hoje" e "Aniversariantes"; a linha do link é fixa. Sem elemento visual novo: reusa o padrão de cabeçalho + link das seções Vagas/Benefícios da própria Home.
@@ -104,7 +115,7 @@ Sem merge na `main`: a Parte 3 depende da decisão acima.
 - **Limite da verificação:** o boundary do App Router é renderizado no cliente após a hidratação, e não há navegador headless no repo (sem jsdom/Playwright — ver DP-21/DP-28). A confirmação **visual** (tela em pt-BR + clique no "Tentar novamente") depende de um teste manual do Pedro.
 
 ### Pendências que este INC deixa registradas
-- **Parte 3** — Pedro escolher entre os caminhos A/B/C/D. Se for **D**, o item 5 do INC-011 precisa ter o texto corrigido (hoje promete "no feed" e isso nunca existiu).
+- ~~**Parte 3** — Pedro escolher entre os caminhos A/B/C/D.~~ ✅ **Fechada: caminho D**, texto do INC-011 corrigido. Revisitável se o piloto mostrar que a seção dedicada não gera descoberta suficiente.
 - **Parte 4** — segue na DP-19, quitável junto do R2. Os dois achados adjacentes deixaram de ser observação e viraram registro próprio: **DP-33** (`authorizeMediaKey` libera `view` de mídia de post por tenant, sem olhar o `status` do post) e **DP-34** (rascunho abandonado **com** anexo nunca é limpo — a varredura só apaga rascunhos *pristine* —, deixando foto de pessoa persistida sem nunca ter sido publicada; minimização/retenção da LGPD).
 - **Janela da tela de aniversariantes**: 7 dias vs. mês corrente.
 - ~~**⚠️ `.env.example` — `SCHEDULER_ANONYMIZE_AT_HOUR_UTC=3` não funciona como está.**~~ ✅ **Resolvido em `93f80f5`** (fechamento parcial de 2026-08-05), pelo lado do compose: a comparação passou a normalizar a hora para 2 dígitos (`pad2`), então `3` e `03` funcionam igual e as 3 linhas do `.env.example` seguem válidas como o Pedro as escreveu. O risco original era o pior tipo: a anonimização diária **nunca rodaria e nunca logaria FALHA**, porque a chamada não era nem tentada — o "cron mudo" que o INC-023 existe para evitar.

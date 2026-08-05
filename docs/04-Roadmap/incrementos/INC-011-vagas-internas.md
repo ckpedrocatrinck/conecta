@@ -12,7 +12,7 @@ Vaga como entidade com candidatura em 1 toque — a demo perfeita da diferença 
 2. Lista para o colaborador com filtro por filial; encerrada some da lista ativa.
 3. Candidatura em 1 toque + observação opcional; cancelável enquanto a vaga estiver aberta; colaborador vê "minhas candidaturas" no perfil.
 4. Admin: lista de candidatos por vaga (nome, filial, data, observação) + export CSV.
-5. Vaga publicada gera card (template INC-009) no feed.
+5. Vaga publicada gera card (template INC-009) na Home (seção "Vagas abertas") e em `/vagas` — não na timeline do feed de posts (decisão registrada no INC-024, 2026-08-05: manter seção própria em vez de unificar com a paginação por cursor de posts).
 
 ## Critérios de aceite
 - [ ] Candidatura duplicada impossível.
