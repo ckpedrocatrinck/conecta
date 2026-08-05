@@ -34,6 +34,16 @@ em `tenants`, autorização das ações novas.
   nenhum código (`grep` em `src/`). **`fivicon` parece erro de digitação de
   `favicon`.** Ver GAP-13.
 
+> **Correção — 2026-08-05:** resolvido. Os dois arquivos foram movidos para
+> `public/branding/`, o primeiro renomeado para `favicon.png` (o typo estava
+> confirmado), e agora estão **versionados** — deixaram de ser untracked.
+> `public/banners/` ficou só com os banners de tela de fato consumidos por
+> código (`home.png`, `vagas.png`). A observação "não referenciados por nenhum
+> código" foi reconfirmada antes da mudança, agora com `grep` no repo inteiro
+> (não só em `src/`): zero uso em componentes, rotas, seeds, scripts ou
+> manifests — os manifests PWA apontam para `/icon-192.png` e afins, que são
+> Route Handlers próprios, não estes arquivos.
+
 Conclusão: nada de meio-de-merge. A auditoria roda sobre código fechado.
 
 ---
@@ -637,6 +647,21 @@ Só o que de fato precisa de ação. Esforço: **P** ≈ até 2h · **M** ≈ me
 | **GAP-13** | Inconsistências menores: empty state do admin de benefícios é `<p>` cru em vez de `EmptyState`; `public/banners/fivicon.png` e `logo.png` untracked e não referenciados (`fivicon` = typo de `favicon`?) | `admin/beneficios/page.tsx:49-50` vs. `[slug]/(app)/beneficios/page.tsx:34-39` | **P** |
 | **GAP-14** | Deprecação `middleware.ts` → `proxy.ts` (Next 16) não está registrada em nenhuma doc | `grep -rn "proxy" docs/` não retorna nada ligado a middleware; `src/middleware.ts` em uso | **P** — registrar como DP |
 | **GAP-15** | O registro de flakiness está desatualizado: 5 rodadas dos suspeitos = 5/5 verdes | `immutability-triggers` + `pending-count-badge` + 3 novos, 16 testes × 5 | **P** — atualizar a doc |
+
+> **Correção — 2026-08-05 (GAP-13):** o achado tem duas metades e elas seguem
+> caminhos diferentes.
+>
+> - ✅ **`fivicon.png` / `logo.png` — resolvido hoje.** Movidos para
+>   `public/branding/`, o primeiro renomeado para `favicon.png` (o typo estava
+>   confirmado), ambos versionados. Detalhe na nota da seção de arquivos
+>   untracked, no início deste documento.
+> - ⬜ **Empty state do admin de benefícios — segue aberto.** O
+>   `<p className="text-meta text-muted-foreground">` cru em
+>   `admin/beneficios/page.tsx:49-50` continua não usando `EmptyState`, ao
+>   contrário da tela do colaborador e do que o design-system pede (R26 da
+>   auditoria de usabilidade). Nada foi mexido nessa parte.
+>
+> Ou seja: o GAP-13 está **parcialmente** quitado — não fechar a linha inteira.
 
 > **Correção — 2026-08-05 (GAP-15):** o diagnóstico desta linha está invertido.
 > Não era o registro de flakiness que estava desatualizado — era esta auditoria.
