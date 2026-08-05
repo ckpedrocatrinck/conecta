@@ -448,6 +448,35 @@ também passa. **Não há teste flaky a estabilizar hoje** — se a instabilidad
 real, foi resolvida sem registro. Recomendo remover a menção de flakiness das
 pendências ou trocá-la por "não reproduzida em 2026-07-27, reabrir se voltar".
 
+> ### ⚠️ Correção posterior — 2026-08-05 (GAP-15)
+>
+> **A conclusão acima estava errada.** O achado original fica como está (é o
+> registro fiel do que 5 rodadas mostraram em 2026-07-27), mas a recomendação
+> de "remover a menção de flakiness das pendências" **não** deve ser seguida: o
+> problema reincidiu **duas vezes** desde então, e agora com mecanismo
+> identificado.
+>
+> - **INC-023 (2026-08-04):** reproduzido em 1 de 2 rodadas paralelas, na linha
+>   de base, antes de qualquer mudança do INC.
+> - **INC-024 (2026-08-05):** reproduzido de novo em `immutability-triggers.test.ts`.
+>
+> **Mecanismo:** o `TRUNCATE … CASCADE` da limpeza de teste pede
+> `AccessExclusiveLock`; um `INSERT` concorrente de outro arquivo de teste
+> segura `RowExclusiveLock` na mesma tabela; sob execução paralela do vitest os
+> dois se cruzam e o Postgres aborta um deles com **`40P01 deadlock detected`**.
+> Não é teste "instável" no sentido de código não-determinístico — é contenção
+> de lock entre arquivos, e não reproduzir em 5 rodadas seriais é esperado.
+>
+> Isso muda a natureza do item: de "registro desatualizado, atualizar a doc"
+> para **problema aberto com causa conhecida**. O registro atual e completo é a
+> **DP-35** em `docs/05-Decisoes-Pendentes.md` — inclusive a lista das tabelas
+> hoje nessa condição. Duas ressalvas de nomenclatura, para quem cruzar as
+> fontes: (a) no texto desta auditoria "GAP-15" nomeia *o registro estar
+> desatualizado*, não o deadlock em si — a equação "GAP-15 = deadlock 40P01"
+> nasceu no registro do INC-023 e ficou; (b) `pending-count-badge`, o segundo
+> suspeito citado aqui, não voltou a falhar — as duas reincidências foram em
+> `immutability-triggers`.
+
 ### 6.3 `npm audit`
 
 🔴 **18 vulnerabilidades (2 críticas, 13 altas, 3 moderadas).** As que importam:
@@ -533,6 +562,13 @@ classe de bug que o INC-017 documentou e corrigiu ao lado, no mesmo arquivo.
 | **Flakiness** (immutability-triggers, pending-count-badge) | **Não reproduzida** em 5 rodadas | GAP-15 — atualizar/remover o registro |
 | **Purga de blob na anonimização** | Aberta, corretamente registrada | sem novidade |
 
+> **Correção — 2026-08-05:** a linha de flakiness acima **não** se sustentou. O
+> deadlock `40P01` reincidiu no INC-023 (2026-08-04) e no INC-024 (2026-08-05),
+> com mecanismo identificado; o registro deve ser **reaberto**, não removido.
+> Ver a nota completa em §6.2 e a **DP-35** em `docs/05-Decisoes-Pendentes.md`.
+> Por consequência, o "resolvido sem registro" logo abaixo também não vale para
+> a flakiness.
+
 **Resolvido sem registro:** a flakiness (6.2). **Gap novo relacionado a pendência
 existente:** GAP-07 (DP-19 incompleto) e GAP-04 (DP-15 fechado cedo demais).
 
@@ -601,6 +637,14 @@ Só o que de fato precisa de ação. Esforço: **P** ≈ até 2h · **M** ≈ me
 | **GAP-13** | Inconsistências menores: empty state do admin de benefícios é `<p>` cru em vez de `EmptyState`; `public/banners/fivicon.png` e `logo.png` untracked e não referenciados (`fivicon` = typo de `favicon`?) | `admin/beneficios/page.tsx:49-50` vs. `[slug]/(app)/beneficios/page.tsx:34-39` | **P** |
 | **GAP-14** | Deprecação `middleware.ts` → `proxy.ts` (Next 16) não está registrada em nenhuma doc | `grep -rn "proxy" docs/` não retorna nada ligado a middleware; `src/middleware.ts` em uso | **P** — registrar como DP |
 | **GAP-15** | O registro de flakiness está desatualizado: 5 rodadas dos suspeitos = 5/5 verdes | `immutability-triggers` + `pending-count-badge` + 3 novos, 16 testes × 5 | **P** — atualizar a doc |
+
+> **Correção — 2026-08-05 (GAP-15):** o diagnóstico desta linha está invertido.
+> Não era o registro de flakiness que estava desatualizado — era esta auditoria.
+> O deadlock `40P01` reincidiu duas vezes (INC-023 em 2026-08-04, INC-024 em
+> 2026-08-05), com mecanismo identificado (`TRUNCATE CASCADE` vs. `INSERT`
+> concorrente sob vitest paralelo). A ação correta não é "atualizar a doc" e sim
+> tratar o problema; ele está rastreado na **DP-35** de
+> `docs/05-Decisoes-Pendentes.md`. Nota completa em §6.2.
 
 ---
 
