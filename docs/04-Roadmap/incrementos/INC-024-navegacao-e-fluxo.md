@@ -77,7 +77,7 @@ Ao anexar foto durante a criação de um post, ela sobe/fica pública imediatame
 ## Registro de conclusão
 **Data:** 2026-08-05
 **Branch:** `inc-024-navegacao-e-fluxo`
-**Merge em main:** `--no-ff` em 2026-08-05 (hash preenchido no commit seguinte ao merge)
+**Merge em main:** `e196dfc` (`--no-ff`, 2026-08-05)
 
 ### Situação final — as 4 partes fechadas
 | Parte | Situação |
