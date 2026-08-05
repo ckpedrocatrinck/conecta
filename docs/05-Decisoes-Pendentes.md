@@ -142,6 +142,12 @@
 **DP-32 — Padrão de checkbox (Base UI + `<label>` sem `htmlFor`) com risco teórico de dupla ativação.** Identificado durante investigação do INC-023: o checkbox de "mudança material" (`admin/comunicados/[id]/form.tsx`) e os de consentimento no perfil (`perfil/page.tsx:117,121`) usam Base UI dentro de `<label>` sem `htmlFor` explícito — padrão que pode causar dupla ativação do clique em alguns navegadores. Não reproduzido em teste manual de 2026-08-04 (funcionou corretamente). Registrado como observação preventiva, não como bug confirmado.
 **Responsável:** Pedro (investigar só se o sintoma "clico e não marca" reaparecer).
 
+**DP-33 — `authorizeMediaKey` não verifica status de publicação do post.** A checagem de acesso a mídia de posts (`posts/{tenant}/{postId}/*`) libera qualquer sessão do mesmo tenant, sem considerar se o post está publicado ou ainda em rascunho. Não é diretamente explorável hoje (chave é UUID, não linkada em nenhuma tela para rascunhos de outros usuários), mas o princípio de autorização deveria ser "post publicado do meu tenant", não "qualquer objeto do meu tenant". Encontrado durante investigação do INC-024, Parte 4.
+**Responsável:** Pedro (avaliar prioridade; relacionado à DP-19).
+
+**DP-34 — Rascunho de post abandonado com foto anexada nunca é limpo (retenção/LGPD).** A varredura de rascunhos abandonados só remove rascunhos "pristine" (sem anexo); anexar um arquivo tira o rascunho dessa condição, então um rascunho nunca publicado, mas com foto de pessoa anexada, persiste indefinidamente sem nunca ter sido de fato publicado. A DP-19 já prevê orphan-sweep para objetos não confirmados; este caso é diferente — o objeto está confirmado, mas o post nunca saiu do rascunho. Encontrado durante investigação do INC-024, Parte 4.
+**Responsável:** Pedro (avaliar se entra no mesmo escopo da DP-19 ou é item próprio).
+
 ---
 
 ## Bloqueadores e dependências do go-live do piloto (INC-013)
