@@ -46,8 +46,9 @@ services:
       APP_INTERNAL_URL: ${APP_INTERNAL_URL:-http://app:3000}
       # Intervalo do sweep de publicacao agendada, em segundos (5 min).
       PUBLISH_INTERVAL_SECONDS: ${SCHEDULER_PUBLISH_INTERVAL_SECONDS:-300}
-      # Hora UTC (2 digitos, com zero a esquerda) da anonimizacao diaria.
-      # 03 UTC = meia-noite em America/Sao_Paulo.
+      # Hora UTC da anonimizacao diaria. 03 UTC = meia-noite em
+      # America/Sao_Paulo. Aceita `3` ou `03` indiferentemente: o script
+      # normaliza para 2 digitos antes de comparar (ver `pad2` no command).
       ANONYMIZE_AT_HOUR_UTC: ${SCHEDULER_ANONYMIZE_AT_HOUR_UTC:-03}
     entrypoint: ["/bin/sh", "-c"]
     # Lista de UM item de proposito: `command` em string escalar passa pelo
@@ -68,15 +69,24 @@ services:
             *)   log "FALHA GET $${path} -> $${status}" ;;
           esac
         }
+        # Normaliza a hora para 2 digitos: `date -u +%H` sempre devolve com zero
+        # a esquerda ("03"), entao comparar direto com o env var quebraria
+        # silenciosamente se alguem escrevesse `3` — a anonimizacao nunca
+        # rodaria E nunca logaria FALHA (a chamada nem seria tentada), que e'
+        # exatamente o "cron mudo" que este servico existe para evitar.
+        # Um char -> prefixa zero; 2 chars -> intocado. Sem aritmetica de
+        # proposito: `$$((0x))` trataria "03" como octal em alguns shells.
+        pad2() { case "$$1" in ?) echo "0$$1" ;; *) echo "$$1" ;; esac; }
+        anon_hour=$$(pad2 "$${ANONYMIZE_AT_HOUR_UTC}")
         last_anon_day=""
-        log "scheduler iniciado (app=$${APP_INTERNAL_URL} publish=$${PUBLISH_INTERVAL_SECONDS}s anonimizacao=$${ANONYMIZE_AT_HOUR_UTC}h UTC)"
+        log "scheduler iniciado (app=$${APP_INTERNAL_URL} publish=$${PUBLISH_INTERVAL_SECONDS}s anonimizacao=$${anon_hour}h UTC)"
         while true; do
           if [ -z "$${CRON_SECRET}" ]; then
             log "ERRO CRON_SECRET vazio no ambiente do agendador - nenhuma chamada feita"
           else
             call /api/cron/publish-announcements
             today=$$(date -u '+%Y-%m-%d')
-            if [ "$${today}" != "$${last_anon_day}" ] && [ "$$(date -u '+%H')" = "$${ANONYMIZE_AT_HOUR_UTC}" ]; then
+            if [ "$${today}" != "$${last_anon_day}" ] && [ "$$(date -u '+%H')" = "$${anon_hour}" ]; then
               call /api/cron/anonymize-users
               last_anon_day="$${today}"
             fi
