@@ -11,10 +11,17 @@ import { recordAuditLog } from "@/lib/repositories/audit-log.repository";
 
 // Push (INC-012) se combina ao canal in-app existente (INC-007) sem alterar
 // remindPendingUsers/pending-panel.ts — o unico ponto de integracao e' este.
-const notificationChannel = new CompositeNotificationChannel([
-  new InAppNotificationChannel(),
-  new PushNotificationChannel(),
-]);
+//
+// INC-026: deixou de ser const de modulo porque o canal de push agora precisa
+// do slug do tenant para montar a URL de destino do clique na notificacao, e
+// isso so' existe por request (`session.tenantSlug`). Os canais nao guardam
+// estado, entao instanciar por chamada nao custa nada.
+function buildNotificationChannel(tenantSlug: string) {
+  return new CompositeNotificationChannel([
+    new InAppNotificationChannel(),
+    new PushNotificationChannel(undefined, tenantSlug),
+  ]);
+}
 
 export async function remindPendingAction(formData: FormData) {
   const session = await requireAdminOrManager();
@@ -28,7 +35,7 @@ export async function remindPendingAction(formData: FormData) {
       session.tenantId,
       announcementId,
       { branchId: isManager ? session.branchId : undefined },
-      notificationChannel,
+      buildNotificationChannel(session.tenantSlug),
     );
     if (!result) return null;
 
