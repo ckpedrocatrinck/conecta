@@ -142,6 +142,31 @@ export function setupClientErrorReporter(): void {
   wrapConsoleError();
 }
 
+/**
+ * Erro TRATADO por um `catch` do produto (type "handled"). Diferente dos
+ * listeners globais: como o catch engoliu a excecao, ela nunca dispararia
+ * `error` nem `unhandledrejection` — sem esta chamada explicita, a falha e'
+ * invisivel no log.
+ *
+ * `context` identifica o fluxo (`"push:activate"`, `"push:revoke"`) e vira
+ * PREFIXO da mensagem. Nao da' para carimbar isso em `route`: o reporter deriva
+ * a rota de `window.location.pathname` e o servidor ainda tira a querystring —
+ * de proposito, porque a query pode carregar dado pessoal.
+ *
+ * Mesma regra de privacidade do resto do modulo: de um valor que nao seja Error
+ * sai so' o nome do tipo, nunca o objeto serializado.
+ */
+export function reportHandledError(context: string, error: unknown): void {
+  const name = error instanceof Error ? error.name : "";
+  const detail = error instanceof Error ? error.message : describeValue(error);
+  const described = `${name ? `${name}: ` : ""}${detail}`.trim();
+  report(
+    "handled",
+    `[${context}] ${described || "erro sem mensagem"}`,
+    error instanceof Error ? error.stack : undefined,
+  );
+}
+
 /** Hook do error boundary de rota (src/app/error.tsx). O digest entra na
  * mensagem para casar a linha do client com o log do servidor. */
 export function reportBoundaryError(error: Error & { digest?: string }): void {

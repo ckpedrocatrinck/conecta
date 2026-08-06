@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Bell, BellOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatDateTimeSaoPaulo } from "@/lib/dates/format-datetime";
+import { isDebugEnabled } from "@/lib/debug/debug-flag";
 import { useIosNonStandalone } from "@/lib/pwa/platform";
 import { urlBase64ToUint8Array } from "@/lib/pwa/vapid-key";
 import { revokeOwnPushSubscriptionAction, saveOwnPushSubscriptionAction } from "@/app/[slug]/(app)/perfil/push-actions";
@@ -12,6 +13,23 @@ import { revokeOwnPushSubscriptionAction, saveOwnPushSubscriptionAction } from "
 type PushSubscriptionRow = { id: string; createdAt: Date };
 
 type Status = "idle" | "pending" | "denied" | "unsupported" | "error";
+
+/**
+ * Instrumentacao TEMPORARIA (INC-025, depuracao do push em iPhone real). Os
+ * catches abaixo engolem a excecao, entao nenhum listener global do INC-022 a
+ * enxerga — sem esta chamada, "Nao foi possivel ativar as notificacoes agora"
+ * e' tudo que existe, no device e no log.
+ *
+ * Mesmo gate do resto do INC-022: so' com a flag `conecta_debug` ligada
+ * (`?debug=1`), e o modulo pesado entra por import() dinamico. Nao altera nada
+ * do que o usuario ve.
+ */
+function reportPushError(step: "activate" | "revoke", error: unknown): void {
+  if (!isDebugEnabled()) return;
+  void import("@/lib/debug/client-error-reporter").then((module) => {
+    module.reportHandledError(`push:${step}`, error);
+  });
+}
 
 /**
  * Opt-in de push (INC-012, escopo item 3). No iOS, so' funciona com o PWA
@@ -64,13 +82,22 @@ export function PushOptIn({ subscriptions }: { subscriptions: PushSubscriptionRo
       await saveOwnPushSubscriptionAction({ endpoint: subscription.endpoint, keys });
       router.refresh();
       setStatus("idle");
-    } catch {
+    } catch (error) {
+      reportPushError("activate", error);
       setStatus("error");
     }
   }
 
   async function revoke(id: string) {
-    await revokeOwnPushSubscriptionAction(id);
+    try {
+      await revokeOwnPushSubscriptionAction(id);
+    } catch (error) {
+      reportPushError("revoke", error);
+      // RELANCA de proposito: hoje esta falha vira `unhandledrejection` e a tela
+      // nao muda. Engolir aqui alteraria comportamento — o escopo desta
+      // instrumentacao e' SO' acrescentar o registro por baixo.
+      throw error;
+    }
     router.refresh();
   }
 

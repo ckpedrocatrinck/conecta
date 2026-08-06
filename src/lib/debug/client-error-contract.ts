@@ -11,7 +11,17 @@ export const CLIENT_ERROR_ENDPOINT = "/api/debug/client-error";
 /** Prefixo da linha de log — e' o que o `grep CLIENT_ERROR` do operador acha. */
 export const CLIENT_ERROR_LOG_PREFIX = "[CLIENT_ERROR]";
 
-export const CLIENT_ERROR_TYPES = ["error", "unhandledrejection", "console_error", "boundary"] as const;
+// "handled": erro que um `catch` do produto JA' TRATOU. Nenhum listener global
+// o veria — o catch engoliu a excecao antes de virar `error`/`unhandledrejection`.
+// A procedencia (qual fluxo) vai no PREFIXO da mensagem, entre colchetes, no
+// formato `push:activate`. (Escrito sem os colchetes literais de proposito: o
+// scanner do Tailwind trata `[algo:valor]` como propriedade arbitraria e emite
+// uma regra CSS morta no bundle, mesmo vindo de um comentario.)
+// porque `route` e' derivada de `window.location.pathname` dentro do reporter e
+// o call site nao a define. Acrescentado na instrumentacao temporaria do fluxo
+// de push (INC-025); o servidor aceita automaticamente por validar contra esta
+// mesma constante.
+export const CLIENT_ERROR_TYPES = ["error", "unhandledrejection", "console_error", "boundary", "handled"] as const;
 export type ClientErrorType = (typeof CLIENT_ERROR_TYPES)[number];
 
 /** Schema FIXO. Nenhum campo livre, nenhuma extensao ad-hoc. */
