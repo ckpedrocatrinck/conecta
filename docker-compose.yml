@@ -16,6 +16,81 @@ services:
       timeout: 5s
       retries: 10
 
+  # Aplicacao (INC-025). ADR-011 §8: build standalone do Next rodando
+  # `node server.js`. AQUI, EM DEV, a imagem e' BUILDADA LOCALMENTE (`build:`).
+  # O pipeline do ADR-011 §9 — CI builda, empurra para o GHCR, VPS so' puxa —
+  # NAO esta' implementado; quando entrar, este bloco troca `build:` por
+  # `image: ghcr.io/...` e a porta 3000 deixa de ser publicada (so' o `proxy`
+  # fica exposto).
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # INLINADA no bundle do cliente em tempo de build — nao adianta
+        # passar em `environment:`. Sem ela, o opt-in de push assina com
+        # chave vazia e `pushManager.subscribe` quebra (INC-012).
+        NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${NEXT_PUBLIC_VAPID_PUBLIC_KEY:-}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Herda os segredos do mesmo `.env` da raiz que o dev local ja' usa
+    # (AUTH_SECRET, CPF_HASH_PEPPER, CRON_SECRET, VAPID_*, APP_DB_PASSWORD).
+    env_file:
+      - .env
+    environment:
+      # `environment:` VENCE `env_file:`. As duas URLs do `.env` apontam para
+      # `localhost`, que dentro deste container e' o proprio container — por
+      # isso sao reescritas aqui para o nome do servico. Remontadas a partir
+      # das mesmas pecas que criam o banco no servico `postgres`, entao nao
+      # ha' segredo novo nem duplicado.
+      # Codigo le' as DUAS como STRING UNICA (prisma/schema.prisma:31 e
+      # src/lib/db/app-client.ts:14), nunca por pecas — nao da' para
+      # sobrescrever "so' o host".
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      # Role de runtime nao-superuser criada por migration (ADR-003/008): so'
+      # com ela a RLS por tenant_id e' real. A senha vem de APP_DB_PASSWORD,
+      # aplicada pelo seed (`prisma/db-admin.ts`).
+      APP_DATABASE_URL: postgresql://conecta_app:${APP_DB_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      # NODE_ENV=production na imagem => `assertAuthTrustHostConfigured`
+      # (src/lib/auth/assert-trust-host.ts) DERRUBA O BOOT se nao houver
+      # AUTH_TRUST_HOST nem AUTH_URL: fora de Vercel/CF o Auth.js resolve
+      # trustHost=false e todo login falha. Nao setamos AUTH_URL para o host
+      # da requisicao continuar valendo (dev acessa por localhost, LAN e tunel).
+      AUTH_TRUST_HOST: "true"
+    ports:
+      # Em DEV a porta e' publicada para o Pedro acessar do host/celular. Em
+      # producao (ADR-011 §8) `app` nao e' exposta — quem abre 80/443 e' o proxy.
+      - "3000:3000"
+    volumes:
+      # Mock de storage de midia (`local-media-fs.ts` grava em cwd/.local-media).
+      # Sem volume, toda foto some a cada rebuild da imagem. Sai com o R2 (DP-19).
+      - conecta_media:/app/.local-media
+
+  # Migrations (ADR-011 §9: backup -> `prisma migrate deploy` -> `up -d`).
+  # One-shot, NAO sobe com `docker compose up` (perfil `tools`), e reusa o
+  # estagio `builder` porque a imagem de runtime nao leva CLI do Prisma nem a
+  # pasta `prisma/` — so' o standalone.
+  #   docker compose run --rm migrate
+  #   docker compose run --rm migrate npx prisma db seed
+  # `prisma migrate dev` NUNCA (regra 9 do CLAUDE.md / ADR-008).
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    profiles: ["tools"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      APP_DATABASE_URL: postgresql://conecta_app:${APP_DB_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    command: ["npx", "prisma", "migrate", "deploy"]
+
   # Agendador (INC-023). Os handlers de `/api/cron/*` sao autenticados por
   # Bearer `CRON_SECRET` e NAO tem gatilho proprio: sempre esperaram um
   # disparador externo (ver comentario em publish-announcements/route.ts).
@@ -23,11 +98,13 @@ services:
   # ADR-011 fixa VPS unica com Docker Compose, entao o agendador mora aqui.
   #
   # PERFIL `scheduler` (nao sobe com `docker compose up` puro, de proposito):
-  # o servico `app` de APP_INTERNAL_URL ainda NAO existe neste compose — hoje
-  # ele so' tem o postgres que serve o dev local (`npm run dev` roda fora do
-  # Compose). Sem `app`, o agendador so' produziria linhas FALHA a cada 5 min.
-  # Em producao/VPS, com o servico `app` presente:
   #   docker compose --profile scheduler up -d
+  # O servico `app` de APP_INTERNAL_URL passou a EXISTIR no INC-025, entao o
+  # agendador ja' tem alvo real. O perfil FICA assim mesmo: sem ele, um
+  # `docker compose up` de dev passaria a bater na app a cada 5 min e a rodar
+  # a anonimizacao diaria sozinho, o que nao e' o que se quer numa maquina de
+  # desenvolvimento. (O INC-023, item 4, previa remover o perfil quando `app`
+  # entrasse; mantido de proposito — trocar isso e' decisao do Pedro.)
   #
   # Log: uma linha por chamada em stdout, no formato
   #   <timestamp UTC> OK|FALHA GET <rota> -> <status HTTP>
@@ -96,3 +173,6 @@ services:
 
 volumes:
   conecta_pgdata:
+  # Mock de storage de midia do servico `app` (INC-025). Removivel junto com
+  # o `local-media-fs.ts` quando o R2 entrar.
+  conecta_media:
