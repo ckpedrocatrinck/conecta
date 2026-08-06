@@ -1,6 +1,7 @@
 # INC-023 — Correções críticas do núcleo jurídico (reabertura de pendência + agendamento)
 
-**Status:** 🟡 Código completo (2026-08-04) — aguarda o serviço `app` no `docker-compose.yml` (ADR-011) para validação end-to-end do agendador dentro do Compose
+**Status:** ✅ Concluído (2026-08-06) — validação end-to-end do agendador dentro do Compose feita no **INC-025**, que trouxe o serviço `app` que faltava
+
 **Fase:** correção (pré-piloto)
 **Origem:** teste manual real de 2026-08-04 (Pedro). Dois comportamentos do núcleo jurídico reportados como quebrados:
 - INC-005, escopo item 4 / critério "Pendência reaberta por versão material aparece para quem já tinha confirmado" (checkbox nunca marcado no arquivo do INC).
@@ -112,9 +113,34 @@ Ver a seção "Como testar manualmente" acima. Resumo: em dev, `curl` manual con
 - `npm run lint && npm run typecheck && npm run test && npm run build` — verdes (61 arquivos, 327 testes).
 - Endpoints de cron verificados por HTTP real em 2026-08-04: `200 {"publishedCount":1}` com o secret correto, `401` sem header e com secret errado, nos dois endpoints.
 
+### Validação end-to-end dentro do Compose (2026-08-06, via INC-025)
+
+Era a única coisa que faltava para fechar este INC: o agendador nunca tinha sido
+exercitado contra um `app` real, só contra o script rodando fora do Docker. Com o
+serviço `app` entregue pelo **INC-025**, `docker compose --profile scheduler up -d`
+produziu, pela primeira vez, chamada real bem-sucedida:
+
+```
+2026-08-06T12:35:25Z scheduler iniciado (app=http://app:3000 publish=300s anonimizacao=03h UTC)
+2026-08-06T12:35:26Z OK GET /api/cron/publish-announcements -> 200
+2026-08-06T12:40:28Z OK GET /api/cron/publish-announcements -> 200
+```
+
+Dois ciclos completos (intervalo de 300s respeitado), **zero linhas `FALHA`**
+(`docker compose logs scheduler | grep -c FALHA` → `0`). O `200` prova três coisas
+de uma vez: DNS de serviço na rede interna (`http://app:3000`), o `CRON_SECRET`
+interpolado do mesmo `.env` batendo nos dois containers, e o handler executando o
+sweep contra o Postgres. O segundo ciclo saiu `200` mesmo tendo havido recriação do
+container `app` entre os dois — o `restart: unless-stopped` do agendador e o
+`depends_on: service_healthy` do app cobriram a janela.
+
+**O que continua não exercitado:** a anonimização diária (`/api/cron/anonymize-users`),
+que só dispara às 03h UTC. O ramo condicional dela foi verificado com relógio stubbado
+em 2026-08-05 (`93f80f5`), mas nunca dentro do Compose.
+
 ### Pendências
 
-- **Serviço `app` no `docker-compose.yml`** (Dockerfile + entrada no compose) — pendência de infraestrutura do ADR-011, fora deste INC. Até existir, o agendador está pronto mas não tem o que chamar, e o teste end-to-end dentro do Compose não pode ser feito.
+- ~~**Serviço `app` no `docker-compose.yml`** (Dockerfile + entrada no compose) — pendência de infraestrutura do ADR-011, fora deste INC. Até existir, o agendador está pronto mas não tem o que chamar, e o teste end-to-end dentro do Compose não pode ser feito.~~ ✅ **Fechada pelo INC-025 (2026-08-06).** Ver "Validação end-to-end" abaixo.
 - **`.env.example` não recebeu os três overrides opcionais** (`APP_INTERNAL_URL`, `SCHEDULER_PUBLISH_INTERVAL_SECONDS`, `SCHEDULER_ANONYMIZE_AT_HOUR_UTC`). Nenhum é obrigatório (todos têm default no compose), mas a regra 5 do CLAUDE.md pede documentar env novo — a edição do arquivo está bloqueada pelas permissões de ferramenta do agente. **Ação do Pedro:** acrescentar as três linhas comentadas.
 - **`docker compose config` imprime o `CRON_SECRET` em claro** no YAML normalizado. Não colar a saída desse comando em log, issue ou relatório.
 - **DP-35 (deadlock 40P01 intermitente na limpeza de testes)** continua aberto — reproduzido 1 de 2 rodadas paralelas na linha de base de hoje, antes de qualquer mudança deste INC. _(Referência corrigida em 2026-08-05: este parágrafo citava "GAP-15", que na auditoria de 2026-07-27 nomeia outra coisa — "o registro de flakiness está desatualizado". O registro atual e completo do deadlock é a **DP-35**.)_ **DP-25** (orçamento de 1s do teste de performance do painel) mediu 267,2ms, confortável. Este INC não acrescentou teste nesse caminho de código, então não moveu nenhum dos dois.
