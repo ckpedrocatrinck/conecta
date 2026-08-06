@@ -47,6 +47,12 @@ const SECURITY_HEADERS = [
 ];
 
 const nextConfig: NextConfig = {
+  // ADR-011 §8: o servico `app` roda `node server.js` a partir do build
+  // standalone. `next build` passa a emitir `.next/standalone/` com um
+  // server.js proprio + so' as dependencias que o trace do Next alcanca —
+  // por isso a imagem nao precisa de `node_modules` completo nem do CLI do
+  // Next. Nao afeta `next dev` nem `next start` (INC-025).
+  output: "standalone",
   // Libera o IP de LAN do dev para testar pelo celular (`next dev` recusa
   // requisicao cross-origin de outra origem que nao localhost). Vale SO' em
   // desenvolvimento — o Next ignora esta chave no build de producao.
