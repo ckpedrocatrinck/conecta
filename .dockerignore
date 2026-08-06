@@ -1,0 +1,46 @@
+# Contexto de build da imagem `app` (INC-025). Padroes sao relativos a raiz
+# do contexto; `**/` e' necessario para pegar ocorrencias aninhadas.
+
+# --- SEGREDO: nunca entra na imagem ---------------------------------------
+# O build gera as env vars que precisa por ARG (NEXT_PUBLIC_*) e recebe o
+# resto em runtime, via `env_file`/`environment` do Compose. Um `.env` dentro
+# do contexto vazaria para a imagem por dois caminhos: o `COPY . .` do estagio
+# builder E o trace do `output: "standalone"`, que copia o `.env` da raiz para
+# dentro de `.next/standalone/` (verificado em 2026-08-06).
+.env
+.env.*
+!.env.example
+
+# --- artefatos de build/instalacao (regerados dentro da imagem) -----------
+node_modules
+**/node_modules
+.next
+**/.next
+tsconfig.tsbuildinfo
+
+# --- estado local de dev, nao pertence a imagem ---------------------------
+.local-media
+logs
+midia
+.git
+.gitignore
+
+# --- documentacao e ferramentas de autoria --------------------------------
+# O vault Obsidian e' grande e nada em runtime le' docs/.
+docs
+.obsidian
+.claude
+CLAUDE.md
+README.md
+
+# --- testes: nao rodam dentro da imagem -----------------------------------
+tests
+**/*.test.ts
+**/*.test.tsx
+vitest.config.ts
+
+# --- infra: evita invalidar cache de layer a cada edicao do compose -------
+Dockerfile
+.dockerignore
+docker-compose.yml
+.github
