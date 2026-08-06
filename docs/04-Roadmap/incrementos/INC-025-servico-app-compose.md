@@ -1,7 +1,10 @@
 # INC-025 — Serviço `app` no Docker Compose (dev/local)
 
-**Status:** 🟡 Código completo (2026-08-06) — 3 dos 4 critérios verificados; o (d) depende de
-`NEXT_PUBLIC_VAPID_PUBLIC_KEY` entrar no `.env` do Pedro (ver Registro de conclusão)
+**Status:** 🟡 **Código completo, INC não fechado** (2026-08-06). Critérios (a), (b) e (c)
+verificados; **o critério (d) está PENDENTE, não fechado.** O INC **permanece 🟡 e não é mergeado
+na `main`** até que o Pedro (1) acrescente as chaves VAPID reais ao `.env` e (2) confirme push
+funcionando **através do container** — primeira vez que isso será exercitado no projeto.
+Só depois disso o status vira ✅. Ver "Critério (d)" no Registro de conclusão.
 **Fase:** infra (pré-piloto)
 **Origem:** investigação de 2026-08-06 (Pedro) — as 4 peças que o ADR-011 §8 pressupõe não existem no repo
 **Depende de:** ADR-011 (§8 arquitetura de produção), INC-023 (agendador)
@@ -44,10 +47,13 @@ As 4 peças ausentes, confirmadas por investigação em 2026-08-06:
       (`-> 000`).
 - [x] **(c)** Uma migration real roda via `prisma migrate deploy` **dentro do fluxo do container**, e
       o schema fica aplicado no `postgres` do compose.
-- [ ] **(d)** Push continua funcional na imagem buildada: `NEXT_PUBLIC_VAPID_PUBLIC_KEY` está
-      presente no bundle do cliente (não `undefined`), o que exige passá-la como **build ARG** — é
-      inlinada em tempo de build, não lida em runtime. **O encanamento está pronto e provado; a
-      variável não existe no `.env`.** Ver "Critério (d)" abaixo — é ação do Pedro.
+- [ ] **(d) PENDENTE — não fechado.** Push funcional na imagem buildada:
+      `NEXT_PUBLIC_VAPID_PUBLIC_KEY` presente no bundle do cliente (não vazia), o que exige passá-la
+      como **build ARG** — é inlinada em tempo de build, não lida em runtime. **O encanamento está
+      entregue e provado; o que falta é o valor:** a variável não existe no `.env` real. **Gap
+      pré-existente do INC-012, não introduzido por este INC** (o push está igualmente quebrado no
+      dev local hoje, fora do Docker). Fecha quando o Pedro adicionar as chaves reais e confirmar
+      push chegando **através do container**. Ver "Critério (d)" abaixo.
 - [x] `npm run lint && npm run typecheck && npm run test && npm run build` (build **local**, fora do
       Docker) continuam verdes.
 
@@ -55,8 +61,10 @@ As 4 peças ausentes, confirmadas por investigação em 2026-08-06:
 
 **Data:** 2026-08-06
 **Branch:** `inc-025-servico-app-compose`
-**Merge em main:** _(pendente — Pedro pediu revisão antes; é a primeira vez que build de produção
-via Docker roda neste projeto)_
+**Merge em main:** _(pendente — bloqueado em duas coisas: (1) revisão do Pedro, porque é a primeira
+vez que build de produção via Docker roda neste projeto, e (2) o critério (d), que só fecha com as
+chaves VAPID reais no `.env` e push confirmado através do container. Sinal verde definitivo é do
+Pedro.)_
 
 ### O que foi entregue
 
@@ -124,10 +132,13 @@ via Docker roda neste projeto)_
 - **Gate local** (fora do Docker): `lint` limpo, `typecheck` limpo, **61 arquivos / 327 testes**
   passando (18,8s), `build` concluído.
 
-### Critério (d) — encanamento pronto, valor ausente
+### Critério (d) — ⏳ PENDENTE (encanamento provado, valor ausente)
 
-Push **não** está funcional na imagem, e a causa **não é o Docker**:
-`NEXT_PUBLIC_VAPID_PUBLIC_KEY` não existe no `.env` da raiz.
+**Este critério não está fechado e é o que mantém o INC em 🟡.** Push **não** está funcional na
+imagem, e a causa **não é o Docker nem este INC**: `NEXT_PUBLIC_VAPID_PUBLIC_KEY` não existe no
+`.env` real. É **gap pré-existente do INC-012** — o push está igualmente quebrado no `npm run dev`
+de hoje, fora do container. Este INC apenas o tornou visível, ao exercitar o build de produção pela
+primeira vez.
 
 Três evidências independentes:
 1. Build **local** (que carrega o `.env`) emitiu no chunk do cliente
@@ -141,11 +152,20 @@ O encanamento foi **provado por experimento controlado**, nos dois caminhos: bui
 marcador (`BTESTINLINEMARKER…` local, `BDOCKERARGMARKER…` via `--build-arg`), o valor aparece
 inlinado no chunk servido, dentro da imagem. Ou seja: **basta a variável existir.**
 
-**Ação do Pedro** (o agente não tem permissão de ferramenta para ler nem editar `.env`/`.env.example`):
-acrescentar `NEXT_PUBLIC_VAPID_PUBLIC_KEY=<chave pública VAPID>` ao `.env` (e a linha comentada no
-`.env.example`, regra 5 do CLAUDE.md), depois `docker compose build app && docker compose up -d app`.
-Isso conserta o push **também no dev local**, que está com o mesmo problema hoje — é um gap
-pré-existente do INC-012 que este INC apenas tornou visível, não introduziu.
+**O que falta para fechar (ação do Pedro** — o agente não tem permissão de ferramenta para ler nem
+editar `.env`/`.env.example`**):**
+
+1. Acrescentar ao `.env` o trio de push, se ainda não estiver completo:
+   `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` e `VAPID_SUBJECT` (as duas últimas são de
+   runtime e só o servidor lê; só a pública é inlinada no bundle). Espelhar em `.env.example` com
+   comentário, sem valor real — regra 5 do CLAUDE.md.
+2. `docker compose build app && docker compose up -d app` — **rebuild é obrigatório**, `up` sozinho
+   não basta: a chave pública entra no bundle em tempo de build.
+3. Confirmar push **através do container** — opt-in numa sessão real, notificação chegando. Será a
+   primeira vez que isso é exercitado no projeto; o INC-012 segue 🟡 justamente por nunca ter tido
+   medição real (ver `docs/02-Arquitetura/pwa-push-ios.md`, tabela ainda vazia).
+
+Só com o passo 3 confirmado o critério (d) vira `[x]` e o INC-025 vira ✅.
 
 ### Pendências que este INC deixa
 
@@ -153,10 +173,15 @@ pré-existente do INC-012 que este INC apenas tornou visível, não introduziu.
   três linhas comentadas que o INC-023 já pedia (`APP_INTERNAL_URL`,
   `SCHEDULER_PUBLISH_INTERVAL_SECONDS`, `SCHEDULER_ANONYMIZE_AT_HOUR_UTC`). Mesmo bloqueio de
   permissão de ferramenta.
-- **Perfil do `scheduler` mantido.** O INC-023 (item 4 das decisões) previa **remover** o perfil
-  quando o serviço `app` entrasse. Não foi removido: sem o perfil, um `docker compose up` de máquina
-  de desenvolvimento passaria a bater na app a cada 5 min e a rodar a anonimização diária sozinho.
-  **Divergência doc × código, reportada e não resolvida silenciosamente** — decisão do Pedro.
+- ~~**Perfil do `scheduler` mantido** — divergência doc × código aguardando decisão do Pedro.~~
+  ✅ **Decidido em 2026-08-06:** o perfil **fica** no compose de dev/local. O item 4 das decisões do
+  INC-023, que mandava removê-lo quando o `app` entrasse, foi **corrigido lá** com a justificativa
+  completa. Em resumo: a razão do perfil nunca foi "o alvo não existe", e sim "máquina de
+  desenvolvimento não dispara cron sozinha" — sem ele, `docker compose up` passaria a publicar
+  comunicados agendados e a rodar a **anonimização diária no banco de dev** sem ninguém pedir. A
+  remoção vale só para o compose de **produção** do ADR-011 §8/§9, que depende da **Fase 3 /
+  contrato assinado** e ainda não foi escrito. Comentário do `docker-compose.yml` atualizado junto,
+  para doc e código não voltarem a divergir.
 - **Pipeline do ADR-011 §9 não implementado** (CI builda → GHCR → VPS puxa). Fora do escopo por
   decisão do Pedro. Quando entrar, o bloco `app` troca `build:` por `image: ghcr.io/…` e a porta
   3000 deixa de ser publicada (só o `proxy` fica exposto — ADR-011 §8).

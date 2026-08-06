@@ -102,9 +102,13 @@ services:
   # O servico `app` de APP_INTERNAL_URL passou a EXISTIR no INC-025, entao o
   # agendador ja' tem alvo real. O perfil FICA assim mesmo: sem ele, um
   # `docker compose up` de dev passaria a bater na app a cada 5 min e a rodar
-  # a anonimizacao diaria sozinho, o que nao e' o que se quer numa maquina de
-  # desenvolvimento. (O INC-023, item 4, previa remover o perfil quando `app`
-  # entrasse; mantido de proposito — trocar isso e' decisao do Pedro.)
+  # a ANONIMIZACAO DIARIA no banco de dev sozinho — nao e' o que se quer numa
+  # maquina de desenvolvimento.
+  # O item 4 do INC-023 previa remover o perfil quando `app` entrasse; decisao
+  # CORRIGIDA em 2026-08-06 (INC-025): a remocao vale so' para o compose de
+  # PRODUCAO do ADR-011 §8/§9 (imagem do GHCR, `app` nao exposta, `proxy` +
+  # `minio`), que depende da Fase 3 / contrato assinado e ainda nao existe.
+  # ESTE arquivo e' o compose de dev/local — aqui o perfil fica.
   #
   # Log: uma linha por chamada em stdout, no formato
   #   <timestamp UTC> OK|FALHA GET <rota> -> <status HTTP>
