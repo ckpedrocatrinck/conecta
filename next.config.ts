@@ -47,6 +47,13 @@ const SECURITY_HEADERS = [
 ];
 
 const nextConfig: NextConfig = {
+  // Libera o IP de LAN do dev para testar pelo celular (`next dev` recusa
+  // requisicao cross-origin de outra origem que nao localhost). Vale SO' em
+  // desenvolvimento — o Next ignora esta chave no build de producao.
+  // O host .trycloudflare.com e' do tunel EFEMERO do teste de iPhone: cada
+  // `cloudflared tunnel --url` sorteia um nome novo, entao esta entrada precisa
+  // ser trocada se o tunel for reaberto.
+  allowedDevOrigins: ["192.168.20.195", "casual-stored-mba-chassis.trycloudflare.com"],
   async headers() {
     return [{ source: "/:path*", headers: SECURITY_HEADERS }];
   },
