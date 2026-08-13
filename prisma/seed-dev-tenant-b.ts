@@ -13,6 +13,10 @@ const CPF_OFFSET_B = 500; // CPFs de B nao colidem com o tenant A (offset 0)
 const db = new PrismaClient();
 
 async function main() {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("prisma/seed-dev-tenant-b.ts e' seed de DEV — nunca rodar com NODE_ENV=production.");
+  }
+
   await ensureAppRolePassword(db);
 
   const existing = await db.tenant.findUnique({ where: { id: TENANT_B_ID } });
