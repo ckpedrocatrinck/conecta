@@ -1,6 +1,8 @@
 # INC-027 — Preparação e publicação do repositório
 
-**Status:** ⬜ Não iniciado
+**Status:** 🔄 Em andamento — Blocos 0 a 4 concluídos (auditoria, backup/rotação, reescrita de
+histórico, seed de demonstração, correções de produto, vitrine); Blocos 5 (travas) e 6
+(publicação) pendentes. Repositório permanece **privado** até o Bloco 6.
 **Fase:** Fora de fase (higiene de repositório / infraestrutura de portfólio)
 **Depende de:** ADR-012 aceito
 **ADRs relevantes:** 012, 010 (slug na URL), 011 (infra)
@@ -403,6 +405,55 @@ blocos 3.5–3.8 (citações entre aspas na narrativa deste próprio Registro de
 não é vazamento novo, nada deste bloco introduziu ocorrência.
 
 Relatório completo: `C:\backups\inc027\bloco-3-9-inc027.md` (fora do repositório).
+
+### Blocos 3.5–3.8, 3.10–3.11 (correções de produto e diagnóstico) — 2026-08-13
+
+Índice — cada bloco tem relatório completo fora do repositório (`C:\backups\inc027\bloco-3-N-inc027.md`); esta entrada existia como lacuna no Registro de Conclusão até o Bloco 4 (achado do próprio Bloco 4, Passo 3): os commits estavam na `main`, mas nenhum resumo tinha sido escrito aqui.
+
+- **Bloco 3.5 — correções antes das capturas.** **Defeito 1a, bug de produto 🔴 (o mais sério dos 6 encontrados nesta faixa):** o middleware (`src/middleware.ts`/`src/lib/tenant/slug-path.ts`) tratava o primeiro segmento de **qualquer** caminho sem ponto como candidato a slug de tenant — `/banners/home.png` virava `"/banners/login"` em vez de servir o arquivo estático, quebrando o banner da Home em **todo tenant**, não só no de demonstração. `RESERVED_SEGMENTS` passou a incluir `banners`/`branding`. Também corrigido: estado vazio ausente na seção "Aniversariantes" da Home e rótulos legíveis de categoria de comunicado. Commits: `573cd8e`, `ed29208`, `06bdf50`.
+- **Bloco 3.6 — mídia e poda de refs.** **Defeito 1, bug de produto 🔴:** `HomeBanner` usava altura fixa (`max-h-52`) com `object-cover` sobre artes 16:9 — cortava até ~40% do conteúdo em qualquer proporção diferente da esperada; virou `aspect-[1920/650]` (proporção explícita, sem altura fixa). Orientação de dimensão do upload de logo corrigida. Commits: `e68c62a`, `f203da6`, `7f555f0`, `4f7b979`.
+- **Bloco 3.7 — aviso de privacidade e atrito de senha.** Investigação do relato "`/aviso-privacidade` devolve 404": rota confirmada correta por código e por teste funcional repetido (200 em toda tentativa) — não reproduzido, hipótese registrada em **DP-39** (sessão sobrevivente a reset de volume do Postgres feito em blocos anteriores). Login direto no seed de demonstração ajustado. Commits: `15174b5`, `ebde610`.
+- **Bloco 3.8 — banner 1920×650 e reversão de senha.** Padronização final de proporção do banner (2155×730, ~0,07% do alvo) e confirmação de que a troca de senha obrigatória no primeiro acesso (revertida antes, ver commits `76eaa31`/`a8756c5` no histórico principal) permanecia intacta. Commit: `7dbeb77`.
+- **Bloco 3.11 — README e trava contra `migrate dev`.** **Bug de produto/documentação, causa raiz de um sintoma reportado como "bug de seed" ("senha de demonstração volta a `Trocar123!` a cada reinício"):** o `README.md` e a seção "Comandos" do `CLAUDE.md` recomendavam `npx prisma migrate dev` — comando que o próprio `ADR-008` já proíbe (a coluna `GENERATED` `search_vector` não é modelável pelo Prisma; `migrate dev` calcula diff espúrio contra essa coluna e pode disparar reset do banco + reseed automático, o que de fato explica o sintoma). Corrigido para `migrate deploy` nos dois arquivos (commit `b627389`). Registrado como **DP-40**: a mitigação continua sendo só documental — nenhuma trava técnica impede o mesmo comando de rodar de novo.
+
+### Bloco 3.12 (bloco de comprovação na leitura do comunicado) — 2026-08-13
+
+Consolidou publicação e ciência (que viviam em pesos visuais opostos — uma como subtítulo apagado, a outra num bloco separado) num único bloco na tela de leitura do colaborador, com peso visual igual entre as duas datas, intervalo legível em pt-BR entre elas (`describeAckInterval`, novo módulo puro testado), a versão do documento efetivamente confirmada (mesmo rótulo do CSV exportado) e uma menção discreta de integridade sem expor o hash.
+
+**Bug de produto encontrado e corrigido no caminho:** `AnnouncementReaderState` nunca expunha qual versão foi de fato confirmada, só a mais recente — um comunicado com edição não-material publicada depois do ack (que corretamente não reabre pendência, ADR-001/INC-005) mostrava a ciência como se fosse sobre o texto atual, quando era sobre uma versão anterior. Campo `lastAckedVersionNumber` adicionado a `reader-state.ts`, coberto por teste de integração (cenário exato: ack em V1, V2 não-material publicada depois).
+
+10 testes unitários novos (`ack-proof.test.ts`) + 2 asserções num teste de integração existente. 360/360 testes verdes. Sem navegador disponível neste ambiente (mesma limitação dos blocos anteriores); verificação feita por consulta funcional somente-leitura contra o tenant de dev real. DPs propostas (não implementadas): anexos na tela de leitura, filiais destinatárias visíveis ao colaborador, navegação de retorno explícita. Relatório completo: `C:\backups\inc027\bloco-3-12-inc027.md`.
+
+### Bloco 4 (vitrine — README da raiz e índice do vault) — 2026-08-13
+
+**README da raiz:** substituído pelo texto aprovado pelo Pedro, usado como está. Único ajuste de caminho: a imagem `docs/06-Design/screenshots/home-colaborador.png` referenciada no texto existe no disco como `home-colaborador.png.jpeg` (nome real do arquivo entregue) — corrigido o caminho no README, arquivo não renomeado. As 4 imagens referenciadas existem; os 4 links internos para `docs/` (ADR-001, 002, 006, 008, 009, 010, 011, `rotacao-pepper.md`, `visao-e-tese.md`, ADR-003) resolvem. Removida uma colchete `]` solta ao final do texto fornecido (artefato de transcrição do prompt, sem correspondência de abertura — não fazia sentido como Markdown; nenhum outro caractere do texto aprovado foi alterado).
+
+Todas as afirmações técnicas do README foram verificadas contra o código real e **nenhuma divergência foi encontrada** — RLS forçada + política default-deny, teste de regressão de RLS, matriz de GRANTs nas 3 direções, trigger recusando `UPDATE`/`DELETE`/`TRUNCATE` mesmo contra a role owner, `INSERT ... ON CONFLICT ... RETURNING` na numeração com teste concorrente, as colunas exatas do CSV exportado (a coluna "Publicado em" do Bloco 3.9 já está refletida no texto do README), CPF só como hash com pepper (nunca em claro), e os três papéis com escopo de filial única por gestor. Números verificados (não inseridos no texto aprovado — reportados no relatório externo para o Pedro decidir onde/se inserir): 12 ADRs Aceitos, 29 arquivos de INC na `main` mais 2 (`INC-025`/`INC-026`) prontos em branch não mergeada, 19 de 21 tabelas de `public` com RLS forçada (as 2 sem RLS são `tenants` e `_prisma_migrations`, mesma exclusão do teste de guarda), 360 testes em 66 arquivos.
+
+**`docs/README.md`:** reescrito como índice do vault (não duplica a vitrine da raiz) — mapa de pastas, convenção de status com o degrau 🟡 explicitado, e tabela dos 12 ADRs com status, substituindo a declaração "Fase de especificação (nenhuma linha de código escrita)" datada de 2026-07-09 (achado D5 do Bloco 0).
+
+**Coerência de status (achado D5, Passo 3):** o próprio arquivo deste INC declarava `**Status:** ⬜ Não iniciado` e a linha do `roadmap.md` também — ambos desatualizados desde o Bloco 0. Corrigidos para `🔄 Em andamento`, com nota de quais blocos estão concluídos. Nenhuma outra declaração de status ativa (fora de auditorias datadas, que são retrato histórico e não foram alteradas) ficou divergente do estado real — verificado por varredura de `"fase de especificação"`, `"nenhuma linha de código"` e `"Não iniciado"` em `docs/`.
+
+**INCs sem Relatório de Entrega formal** (heading `## Relatório de Entrega — INC-XXX`, formato definido em `docs/00-Processo/fluxo-de-trabalho.md`) — têm `Registro de conclusão` preenchido, mas não no formato canônico: INC-005, 006, 007, 008, 008.5, 012, 012.5, 013, 015, 020, 021, 023, 024. Não escritos retroativamente, apenas listados (pedido explícito do Bloco 4).
+
+Relatório completo: `C:\backups\inc027\bloco-4-inc027.md`.
+
+### Síntese do INC (Blocos 0–4)
+
+**Desvio consciente do resíduo "Unigrão" (detalhe completo no Bloco 2 acima).** Um resíduo do termo "Unigrão" (nome de um LMS de terceiro — produto, não identificador do cliente-piloto nem do autor) permanece em texto de **um commit antigo** do histórico reescrito, fora do HEAD (já corrigido no HEAD). Decisão: não repetir o `filter-repo` só por isso — uma segunda passada trocaria os 237 SHAs novamente, invalidando as 51 citações de SHA já corrigidas nos Relatórios de Entrega, por um ganho marginal (termo de produto de terceiro, não vinculável a ninguém).
+
+**Bugs de PRODUTO descobertos durante a preparação, que os 337 testes da época (antes dos blocos 3.9/3.12) não pegavam** — nenhum é bug de seed:
+1. **Middleware tratando `/banners/` (e `/branding/`) como slug de tenant** (Bloco 3.5) — quebrava o banner da Home em **todo tenant**, não só no de demonstração; passou despercebido porque nenhum teste de integração exercitava uma rota estática por baixo do middleware de resolução de tenant.
+2. **Proporção do banner de Aparência** (Bloco 3.6) — altura fixa com `object-cover` cortava até ~40% de artes fora de uma proporção específica; passou despercebido porque não havia teste de proporção nem verificação visual até a preparação da vitrine.
+3. **`publish_at` nunca gravado na publicação imediata** (Bloco 3.9) — só o agendamento gravava o campo; toda publicação direta (o caminho mais comum) ficava com `publish_at = null` para sempre, afundando o item pro fim das listas ordenadas por data e deixando o comprovante exportado sem data de publicação. Suíte verde o tempo todo — os testes verificavam o *status* da publicação, nunca o `publish_at` resultante.
+4. **Versão confirmada não exposta na leitura** (Bloco 3.12) — a tela de leitura nunca mostrava qual versão do documento foi de fato confirmada; um comunicado editado (não-materialmente) depois do ack podia exibir a ciência como se fosse sobre o texto atual, quando era sobre uma versão anterior.
+5. **README e `CLAUDE.md` recomendando `prisma migrate dev`** (Bloco 3.11, DP-40) — comando que o próprio `ADR-008` proíbe por escrito; causa raiz confirmada de um sintoma que parecia bug de seed ("senha de demonstração volta ao padrão a cada reinício"), na verdade um reset de banco disparado pelo diff espúrio do `migrate dev` contra a coluna `GENERATED`.
+
+Padrão comum aos 5: nenhum foi pego por "suíte verde" — cada um exigia olhar a tela renderizada, o dado gravado ou a documentação operacional, não só o resultado de uma asserção sobre o caminho feliz já coberto.
+
+**Aprendizado de método.** Este INC foi especificado com 6 blocos, dimensionados **antes** de o Bloco 0 (auditoria read-only) investigar o que de fato precisava ser feito. O escopo teve que ser reescrito várias vezes conforme a auditoria e a preparação da vitrine revelavam trabalho não previsto (identificadores derivados no Bloco 0b, ~20 branches ressuscitadas pelo próprio `filter-repo`, 5 bugs de produto que não tinham nada a ver com "higiene de repositório"). Uma auditoria read-only que pode mudar o escopo do trabalho subsequente deveria ser **um INC próprio**, encerrado com relatório entregue ao Pedro, e o INC de execução deveria ser especificado **depois**, com o relatório em mãos — em vez de um único INC guarda-chuva que absorve o replanejamento como "blocos extras" (3.5 a 3.12) não planejados no arquivo original.
+
+**DPs criadas ao longo do caminho:** DP-37 (demo pública em VPS, bloqueada por infraestrutura), DP-38 (✅ resolvida — nomes genéricos no seed), DP-39 (🟡 aviso de privacidade "404" reportado, não reproduzido, hipótese de sessão órfã pós-reset), DP-40 (🟡 ausência de trava técnica contra `migrate dev`, mitigação hoje 100% documental). Propostas nos Blocos 3.9 e 3.12 (não abertas como DP formal — ficam para o Pedro decidir se abre): fuso de `formatCalendarDate` aplicado a `JobOpening.deadline` (mesma classe de bug do INC-020, fora do escopo de comunicados); anexos na tela de leitura de comunicado; filiais destinatárias visíveis ao colaborador; navegação de retorno explícita na tela de leitura.
 
 ---
 
