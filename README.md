@@ -52,9 +52,9 @@ Três papéis: administrador, gestor (escopo de uma filial) e colaborador. A nav
 
 ### Isolamento multi-tenant que não é decorativo
 
-Row-Level Security no PostgreSQL não vale nada se a aplicação conecta como superuser — o superuser ignora RLS por definição. O Conecta separa a role de migração da role de runtime: a aplicação conecta como `conecta_app`, que **não é superuser**, com `FORCE ROW LEVEL SECURITY` e política default-deny em todas as tabelas de domínio.
+Row-Level Security no PostgreSQL não vale nada se a aplicação conecta como superuser — o superuser ignora RLS por definição. O Conecta separa a role de migração da role de runtime: a aplicação conecta como `conecta_app`, que **não é superuser**, com `FORCE ROW LEVEL SECURITY` e política default-deny em todas as 19 tabelas de domínio.
 
-Isso é verificado por teste, não por convenção. A suíte falha se uma tabela nova entrar no schema sem política de RLS, e uma matriz de GRANTs falha em três direções: privilégio excedente, privilégio ausente e divergência entre o esperado e o concedido.
+Isso é verificado por 360 testes automatizados, não por convenção. A suíte falha se uma tabela nova entrar no schema sem política de RLS, e uma matriz de GRANTs falha em três direções: privilégio excedente, privilégio ausente e divergência entre o esperado e o concedido.
 
 ### Imutabilidade garantida no banco, não na aplicação
 
@@ -122,8 +122,8 @@ Resolução de tenant por path (`/{slug}`) em vez de subdomínio, para simplific
 
 Este repositório não é só código. Em `docs/` há um vault de decisão que precede a implementação:
 
-- **ADRs** — cada decisão de arquitetura com contexto, alternativas rejeitadas, consequências assumidas e gatilho de revisão. Inclusive as que foram substituídas por decisões posteriores.
-- **INCs** — cada incremento especificado antes de ser escrito: escopo, fora de escopo, critérios de aceite e relatório de entrega ligado ao commit de merge.
+- **12 ADRs** — cada decisão de arquitetura com contexto, alternativas rejeitadas, consequências assumidas e gatilho de revisão. Inclusive as que foram substituídas por decisões posteriores.
+- **31 INCs** — cada incremento especificado antes de ser escrito: escopo, fora de escopo, critérios de aceite e relatório de entrega ligado ao commit de merge.
 - **DPs** — decisões pendentes registradas em vez de resolvidas por impulso, com o que cada uma bloqueia.
 - **Auditorias** — revisões com severidade classificada, feitas em modo somente-leitura antes de qualquer correção.
 
