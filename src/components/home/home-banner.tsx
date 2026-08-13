@@ -1,30 +1,25 @@
 import { cn } from "@/lib/utils"
 
-// Achado INC-027 Bloco 3.8: o Bloco 3.6 mediu errado — a suspeita de "16:9"
-// nunca foi conferida contra as artes reais. Medindo de fato (public/banners/
-// home.png 1717x916=1.874, vagas.png 1774x887=2.000, clube.png 1672x941=1.777),
-// nenhuma e' 16:9 (1.778); todas sao mais largas, entre ~1.78:1 e 2:1.
-// Forcar aspect-video nessas artes so' trocou o tipo de descompasso (o
-// container virou maior que o necessario, sobrando fundo da propria arte —
-// branco/creme nas 3 — que lia como "faixa vazia"). `aspect-[2/1]` casa com
-// a proporcao REAL (direcao (a) do Bloco 3.8: o layout respeita a arte
-// entregue, a tela de Aparencia passa a recomendar essa proporcao — nao o
-// contrario). `max-h-64` (256px) e' um TETO de seguranca, nao o
-// dimensionador primario (essa foi a falha do design anterior a 3.6): so'
-// entra em jogo em containers muito largos (>512px, onde 672px de
-// max-w-2xl geraria 336px de altura) para o banner nao dominar a dobra
-// inicial da pagina — nessa faixa estreita de largura ele reintroduz um
-// recorte lateral leve (efeito ~2.6:1 no teto, contra o 2:1 alvo), aceitavel
-// porque so' afeta a borda da arte, nunca o essencial centralizado.
-// `max-w-2xl` (mesmo teto usado nas telas que hospedam este banner) evita
-// que o container vire gigante em telas admin sem largura maxima propria.
-// `mx-auto` centraliza quando o pai e' mais largo que o teto. Exportada
-// (não só usada inline) para o teste unitário travar a proporção — não há
-// infra de render de componente neste projeto (vitest roda em
-// `environment: "node"`, sem jsdom/testing-library), então o teste
-// verifica a string de classes em vez do DOM renderizado.
+// INC-027 Bloco 3.8 (padrão definido pelo Pedro): 1920×650px (≈2,954:1) é a
+// proporção OFICIAL de banner do produto — `aspect-[1920/650]` casa o
+// container com esse valor exato (não um arredondamento tipo aspect-video
+// 16:9 ou aspect-[2/1], os dois ciclos anteriores neste mesmo componente).
+// Nenhuma das 3 artes padrão hoje bate com essa proporção (medidas reais:
+// home.png 1.874:1, vagas.png 2:1, clube.png 1.777:1) — todas vão sofrer
+// recorte topo/base via object-cover (32-40%, ver relatório do bloco) até
+// serem refeitas/recortadas para o padrão novo; isso é esperado e
+// sinalizado, não um bug deste componente. `max-h-60` (240px) é um TETO de
+// SEGURANÇA, não o dimensionador primário (essa foi a causa raiz do defeito
+// original, pré-3.6): na largura máxima normal deste banner (max-w-2xl,
+// 672px) a altura natural já fica em ~227px, abaixo do teto — o max-h só
+// entraria em jogo se um `className` externo alargasse o container além de
+// ~709px. `mx-auto` centraliza quando o pai é mais largo que o teto.
+// Exportada (não só usada inline) para o teste unitário travar a proporção
+// — não há infra de render de componente neste projeto (vitest roda em
+// `environment: "node"`, sem jsdom/testing-library), então o teste verifica
+// a string de classes em vez do DOM renderizado.
 export const HOME_BANNER_IMAGE_CLASSNAME =
-  "mx-auto aspect-[2/1] h-auto w-full max-w-2xl max-h-64 rounded-[var(--radius-card)] border border-border object-cover";
+  "mx-auto aspect-[1920/650] h-auto w-full max-w-2xl max-h-60 rounded-[var(--radius-card)] border border-border object-cover";
 
 interface HomeBannerProps {
   title: string
