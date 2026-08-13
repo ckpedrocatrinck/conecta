@@ -6,6 +6,7 @@ import { requireAdminOrManager } from "@/lib/auth/session";
 import { withTenant } from "@/lib/db/with-tenant";
 import { getAnnouncementPendencyDetail } from "@/lib/announcements/pending-panel";
 import { formatAnnouncementCode } from "@/lib/announcements/publish";
+import { formatAnnouncementCategory } from "@/lib/announcements/category-labels";
 import { findBranchesByTenant } from "@/lib/repositories/branch.repository";
 import { formatDateTimeSaoPaulo } from "@/lib/dates/format-datetime";
 import { remindPendingAction } from "./actions";
@@ -50,7 +51,7 @@ export default async function PendenciaDetalhePage({
             ? formatAnnouncementCode(detail.announcement.seqNumber, detail.announcement.year)
             : "sem número"}
           {" · "}
-          {detail.announcement.category}
+          {formatAnnouncementCategory(detail.announcement.category)}
           {" · "}
           {STATUS_LABEL[detail.announcement.status] ?? detail.announcement.status}
         </span>

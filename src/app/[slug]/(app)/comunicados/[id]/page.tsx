@@ -7,6 +7,7 @@ import { recordAnnouncementReadOnce, findAnnouncementReadsForUser } from "@/lib/
 import { findAnnouncementAcksForUser } from "@/lib/repositories/announcement-ack.repository";
 import { buildAnnouncementReaderState } from "@/lib/announcements/reader-state";
 import { formatAnnouncementCode } from "@/lib/announcements/publish";
+import { formatAnnouncementCategory } from "@/lib/announcements/category-labels";
 import { formatDateTimeSaoPaulo } from "@/lib/dates/format-datetime";
 import { Check } from "lucide-react";
 import { RichTextContent } from "@/components/announcements/rich-text-content";
@@ -67,7 +68,7 @@ export default async function LerComunicadoPage({ params }: { params: Promise<{ 
           {announcement.seqNumber != null && announcement.year != null
             ? `${formatAnnouncementCode(announcement.seqNumber, announcement.year)} · `
             : ""}
-          {announcement.category}
+          {formatAnnouncementCategory(announcement.category)}
         </span>
         <h1 className="text-display text-foreground">{latest.title}</h1>
       </div>
