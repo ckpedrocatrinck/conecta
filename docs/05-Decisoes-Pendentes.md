@@ -186,6 +186,9 @@
 **DP-37 — Demo online pública em VPS com seed de demonstração e reset diário (INC-027).** Rodar uma instância pública, populada com o seed Rede Vale Verde, com reset automático diário via cron, para portfólio. **Bloqueada:** sem infraestrutura de VPS contratada.
 **Responsável:** Pedro (priorizar quando decidir contratar a infra).
 
+**DP-39 — Confirmar alcançabilidade real de `/{slug}/aviso-privacidade` (INC-027 Bloco 3.7).** 🟡 Pedro reportou a URL devolvendo "Página não encontrada" durante teste manual da demo. Investigação de código (Bloco 3.7) **não reproduziu o problema**: a rota existe e está corretamente implementada (`src/app/[slug]/aviso-privacidade/page.tsx`, gate de primeiro acesso via `requireOnboardedSession`, link de releitura em `/perfil` com `?modo=leitura`), e respondeu **200** em toda tentativa testada — navegação direta autenticada, com `?modo=leitura`, antes e depois da troca de senha, e via sessão recém-criada. Hipótese mais provável: sessão do navegador sobrevivente a um dos resets de volume do Postgres feitos nos Blocos 3.5/3.6 (o JWT do cookie continua válido no cliente, mas a linha de `Session` referenciada por ele já não existe no banco recriado). **Bloqueia:** o fechamento do critério "aviso acessível ao titular" do **G2** (`docs/05-Decisoes-Pendentes.md`, seção de go-live) antes do piloto — não bloqueia o Bloco 4 do INC-027.
+**Responsável:** Pedro (retestar com login novo, sem reset de banco pelo meio; se reproduzir de verdade, registrar a URL exata, o navegador e se a sessão vinha de antes de um reset, para investigação de código com repro real).
+
 ---
 
 ## Bloqueadores e dependências do go-live do piloto (INC-013)
