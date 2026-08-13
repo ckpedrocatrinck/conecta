@@ -12,7 +12,11 @@ const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
 // Primeiros segmentos que NUNCA sao slug de tenant. `_next` ja e' descartado
 // pelo formato (underscore), mas fica explicito. Mantidos em sincronia com o
 // que o matcher do middleware e os PUBLIC_PATHS tratam como nao-tenant.
-const RESERVED_SEGMENTS = new Set(["api", "_next"]);
+// `banners`/`branding`: pastas estaticas em public/ servidas na raiz (ex.:
+// /banners/home.png) — sem isso, o PRIMEIRO segmento (sem ponto) combina com
+// SLUG_RE e a requisicao do asset e' tratada como rota de tenant, redirecionada
+// para "/banners/login" em vez de servir o arquivo (achado INC-027 Bloco 3.5).
+const RESERVED_SEGMENTS = new Set(["api", "_next", "banners", "branding"]);
 
 export function isReservedSegment(segment: string): boolean {
   return RESERVED_SEGMENTS.has(segment.toLowerCase());
