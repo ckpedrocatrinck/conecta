@@ -22,6 +22,12 @@ describe("extractTenantSlug (INC-014 Bloco 1 — Edge, string puro)", () => {
     expect(extractTenantSlug("/_next/static/chunk.js")).toBeNull();
   });
 
+  it("descarta pastas estaticas de public/ sem ponto no 1o segmento (banners, branding — INC-027 Bloco 3.5)", () => {
+    expect(extractTenantSlug("/banners/home.png")).toBeNull();
+    expect(extractTenantSlug("/banners/vagas.png")).toBeNull();
+    expect(extractTenantSlug("/branding/logo.png")).toBeNull();
+  });
+
   it("descarta assets estaticos com ponto (nunca sao slug)", () => {
     expect(extractTenantSlug("/favicon.ico")).toBeNull();
     expect(extractTenantSlug("/icon-192.png")).toBeNull();
@@ -37,6 +43,11 @@ describe("isReservedSegment", () => {
   it("reserva api e _next", () => {
     expect(isReservedSegment("api")).toBe(true);
     expect(isReservedSegment("_next")).toBe(true);
+  });
+
+  it("reserva banners e branding (pastas estaticas de public/)", () => {
+    expect(isReservedSegment("banners")).toBe(true);
+    expect(isReservedSegment("branding")).toBe(true);
   });
 
   it("nao reserva um slug de tenant real", () => {

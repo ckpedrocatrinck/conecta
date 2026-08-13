@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { computeContentHash } from "../src/lib/crypto/content-hash";
 import { recordAuditLog } from "../src/lib/repositories/audit-log.repository";
 import { writeMediaFile } from "../src/lib/storage/local-media-fs";
+import { birthdayWindowMonthDays } from "../src/lib/dates/birthday-window";
 
 // Conteudo de demonstracao (INC-027 Bloco 3): comunicados, acks parciais e
 // logo do tenant Rede Vale Verde. Isolado de seed-data.ts porque
@@ -286,6 +287,55 @@ export async function seedDemoAnnouncements(
   }
 
   return results;
+}
+
+/** Garante 2-3 aniversariantes "hoje" (janela de 0 dias) na Home do
+ * colaborador, sem concentrar todo mundo no mês corrente — o resto dos 40
+ * usuários mantém a distribuição uniforme pelos 12 meses que já vem de
+ * `buildTenantFixtures`. Recalculado a cada seed, então funciona em qualquer
+ * data que o seed rodar (INC-027 Bloco 3.5: a Home ficava sem nenhum
+ * aniversariante quando o dia corrente não calhava de bater com a
+ * distribuição fixa por índice). Usa `Date.UTC` para casar exatamente com o
+ * `EXTRACT(MONTH/DAY FROM birth_date)` da query — birth_date é `@db.Date`
+ * (sem fuso), então o mês/dia gravado tem que vir dos componentes UTC. */
+export async function seedTodaysBirthdays(
+  db: PrismaClient,
+  employees: { id: string }[],
+  now: Date = new Date(),
+): Promise<number> {
+  const [{ month, day }] = birthdayWindowMonthDays(now, 0);
+  const picks = [10, 20, 30].map((i) => employees[i]).filter((u): u is { id: string } => Boolean(u));
+
+  for (const [idx, user] of picks.entries()) {
+    await db.user.update({
+      where: { id: user.id },
+      data: { birthDate: new Date(Date.UTC(1985 + idx, month - 1, day)), birthdayVisible: true },
+    });
+  }
+
+  return picks.length;
+}
+
+/** Corrige a mídia dos posts de exemplo (`buildTenantFixtures`): o fixture
+ * compartilhado (usado por 27 arquivos de teste) grava
+ * `mediaUrl: "https://example.com/placeholder.jpg"` — um literal que nunca
+ * existiu no storage local, porque nenhum teste chega a resolver essa key de
+ * verdade. Na demo isso aparecia como ícone de imagem quebrada nos 3 cards do
+ * feed (INC-027 Bloco 3.5, Defeito 1b). Corrige só os registros do tenant de
+ * demonstração, sem tocar `buildTenantFixtures` nem os testes que dependem
+ * dele. Reaproveita uma arte já existente em `public/banners/` como capa —
+ * não introduz asset novo. */
+export async function seedDemoPostMedia(db: PrismaClient, tenantId: string, coverImagePath: string): Promise<number> {
+  const bytes = await readFile(coverImagePath);
+  const media = await db.postMedia.findMany({ where: { tenantId, mediaUrl: "https://example.com/placeholder.jpg" } });
+
+  for (const m of media) {
+    const key = `posts/${tenantId}/${m.postId}/${randomUUID()}`;
+    await writeMediaFile(key, bytes, "image/png");
+    await db.postMedia.update({ where: { id: m.id }, data: { mediaUrl: key } });
+  }
+
+  return media.length;
 }
 
 /** Sobe o wordmark do tenant de demonstração para o media storage local (mesma

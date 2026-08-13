@@ -4,6 +4,7 @@ import { requireAdminOrManager } from "@/lib/auth/session";
 import { withTenant } from "@/lib/db/with-tenant";
 import { getUserPendencyHistory } from "@/lib/announcements/pending-panel";
 import { formatAnnouncementCode } from "@/lib/announcements/publish";
+import { formatAnnouncementCategory } from "@/lib/announcements/category-labels";
 import { formatDateTimeSaoPaulo } from "@/lib/dates/format-datetime";
 
 export default async function PendenciaColaboradorPage({
@@ -41,7 +42,7 @@ export default async function PendenciaColaboradorPage({
                     ? formatAnnouncementCode(item.announcement.seqNumber, item.announcement.year)
                     : "sem número"}
                   {" · "}
-                  {item.announcement.category}
+                  {formatAnnouncementCategory(item.announcement.category)}
                 </span>
                 <span className={`text-meta font-bold ${item.ackSatisfied ? "text-success" : "text-action"}`}>
                   {item.ackSatisfied ? "Confirmado" : "Pendente"}

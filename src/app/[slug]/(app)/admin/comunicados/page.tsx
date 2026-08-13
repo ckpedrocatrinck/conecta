@@ -10,6 +10,7 @@ import { withTenant } from "@/lib/db/with-tenant";
 import { findAnnouncementsForAdminList, searchAnnouncementIds } from "@/lib/repositories/announcement.repository";
 import { listAnnouncementPendencySummaries } from "@/lib/announcements/pending-panel";
 import { formatAnnouncementCode } from "@/lib/announcements/publish";
+import { formatAnnouncementCategory } from "@/lib/announcements/category-labels";
 import { formatCalendarDate } from "@/lib/dates/format-date";
 import type { AnnouncementStatus } from "@prisma/client";
 
@@ -142,7 +143,7 @@ export default async function ComunicadosPage({
                   <span className="text-meta text-muted-foreground">
                     {a.seqNumber != null && a.year != null ? formatAnnouncementCode(a.seqNumber, a.year) : "sem número"}
                     {" · "}
-                    {a.category}
+                    {formatAnnouncementCategory(a.category)}
                   </span>
                   <span className="inline-flex shrink-0 items-center gap-1.5 text-meta font-semibold text-muted-foreground">
                     <span className={`size-2 rounded-full ${STATUS_DOT[a.status]}`} aria-hidden="true" />

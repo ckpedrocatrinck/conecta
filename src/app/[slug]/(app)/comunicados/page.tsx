@@ -8,6 +8,7 @@ import { requireOnboardedSession } from "@/lib/auth/session";
 import { withTenant } from "@/lib/db/with-tenant";
 import { listAnnouncementsForUser } from "@/lib/announcements/list-for-user";
 import { formatAnnouncementCode } from "@/lib/announcements/publish";
+import { formatAnnouncementCategory } from "@/lib/announcements/category-labels";
 import type { AnnouncementReaderBadge } from "@/lib/announcements/reader-state";
 
 const TITLE_CLASS: Record<AnnouncementReaderBadge, string> = {
@@ -128,7 +129,7 @@ export default async function ComunicadosColaboradorPage({
                   {announcement.seqNumber != null && announcement.year != null
                     ? `${formatAnnouncementCode(announcement.seqNumber, announcement.year)} · `
                     : ""}
-                  {announcement.category}
+                  {formatAnnouncementCategory(announcement.category)}
                 </span>
               </Link>
             );

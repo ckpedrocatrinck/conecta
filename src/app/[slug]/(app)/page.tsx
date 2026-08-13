@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AlertTriangle, Check, MessageSquareHeart } from "lucide-react";
+import { AlertTriangle, Cake, Check, MessageSquareHeart } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -175,9 +175,15 @@ export default async function Home() {
             Ver próximos aniversários
           </Link>
         </div>
-        {todaysBirthdayCards.map(({ userId, card }) => (
-          <CardTemplate key={userId} data={card} />
-        ))}
+        {todaysBirthdayCards.length === 0 ? (
+          <EmptyState
+            icon={Cake}
+            title="Nenhum aniversariante hoje"
+            description="Confira quem faz aniversário nos próximos dias na tela de aniversariantes."
+          />
+        ) : (
+          todaysBirthdayCards.map(({ userId, card }) => <CardTemplate key={userId} data={card} />)
+        )}
       </div>
 
       <div className="flex flex-col gap-3">

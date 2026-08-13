@@ -6,6 +6,7 @@ import { requireAdminOrManager } from "@/lib/auth/session";
 import { withTenant } from "@/lib/db/with-tenant";
 import { listAnnouncementPendencySummaries } from "@/lib/announcements/pending-panel";
 import { formatAnnouncementCode } from "@/lib/announcements/publish";
+import { formatAnnouncementCategory } from "@/lib/announcements/category-labels";
 import { findBranchesByTenant } from "@/lib/repositories/branch.repository";
 
 export default async function PendenciasPage({
@@ -81,7 +82,7 @@ export default async function PendenciasPage({
                     ? formatAnnouncementCode(s.announcement.seqNumber, s.announcement.year)
                     : "sem número"}
                   {" · "}
-                  {s.announcement.category}
+                  {formatAnnouncementCategory(s.announcement.category)}
                 </span>
                 {s.isArchivedWithPendency && (
                   <span className="shrink-0 rounded-full bg-destructive/10 px-2 py-0.5 text-label text-destructive">
