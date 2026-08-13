@@ -44,6 +44,7 @@ async function main() {
     userCount: USER_COUNT,
     cpfSeedOffset: CPF_OFFSET,
     includeSampleAnnouncements: false,
+    skipFirstAccessFlow: true,
   });
 
   const admin = users[0];
@@ -75,7 +76,7 @@ async function main() {
   console.log(`Mídia redundante removida de ${removedMediaCount} post(s) do feed (sem foto, só texto).`);
   console.log(`${birthdaysToday} aniversariante(s) ajustado(s) para hoje.`);
   console.log("");
-  console.log("Credenciais de demonstração (senha inicial igual para todos, troca obrigatória no 1º login):");
+  console.log("Credenciais de demonstração (login direto — sem troca de senha nem aviso de privacidade no 1º acesso):");
   console.log(`  Admin      — CPF ${demoCpf(0)} / senha Trocar123!  (${admin.fullName})`);
   console.log(`  Gestor     — CPF ${demoCpf(1)} / senha Trocar123!  (${manager.fullName})`);
   console.log(`  Colaborador— CPF ${demoCpf(4)} / senha Trocar123!  (${employee.fullName})`);

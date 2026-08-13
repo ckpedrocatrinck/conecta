@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildTenantFixtures } from "../../prisma/seed-data";
 import { cleanupTenant } from "../helpers/cleanup-tenant";
 import { hashCpf } from "../../src/lib/crypto/cpf-hash";
-import { verifyPassword } from "../../src/lib/crypto/password-hash";
+import { hashPassword, verifyPassword } from "../../src/lib/crypto/password-hash";
 import { withTenant } from "../../src/lib/db/with-tenant";
 import {
   createBranch,
@@ -20,11 +20,13 @@ import {
   revokeSession,
 } from "../../src/lib/repositories/session.repository";
 import {
+  createEmployee,
   effectiveFailedAttempts,
   findUserByCpfHash,
   findUserById,
   registerFailedLogin,
   registerSuccessfulLogin,
+  resetEmployeePassword,
   updateConsentToggles,
   updateEmployeeProfile,
 } from "../../src/lib/repositories/user.repository";
@@ -329,6 +331,72 @@ describe("toggles de consentimento persistem com timestamp", () => {
       });
       const afterResubmit = await findUserById(tx, tenant.tenant.id, userId);
       expect(afterResubmit?.birthdayVisibleChangedAt?.getTime()).toBe(stampedAt?.getTime());
+    });
+  });
+});
+
+describe("skipFirstAccessFlow (INC-027 Bloco 3.7 — login direto no seed de demonstração)", () => {
+  it("por padrão (flag ausente), o comportamento de produto é preservado: troca de senha obrigatória e aviso de privacidade não aceito", async () => {
+    // `tenant` do beforeAll deste arquivo não passa skipFirstAccessFlow —
+    // exatamente o caminho que os outros 26 arquivos de teste também usam.
+    await withTenant({ tenantId: tenant.tenant.id }, async (tx) => {
+      const user = await findUserById(tx, tenant.tenant.id, tenant.users[0].id);
+      expect(user?.mustChangePassword).toBe(true);
+      expect(user?.privacyAcceptedAt).toBeNull();
+    });
+  });
+
+  it("com skipFirstAccessFlow: true, o usuário nasce pronto para login direto (senha já trocada, aviso já aceito)", async () => {
+    const suffix = randomUUID().slice(0, 8);
+    const demo = await buildTenantFixtures(ownerDb, {
+      name: `Demo Login Direto ${suffix}`,
+      slug: `demo-login-direto-${suffix}`,
+      branchCount: 1,
+      userCount: 4,
+      cpfSeedOffset: 950,
+      includeSampleAnnouncements: false,
+      skipFirstAccessFlow: true,
+    });
+
+    try {
+      await withTenant({ tenantId: demo.tenant.id }, async (tx) => {
+        const user = await findUserById(tx, demo.tenant.id, demo.users[0].id);
+        expect(user?.mustChangePassword).toBe(false);
+        expect(user?.privacyAcceptedAt).not.toBeNull();
+        expect(user?.privacyNoticeVersion).not.toBeNull();
+        // A senha inicial continua sendo a mesma ("Trocar123!") — só a flag
+        // de troca obrigatória some, o login em si não muda.
+        expect(await verifyPassword("Trocar123!", user!.passwordHash)).toBe(true);
+      });
+    } finally {
+      await cleanupTenant(ownerDb, demo.tenant.id);
+    }
+  });
+
+  it("createEmployee (criação real de colaborador pela UI) continua exigindo troca de senha, mesmo num tenant semeado com skipFirstAccessFlow", async () => {
+    const passwordHash = await hashPassword("Provisoria123!");
+    await withTenant({ tenantId: tenant.tenant.id }, async (tx) => {
+      const [branch] = await findBranchesByTenant(tx, tenant.tenant.id);
+      const created = await createEmployee(tx, {
+        tenantId: tenant.tenant.id,
+        branchId: branch.id,
+        role: "employee",
+        fullName: "Colaborador Novo Teste",
+        registrationCode: `MAT-NOVO-${randomUUID().slice(0, 6)}`,
+        cpfHash: hashCpf(String(99_000_000_000 + Math.floor(Math.random() * 999_999)).padStart(11, "0")),
+        passwordHash,
+      });
+      expect(created.mustChangePassword).toBe(true);
+    });
+  });
+
+  it("resetEmployeePassword (reset administrativo) continua exigindo nova troca de senha", async () => {
+    const userId = tenant.users[1].id;
+    const passwordHash = await hashPassword("NovaProvisoria123!");
+    await withTenant({ tenantId: tenant.tenant.id }, async (tx) => {
+      await resetEmployeePassword(tx, tenant.tenant.id, userId, passwordHash);
+      const after = await findUserById(tx, tenant.tenant.id, userId);
+      expect(after?.mustChangePassword).toBe(true);
     });
   });
 });
