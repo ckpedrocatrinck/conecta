@@ -228,6 +228,116 @@ Não é limpeza; é feature de portfólio e insumo futuro de onboarding/treiname
 *(a preencher ao final — data, branch, commit de merge, decisões tomadas durante a
 execução, desvios do plano)*
 
+### Blocos 0–1 (auditoria, backup e rotação de credenciais)
+
+Executados em sessões anteriores. Bundle completo do histórico original cifrado e
+verificado fora do GitHub (`C:\backups\inc027\`); branch `chore/seed-senha-padrao` excluída
+antes da reescrita (nunca enviada ao remoto); rotação de VAPID, `CPF_HASH_PEPPER`,
+`CRON_SECRET`, senha da role `conecta_app` e `POSTGRES_PASSWORD` concluída via script que
+nunca leu `.env` diretamente. `docs/02-Arquitetura/rotacao-pepper.md` escrito a partir da
+execução real.
+
+### Bloco 2 (reescrita de histórico) — 2026-08-13
+
+`git-filter-repo` executado uma única vez: 241→237 commits (4 esvaziados e podados),
+substituição de termos (`--replace-text`/`--replace-message`) e remoção de 16 caminhos
+(`--invert-paths`) — capturas de tela do redesenho, HTML de referência de design, logo e
+favicon reais do cliente, e três documentos de auditoria/insumo jurídico interno. Todas as
+51 citações de SHA em Relatórios de Entrega corrigidas via `commit-map`; 9 referências
+órfãs reescritas (frase reescrita, não só link apagado); dois bugs sistêmicos de
+concordância de gênero encontrados e corrigidos ("Rede Vale Verde" feminino herdando artigo
+masculino de "Armazém"; "portal legado" masculino herdando artigo feminino de "Endoweb"),
+incluindo uma string de UI viva (`src/app/[slug]/(app)/admin/page.tsx`). As 10 verificações
+finais (ausência de termo em HEAD/histórico/mensagens/paths/objetos soltos, SHAs resolvem,
+`gitleaks` limpo, lint/typecheck/build/test verdes, branches `inc-025`/`inc-026`/`main`
+sobreviventes) passaram todas.
+
+**Desvio consciente registrado:** um resíduo do termo "Unigrão" (nome de um LMS de
+terceiro, não vinculável ao cliente-piloto nem ao autor) permanece em texto de **um** commit
+antigo do histórico (fora do HEAD, já corrigido). Decisão: não repetir o `filter-repo` só
+por isso — uma segunda passada trocaria os 237 SHAs novamente, invalidando as 51 citações
+recém-corrigidas, por um ganho marginal (termo de produto de terceiro, não identificador do
+cliente). Efeito colateral do próprio `filter-repo` (remoção do `origin` ao reescrever)
+ressuscitou como branches locais as ~20 branches já podadas na Parte A do Bloco 1 — listadas
+no relatório interno, pendente de nova poda antes do Bloco 6.
+
+Relatório completo (expressions file, os 10 critérios, tabela de correções): `C:\backups\inc027\bloco-2-inc027.md` (fora do repositório).
+
+### Bloco 3 (seed de demonstração Rede Vale Verde) — 2026-08-13
+
+**Branding (Passo 1):** o Pedro adicionou manualmente wordmark (`public/branding/logo.png`,
+2172×724) e favicon (`public/branding/favicon.png`, 1254×1254) de Rede Vale Verde. Varredura
+completa em `src/`/`app/` mostrou que **nenhum caminho estático de branding é lido pelo
+código hoje**: o ícone do PWA (`app/icon.tsx`, `app/apple-icon.tsx`, `icon-192.png`,
+`icon-512*.png`) é gerado por código via `renderAppIconNode()` (glifo "C" sobre
+`BRAND_TOKENS.primary`, adapta-se a qualquer paleta sem asset); a marca no header
+(`AdminHeaderNav`) é texto ("C" + "Conecta" + nome do tenant), não imagem; e o logotipo
+por-tenant (`Tenant.logoUrl`) é dado de banco + media storage (upload real via
+`/admin/aparencia`), não um arquivo em `public/`. `favicon.ico` servido hoje é o padrão do
+Next.js (não vinculado ao cliente). Decisão: em vez de inventar uma nova forma de consumo
+(fora de escopo — arquitetura), reaproveitei o mecanismo **já existente** e feito
+exatamente para isso: o seed grava `logo.png` no media storage local
+(`branding/{tenantId}/logo/{uuid}`, mesma convenção do upload real) e seta `Tenant.logoUrl`
+— aparece em qualquer tela que já renderiza o logo do tenant (cards de feed/vagas/benefícios
+exportados). `favicon.png` permanece sem consumidor (não há favicon por-tenant na
+arquitetura atual, correto para um produto multi-tenant); substituí-lo exigiria
+`sharp`/`png-to-ico` (dependência nova) — não fiz, fica de fora do escopo deste bloco.
+DP-36 (`/icon` e `/apple-icon` caem no regex de slug do middleware) não foi tocado por este
+bloco e continua se aplicando sem mudança.
+
+**Auditoria do seed antigo (Passo 2):** nomes de filial já eram genéricos
+(`Filial Centro/Norte/Sul/Leste/Oeste`) — nenhum topônimo real de Petrópolis encontrado.
+Nenhum outro dado de lugar/pessoa/empresa real no seed. Vínculo gestor↔filial (DP-12) já
+respeitado pela distribuição por índice (1 gestor por filial quando `branchCount` = nº de
+gestores). Seed idempotente (checagem de tenant existente). **Gap encontrado:** nenhuma
+guarda de `NODE_ENV` existia — adicionada em `prisma/seed.ts` e `prisma/seed-dev-tenant-b.ts`
+(bloqueia se `NODE_ENV=production`).
+
+**Reescrita (Passo 3):** `buildTenantFixtures()` (compartilhada com 27 arquivos de teste de
+integração) recebeu só uma extensão aditiva e retrocompatível (`opts.branchNames`) — nenhum
+teste existente foi tocado. Todo o conteúdo de demonstração vive em
+`prisma/seed-demo-content.ts` (novo) e é orquestrado por `prisma/seed.ts` reescrito:
+- Tenant Rede Vale Verde / slug `vale-verde`; 3 filiais **Centro, Zona Norte, Distrito
+  Industrial**; 40 colaboradores (`Colaborador 0-N`, DP-38); avatares deixados como
+  `photoUrl: null` deliberadamente — o app já tem avatar sintético determinístico embutido
+  (inicial + cor por hash do nome, `src/lib/cards/avatar.ts`, é o padrão documentado no
+  design-system §5), então gerar um segundo mecanismo (boring-avatars/DiceBear) duplicaria
+  o que já existe sem necessidade.
+- 15 comunicados (`prisma/seed-demo-content.ts`): categorias e criticidades variadas,
+  incluindo 2 agendados (`scheduled`, publishAt futuro) e 2 arquivados. 5 são
+  `requires_ack` publicados, com acks calibrados entre 60–70% (confirmado pela função real
+  do painel, `listAnnouncementPendencySummaries`: 62–64% em todos os 5).
+- Logo do tenant semeado via media storage (ver Passo 1).
+- Credenciais de demonstração previsíveis impressas na saída do seed (1 usuário por papel;
+  senha inicial igual para todos, troca obrigatória no 1º login — comportamento real do
+  produto, não simplificado para a demo).
+
+**Validação (Passo 4) — todas as 6 passaram:**
+1. Seed rodado com sucesso (`npx prisma db seed` → `tsx prisma/seed.ts`).
+2. `npm run dev` + verificação autenticada via sessão real (login por CPF+senha): manifest
+   do tenant (`Conecta · Rede Vale Verde`), logo servido byte-a-byte idêntico ao arquivo
+   semeado via `/api/media/[key]` autenticado, e os 5 comunicados `requires_ack` publicados
+   confirmados em 62–64% pela função real do painel de pendências. (Sem navegador disponível
+   neste ambiente — verificação funcional/autenticada substituiu captura de tela.)
+3. `npm run lint && npm run typecheck && npm run build && npm run test` — todos verdes
+   (327/327 testes, sem nenhum quebrado pelo novo seed).
+4. Seed rodado duas vezes seguidas: segunda vez detectou o tenant existente e não duplicou
+   nada.
+5. `git grep` (fixed-string) dos 17 termos de `expressions.txt` no HEAD: zero ocorrências
+   fora dos dois arquivos de branding novos (que contêm "Vale Verde" — esperado, é a marca
+   nova).
+6. `SELECT current_user, usesuper FROM pg_user` via `APP_DATABASE_URL`: `conecta_app`,
+   `usesuper = false` — confirmado não-superuser após o seed.
+
+Relatório completo: `C:\backups\inc027\bloco-3-inc027.md` (fora do repositório).
+
+**Pendências para antes do Bloco 4/6:** repodar as ~20 branches ressuscitadas pelo Bloco 2;
+decidir o resíduo histórico "Unigrão" (aceitar vs. segunda passada de `filter-repo`);
+resolver o placeholder `[NOME DO PRODUTO]` em `docs/03-LGPD/guia-conformidade-lgpd.md`
+(identificado em auditoria anterior, fora do escopo deste bloco); decidir o destino de
+`public/branding/favicon.png` (hoje sem consumidor); commitar ou descartar as edições locais
+pendentes de `.claude/settings.json`/`.env.example` (fora do escopo deste INC — não tocadas).
+
 ---
 
 ## Apêndice A — Tabela de substituição
