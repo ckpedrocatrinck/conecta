@@ -9,6 +9,7 @@ import { withTenant } from "@/lib/db/with-tenant";
 import { listAnnouncementsForUser } from "@/lib/announcements/list-for-user";
 import { formatAnnouncementCode } from "@/lib/announcements/publish";
 import { formatAnnouncementCategory } from "@/lib/announcements/category-labels";
+import { formatDateTimeSaoPaulo } from "@/lib/dates/format-datetime";
 import type { AnnouncementReaderBadge } from "@/lib/announcements/reader-state";
 
 const TITLE_CLASS: Record<AnnouncementReaderBadge, string> = {
@@ -130,6 +131,14 @@ export default async function ComunicadosColaboradorPage({
                     ? `${formatAnnouncementCode(announcement.seqNumber, announcement.year)} · `
                     : ""}
                   {formatAnnouncementCategory(announcement.category)}
+                </span>
+                {/* announcement.publishAt garantido nao-nulo: lista so' traz
+                    status published (findVisibleAnnouncementIdsForUser), e
+                    publishAnnouncement() sempre grava publish_at (INC-027
+                    bloco 3.9) — permite ao colaborador ver o que e' novo sem
+                    abrir cada item. */}
+                <span className="text-meta text-subtle-foreground">
+                  Publicado em {formatDateTimeSaoPaulo(announcement.publishAt as Date)}
                 </span>
               </Link>
             );

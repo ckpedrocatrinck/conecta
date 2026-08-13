@@ -11,7 +11,7 @@ import { findAnnouncementsForAdminList, searchAnnouncementIds } from "@/lib/repo
 import { listAnnouncementPendencySummaries } from "@/lib/announcements/pending-panel";
 import { formatAnnouncementCode } from "@/lib/announcements/publish";
 import { formatAnnouncementCategory } from "@/lib/announcements/category-labels";
-import { formatCalendarDate } from "@/lib/dates/format-date";
+import { formatDateTimeSaoPaulo } from "@/lib/dates/format-datetime";
 import type { AnnouncementStatus } from "@prisma/client";
 
 const STATUS_LABEL: Record<AnnouncementStatus, string> = {
@@ -41,8 +41,13 @@ function relativePublished(date: Date): string {
 }
 
 function footerLine(status: AnnouncementStatus, publishAt: Date | null): string {
-  if (status === "published" && publishAt) return `Publicado ${relativePublished(publishAt)}`;
-  if (status === "scheduled" && publishAt) return `Publicação agendada para ${formatCalendarDate(publishAt)}`;
+  if (status === "published" && publishAt) return `Publicado ${relativePublished(publishAt)} (${formatDateTimeSaoPaulo(publishAt)})`;
+  // `publish_at` e' timestamptz (instante, com hora escolhida pelo admin no
+  // agendamento) — formatDateTimeSaoPaulo converte pro fuso certo antes de
+  // exibir; formatCalendarDate (usado antes aqui) le os componentes UTC
+  // direto, o que desloca o dia perto da virada de meia-noite em SP (mesma
+  // classe de bug do INC-020).
+  if (status === "scheduled" && publishAt) return `Publicação agendada para ${formatDateTimeSaoPaulo(publishAt)}`;
   if (status === "archived") return "Arquivado";
   return "Em edição";
 }

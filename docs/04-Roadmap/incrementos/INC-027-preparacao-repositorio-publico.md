@@ -338,6 +338,72 @@ resolver o placeholder `[NOME DO PRODUTO]` em `docs/03-LGPD/guia-conformidade-lg
 `public/branding/favicon.png` (hoje sem consumidor); commitar ou descartar as edições locais
 pendentes de `.claude/settings.json`/`.env.example` (fora do escopo deste INC — não tocadas).
 
+### Bloco 3.9 (ordenação e datas de publicação nos comunicados) — 2026-08-13
+
+Dois defeitos encontrados pelo Pedro na revisão visual do seed do Bloco 3.
+
+**Defeito 1 — ordenação.** Causa raiz: `markAnnouncementPublished()` nunca gravava
+`publish_at` — só `scheduleAnnouncementPublication()` gravava (a data agendada). Todo
+comunicado publicado **direto** (sem agendamento, o caminho mais comum) ficava com
+`publish_at = null` para sempre, e as listas do colaborador/painel de pendências (que já
+ordenavam por `publish_at`, código correto) colocavam esse `null` como o mais antigo
+possível — daí "recém-publicado aparece no fim". A lista do admin
+(`findAnnouncementsForAdminList`) tinha um segundo defeito independente: ordenava por
+`created_at`, que diverge de `publish_at` sempre que um agendado publica depois de outro
+criado antes (cenário coberto por teste).
+
+Campo escolhido para todo estado: `publish_at` com fallback para `created_at` **só** para
+rascunho (único status sem `publish_at`) — função única `announcementOrderingDate()`,
+usada nas 3 listas (colaborador, admin, painel de pendências) para não haver 3 regras
+divergentes de novo. `publishAnnouncement()` agora grava `publish_at`: `now` na publicação
+imediata; preserva a data agendada quando ela já passou (sweep, ou "publicar agora" depois
+do horário marcado); usa `now` também se "publicar agora" antecipa um agendamento ainda no
+futuro (senão a lista ordenaria pelo agendamento obsoleto, não pelo instante real em que o
+conteúdo ficou visível).
+
+**Defeito 2 — data de publicação ausente.** Corrigido: exibida na tela de leitura do
+colaborador (com hora, fuso America/Sao_Paulo via `formatDateTimeSaoPaulo`, mesmo
+mecanismo do INC-020) e na lista do colaborador. O comprovante exportado (CSV de
+confirmações) tinha ciência e hash, mas não publicação — coluna "Publicado em" adicionada.
+Hash da versão lida: já estava exposto no comprovante (coluna `Hash`, `content_hash_at_ack`)
+mesmo sem aparecer em tela — satisfaz o pedido ("na tela OU no comprovante"), não fiz
+mudança adicional. Achado correlato durante a auditoria de formato: o rodapé do admin usava
+`formatCalendarDate` (leitura de componentes UTC direto) num campo `publish_at`
+(timestamptz) para o caso "agendado" — mesma classe de bug do INC-020, deslocava o dia
+perto da virada de meia-noite em SP; trocado para `formatDateTimeSaoPaulo`.
+
+**Fora de escopo, relatado e não tocado:** `deadline` de vaga (`JobOpening`, também
+timestamptz) tem o mesmo padrão de uso de `formatCalendarDate` em 2 lugares
+(`job-opening-card.tsx`, `cards/render/index.tsx`) — mesma classe de bug do INC-020, mas
+fora do escopo deste bloco (comunicados). Fica como achado para o Pedro decidir se abre
+INC/DP.
+
+**Testes:** `tests/integration/announcement-ordering.test.ts` (novo) — grava `publish_at`
+na publicação imediata; preserva `publish_at` de agendamento já devido; substitui por `now`
+quando "publicar agora" antecipa um agendamento futuro; e o cenário pedido explicitamente
+(agendado publicado depois de outro criado antes) verificado nas 3 listas. Ajustes em
+testes existentes que assumiam o comportamento antigo:
+`announcement-create-and-publish.test.ts` (esperava `publish_at: null` na publicação
+imediata) e `announcement-ack-export.test.ts` (cabeçalho do CSV com a coluna nova).
+
+**Validação:** `npm run lint && npm run typecheck && npm run build && npm run test` —
+verdes, 351/351 testes (1 flaky pré-existente e não relacionado —
+`immutability-triggers.test.ts`, deadlock de paralelismo entre arquivos de teste,
+reproduzido isolado como verde). Verificação da ordenação contra o tenant de dev real
+(consulta somente-leitura às 3 funções de lista) confirmou o efeito esperado: agendados
+futuros primeiro, depois publicados em ordem decrescente de `publish_at`, arquivados por
+último — antes da correção, os arquivados (criados por último no script do seed) apareciam
+no topo por `created_at`. Sem navegador disponível neste ambiente (mesma limitação
+registrada nos blocos anteriores); não fiz "seed do zero" (ação destrutiva sobre o tenant
+de dev existente, bloqueada pelo classificador de segurança do ambiente) — validação
+substituta: consulta funcional somente-leitura descrita acima.
+
+`git grep` dos termos de `expressions.txt`: 2 ocorrências, as mesmas já reportadas nos
+blocos 3.5–3.8 (citações entre aspas na narrativa deste próprio Registro de Conclusão) —
+não é vazamento novo, nada deste bloco introduziu ocorrência.
+
+Relatório completo: `C:\backups\inc027\bloco-3-9-inc027.md` (fora do repositório).
+
 ---
 
 ## Apêndice A — Tabela de substituição

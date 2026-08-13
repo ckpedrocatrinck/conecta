@@ -94,7 +94,7 @@ describe("export CSV do log de confirmacoes", () => {
 
     const bodyWithoutBom = csvExport!.csv.slice(UTF8_BOM.length);
     const firstLine = bodyWithoutBom.split("\n")[0].trim();
-    expect(firstLine).toBe("Colaborador;Matrícula;Filial;Versão;Hash;Confirmado em");
+    expect(firstLine).toBe("Colaborador;Matrícula;Filial;Versão;Publicado em;Hash;Confirmado em");
 
     const parsed = Papa.parse<Record<string, string>>(bodyWithoutBom, { header: true, delimiter: ";", skipEmptyLines: true });
     expect(parsed.errors).toHaveLength(0);
@@ -104,6 +104,7 @@ describe("export CSV do log de confirmacoes", () => {
     expect(row1.Matrícula).toBe(emp1.registrationCode);
     expect(row1.Filial).toBe(branchA.name);
     expect(row1.Versão).toBe("1");
+    expect(row1["Publicado em"]).toMatch(/^\d{2}\/\d{2}\/\d{4},? \d{2}:\d{2}$/);
     expect(row1.Hash).toBe("hash-emp1");
     expect(row1["Confirmado em"]).toMatch(/^\d{2}\/\d{2}\/\d{4},? \d{2}:\d{2}$/);
 
