@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+# Trava contra segredo commitado (INC-027 Bloco 5). Roda gitleaks só no que
+# está em stage — não no repositório inteiro, então é rápido o suficiente
+# para todo commit. Falha FECHADA: se o binário do gitleaks não estiver
+# instalado, o commit é BLOQUEADO (não pulado em silêncio) — um hook que
+# some quando falta a ferramenta é pior que nenhum hook, porque passa a
+# sensação de proteção sem entregar nenhuma.
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo ""
+  echo "pre-commit: gitleaks não encontrado no PATH — commit bloqueado."
+  echo "Instale antes de commitar (escolha o do seu SO):"
+  echo "  macOS:   brew install gitleaks"
+  echo "  Windows: choco install gitleaks   (ou scoop install gitleaks)"
+  echo "  Linux:   veja https://github.com/gitleaks/gitleaks#installing"
+  echo ""
+  exit 1
+fi
+
+gitleaks protect --staged --redact -v

@@ -82,7 +82,7 @@ O schema tem uma coluna `GENERATED ALWAYS AS … STORED` para busca textual, que
 
 ## Como rodar
 
-Requisitos: Node 20+, Docker e Docker Compose.
+Requisitos: Node 20+, Docker, Docker Compose e [gitleaks](https://github.com/gitleaks/gitleaks#installing) (usado pelo hook de pre-commit — `npm ci` já instala o hook em si via `husky`, só o binário do gitleaks precisa ser instalado à parte).
 
 ```bash
 git clone https://github.com/pedromcatrinck/conecta.git
