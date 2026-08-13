@@ -4,6 +4,7 @@ import { DEV_ADMIN_USER_ID, DEV_TENANT_ID } from "../src/lib/dev/seed-ids";
 import { ensureAppRolePassword } from "./db-admin";
 import { buildTenantFixtures } from "./seed-data";
 import { removeDemoPostMedia, seedDemoAnnouncements, seedTenantLogo, seedTodaysBirthdays } from "./seed-demo-content";
+import { shouldSkipFirstAccessFlow } from "./seed-env";
 
 // Usa DATABASE_URL (role owner do docker-compose) — bypassa RLS de
 // proposito, seed e' operacao administrativa.
@@ -34,6 +35,8 @@ async function main() {
     return;
   }
 
+  const skipFirstAccessFlow = shouldSkipFirstAccessFlow(process.env);
+
   const { tenant, branches, users } = await buildTenantFixtures(db, {
     id: DEV_TENANT_ID,
     adminUserId: DEV_ADMIN_USER_ID,
@@ -44,7 +47,7 @@ async function main() {
     userCount: USER_COUNT,
     cpfSeedOffset: CPF_OFFSET,
     includeSampleAnnouncements: false,
-    skipFirstAccessFlow: true,
+    skipFirstAccessFlow,
   });
 
   const admin = users[0];
@@ -76,7 +79,11 @@ async function main() {
   console.log(`Mídia redundante removida de ${removedMediaCount} post(s) do feed (sem foto, só texto).`);
   console.log(`${birthdaysToday} aniversariante(s) ajustado(s) para hoje.`);
   console.log("");
-  console.log("Credenciais de demonstração (login direto — sem troca de senha nem aviso de privacidade no 1º acesso):");
+  if (skipFirstAccessFlow) {
+    console.log("Credenciais de demonstração (SEED_SKIP_PASSWORD_CHANGE ativo — login direto, sem troca de senha):");
+  } else {
+    console.log("Credenciais de demonstração (senha inicial — 1º login exige definir uma nova senha, comportamento real do produto):");
+  }
   console.log(`  Admin      — CPF ${demoCpf(0)} / senha Trocar123!  (${admin.fullName})`);
   console.log(`  Gestor     — CPF ${demoCpf(1)} / senha Trocar123!  (${manager.fullName})`);
   console.log(`  Colaborador— CPF ${demoCpf(4)} / senha Trocar123!  (${employee.fullName})`);
