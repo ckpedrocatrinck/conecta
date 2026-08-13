@@ -8,6 +8,7 @@ import {
 } from "@/lib/repositories/tenant.repository";
 import { mediaStorage } from "@/lib/storage/media-storage";
 import { DEFAULT_ACCENT_COLOR } from "@/lib/cards/brand-tokens";
+import { HOME_BANNER_IMAGE_CLASSNAME } from "@/components/home/home-banner";
 import { AppearanceUploader } from "./appearance-uploader";
 import { AccentColorField } from "./accent-color-field";
 
@@ -26,10 +27,10 @@ const BANNER_SIZE_HINT = (
   </p>
 );
 
-// Preview FIEL: mesmo object-cover + teto de 208px (max-h-52) da faixa ao vivo
-// (home-banner.tsx) nas 3 secoes — o admin ve o recorte real, nao a arte inteira.
-const BANNER_PREVIEW_CLASSNAME =
-  "h-auto max-h-52 w-full rounded-[var(--radius-card)] border border-border object-cover";
+// Preview FIEL: reaproveita a MESMA classe do banner ao vivo (home-banner.tsx)
+// — o admin ve o recorte real, nao a arte inteira (INC-027 Bloco 3.6: duas
+// strings de classe duplicadas podiam divergir silenciosamente).
+const BANNER_PREVIEW_CLASSNAME = HOME_BANNER_IMAGE_CLASSNAME;
 
 export default async function AparenciaPage() {
   const session = await requireAdmin();
