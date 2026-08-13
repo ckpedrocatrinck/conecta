@@ -248,10 +248,10 @@ export async function buildTenantFixtures(db: PrismaClient, opts: BuildTenantFix
   // active=true do colaborador).
   const benefits = [];
   const benefitsData = [
-    { category: "saude" as const, partnerName: "Academia Fit", title: "30% de desconto na mensalidade", description: "Apresente o cracha na recepcao. Valido para todos os planos.", sortOrder: 1, active: true },
-    { category: "saude" as const, partnerName: "Farmacia Bem-Estar", title: "15% em medicamentos genericos", description: "Desconto na apresentacao do cracha.", sortOrder: 2, active: true },
-    { category: "alimentacao" as const, partnerName: "Restaurante do Chef", title: "Almoco executivo com 20% off", description: "De segunda a sexta, no horario de almoco.", sortOrder: 1, active: true },
-    { category: "educacao" as const, partnerName: "Escola de Idiomas Global", title: "Bolsa de 25% em cursos de ingles", description: "Extensivo a dependentes.", sortOrder: 1, active: false },
+    { category: "saude" as const, partnerName: "Academia Fit", title: "30% de desconto na mensalidade", description: "Apresente o crachá na recepção. Válido para todos os planos.", sortOrder: 1, active: true },
+    { category: "saude" as const, partnerName: "Farmácia Bem-Estar", title: "15% em medicamentos genéricos", description: "Desconto na apresentação do crachá.", sortOrder: 2, active: true },
+    { category: "alimentacao" as const, partnerName: "Restaurante do Chef", title: "Almoço executivo com 20% off", description: "De segunda a sexta, no horário de almoço.", sortOrder: 1, active: true },
+    { category: "educacao" as const, partnerName: "Escola de Idiomas Global", title: "Bolsa de 25% em cursos de inglês", description: "Extensivo a dependentes.", sortOrder: 1, active: false },
   ];
   for (const b of benefitsData) {
     const benefit = await db.benefit.create({

@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { DEV_ADMIN_USER_ID, DEV_TENANT_ID } from "../src/lib/dev/seed-ids";
 import { ensureAppRolePassword } from "./db-admin";
 import { buildTenantFixtures } from "./seed-data";
-import { seedDemoAnnouncements, seedTenantLogo } from "./seed-demo-content";
+import { seedDemoAnnouncements, seedDemoPostMedia, seedTenantLogo, seedTodaysBirthdays } from "./seed-demo-content";
 
 // Usa DATABASE_URL (role owner do docker-compose) — bypassa RLS de
 // proposito, seed e' operacao administrativa.
@@ -30,7 +30,7 @@ async function main() {
 
   const existing = await db.tenant.findUnique({ where: { id: DEV_TENANT_ID } });
   if (existing) {
-    console.log(`Tenant de dev "${existing.name}" ja existe (id=${existing.id}) — pulando seed de dados.`);
+    console.log(`Tenant de dev "${existing.name}" já existe (id=${existing.id}) — pulando seed de dados.`);
     return;
   }
 
@@ -60,15 +60,23 @@ async function main() {
   const logoPath = path.resolve(process.cwd(), "public/branding/logo.png");
   await seedTenantLogo(db, tenant.id, logoPath);
 
-  console.log(`Seed concluido: tenant "${tenant.name}" (${tenant.id}) com ${users.length} usuarios.`);
+  const homeBannerPath = path.resolve(process.cwd(), "public/banners/home.png");
+  const fixedMediaCount = await seedDemoPostMedia(db, tenant.id, homeBannerPath);
+
+  const employees = users.filter((u) => u.role === "employee");
+  const birthdaysToday = await seedTodaysBirthdays(db, employees);
+
+  console.log(`Seed concluído: tenant "${tenant.name}" (${tenant.id}) com ${users.length} usuários.`);
   console.log(`Comunicados: ${announcementResults.length} criados.`);
   for (const r of announcementResults) {
     const pct = r.percentConfirmed !== undefined ? ` — ${r.percentConfirmed}% confirmado` : "";
     console.log(`  [${r.status}] ${r.title}${pct}`);
   }
   console.log("Logo do tenant enviado para o media storage local.");
+  console.log(`Mídia de ${fixedMediaCount} post(s) do feed corrigida (key real de storage).`);
+  console.log(`${birthdaysToday} aniversariante(s) ajustado(s) para hoje.`);
   console.log("");
-  console.log("Credenciais de demonstracao (senha inicial igual para todos, troca obrigatoria no 1o login):");
+  console.log("Credenciais de demonstração (senha inicial igual para todos, troca obrigatória no 1º login):");
   console.log(`  Admin      — CPF ${demoCpf(0)} / senha Trocar123!  (${admin.fullName})`);
   console.log(`  Gestor     — CPF ${demoCpf(1)} / senha Trocar123!  (${manager.fullName})`);
   console.log(`  Colaborador— CPF ${demoCpf(4)} / senha Trocar123!  (${employee.fullName})`);
