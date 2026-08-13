@@ -22,6 +22,13 @@ export type AnnouncementReaderState<V extends AnnouncementVersionLite = Announce
   wasReopened: boolean;
   badge: AnnouncementReaderBadge;
   lastAckedAt?: Date;
+  /** Numero da versao do ack que satisfaz a exigencia hoje (INC-027 bloco
+   * 3.12) — pode ser MENOR que `latestVersion.versionNumber`: uma edicao
+   * NAO-material publicada depois do ack nao reabre pendencia (regra do
+   * modelo), mas o conteudo exibido na tela ja mudou desde a confirmacao.
+   * A tela de leitura usa isso pra avisar quando o que foi confirmado nao e'
+   * mais, ao pe da letra, o texto atual. */
+  lastAckedVersionNumber?: number;
 };
 
 /**
@@ -73,9 +80,9 @@ export function buildAnnouncementReaderState<V extends AnnouncementVersionLite>(
         ? "lido"
         : "novo";
 
-  const lastAckedAt = satisfyingAcks
-    .map((a) => a.ackedAt)
-    .sort((a, b) => b.getTime() - a.getTime())[0];
+  const mostRecentSatisfyingAck = [...satisfyingAcks].sort((a, b) => b.ackedAt.getTime() - a.ackedAt.getTime())[0];
+  const lastAckedAt = mostRecentSatisfyingAck?.ackedAt;
+  const lastAckedVersionNumber = mostRecentSatisfyingAck ? versionNumberById.get(mostRecentSatisfyingAck.versionId) : undefined;
 
   return {
     requiredVersionNumber,
@@ -86,5 +93,6 @@ export function buildAnnouncementReaderState<V extends AnnouncementVersionLite>(
     wasReopened,
     badge,
     lastAckedAt,
+    lastAckedVersionNumber,
   };
 }

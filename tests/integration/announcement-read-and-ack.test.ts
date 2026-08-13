@@ -216,7 +216,15 @@ describe("reabertura de pendencia por versao material (com salto multiplo)", () 
         isMaterialChange: false,
       }),
     );
-    expect((await stateAfterV1Ack()).ackSatisfied).toBe(true);
+    {
+      const state = await stateAfterV1Ack();
+      expect(state.ackSatisfied).toBe(true);
+      // INC-027 bloco 3.12: o ack satisfaz mesmo com V2 ja' publicada, mas foi
+      // dado em V1 — a tela de leitura precisa saber disso pra nao alegar que
+      // a pessoa confirmou o texto atual (V2), que ela nunca viu.
+      expect(state.lastAckedVersionNumber).toBe(1);
+      expect(state.latestVersion.versionNumber).toBe(2);
+    }
 
     // V3 material: pendencia reabre.
     await withTenant({ tenantId: tenant.tenant.id }, (tx) =>
