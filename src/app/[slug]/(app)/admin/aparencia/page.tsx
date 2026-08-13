@@ -19,15 +19,16 @@ const DEFAULT_BANNER_SRC = "/banners/home.png";
 // configurou banner proprio.
 const DEFAULT_VAGAS_BANNER_SRC = "/banners/vagas.png";
 
-// Proporção medida das 3 artes padrão do produto (INC-027 Bloco 3.8): nenhuma
-// é 16:9 — home.png 1717×916 (1.874:1), vagas.png 1774×887 (2:1 exato),
-// clube.png 1672×941 (1.777:1). A recomendação anterior (1920×1080/16:9) não
-// correspondia ao que o próprio produto entrega — texto corrigido para a
-// proporção que o layout realmente usa (aspect-[2/1] em home-banner.tsx),
-// não o contrário.
+// Padrão de banner definido pelo Pedro (INC-027 Bloco 3.8): 1920×650px
+// (≈2,95:1) — a orientação aqui precisa concordar EXATAMENTE com o
+// aspect-ratio usado em home-banner.tsx (HOME_BANNER_IMAGE_CLASSNAME); a
+// divergência entre os dois foi a causa raiz dos dois ciclos anteriores
+// neste mesmo componente. Nenhuma das 3 artes padrão do produto hoje bate
+// com essa proporção (home.png 1.874:1, vagas.png 2:1, clube.png 1.777:1)
+// — todas sofrem recorte de 32-40% até serem refeitas/recortadas.
 const BANNER_SIZE_HINT = (
   <p className="rounded-[var(--radius-card)] border border-border bg-primary-subtle px-3 py-2 text-meta text-foreground-soft">
-    <span className="font-semibold text-foreground">Tamanho recomendado: 1600×800px (2:1) — banner bem mais largo que alto.</span>{" "}
+    <span className="font-semibold text-foreground">Tamanho recomendado: 1920×650px (≈3:1) — banner bem mais largo que alto.</span>{" "}
     Mantenha o essencial (texto, logo, pessoas) <span className="font-semibold">centralizado</span> —
     áreas nas bordas podem ser cortadas em telas diferentes.
   </p>
