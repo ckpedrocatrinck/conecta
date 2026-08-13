@@ -10,6 +10,10 @@ export type BuildTenantFixturesOptions = {
   slug: string;
   branchCount?: number;
   userCount?: number;
+  /** Nomes das filiais, na ordem de criacao. Falta de entrada num indice cai
+   * no default (`BRANCH_NAMES` / `Filial N`). Usado pelo seed de demonstracao
+   * (INC-027) para nomes genericos por zona em vez do default "Filial X". */
+  branchNames?: string[];
   /** Evita CPFs/matriculas iguais quando varios tenants sao criados no mesmo teste. */
   cpfSeedOffset?: number;
   /** Default true. Testes que exercitam a numeracao/sequencia de
@@ -52,7 +56,7 @@ export async function buildTenantFixtures(db: PrismaClient, opts: BuildTenantFix
       await db.branch.create({
         data: {
           tenantId: tenant.id,
-          name: BRANCH_NAMES[i] ?? `Filial ${i + 1}`,
+          name: opts.branchNames?.[i] ?? BRANCH_NAMES[i] ?? `Filial ${i + 1}`,
           code: `F${i + 1}`,
         },
       }),
