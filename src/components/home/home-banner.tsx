@@ -1,18 +1,30 @@
 import { cn } from "@/lib/utils"
 
-// `aspect-video` (16:9) casa o CONTAINER com o "Tamanho recomendado:
-// 1920x1080px (16:9)" da tela de Aparência — antes a altura fixa (max-h-52)
-// com w-full deixava o container muito mais largo que 16:9 em qualquer tela
-// >~370px, e o object-cover cortava topo/base de uma arte corretamente 16:9
-// (achado INC-027 Bloco 3.6). `max-w-2xl` (mesmo teto usado nas telas que
-// hospedam este banner) evita que o container vire gigante em telas admin
-// sem largura maxima propria. `mx-auto` centraliza quando o pai e' mais
-// largo que o teto. Exportada (não só usada inline) para o teste unitário
-// travar a proporção — não há infra de render de componente neste projeto
-// (vitest roda em `environment: "node"`, sem jsdom/testing-library), então
-// o teste verifica a string de classes em vez do DOM renderizado.
+// Achado INC-027 Bloco 3.8: o Bloco 3.6 mediu errado — a suspeita de "16:9"
+// nunca foi conferida contra as artes reais. Medindo de fato (public/banners/
+// home.png 1717x916=1.874, vagas.png 1774x887=2.000, clube.png 1672x941=1.777),
+// nenhuma e' 16:9 (1.778); todas sao mais largas, entre ~1.78:1 e 2:1.
+// Forcar aspect-video nessas artes so' trocou o tipo de descompasso (o
+// container virou maior que o necessario, sobrando fundo da propria arte —
+// branco/creme nas 3 — que lia como "faixa vazia"). `aspect-[2/1]` casa com
+// a proporcao REAL (direcao (a) do Bloco 3.8: o layout respeita a arte
+// entregue, a tela de Aparencia passa a recomendar essa proporcao — nao o
+// contrario). `max-h-64` (256px) e' um TETO de seguranca, nao o
+// dimensionador primario (essa foi a falha do design anterior a 3.6): so'
+// entra em jogo em containers muito largos (>512px, onde 672px de
+// max-w-2xl geraria 336px de altura) para o banner nao dominar a dobra
+// inicial da pagina — nessa faixa estreita de largura ele reintroduz um
+// recorte lateral leve (efeito ~2.6:1 no teto, contra o 2:1 alvo), aceitavel
+// porque so' afeta a borda da arte, nunca o essencial centralizado.
+// `max-w-2xl` (mesmo teto usado nas telas que hospedam este banner) evita
+// que o container vire gigante em telas admin sem largura maxima propria.
+// `mx-auto` centraliza quando o pai e' mais largo que o teto. Exportada
+// (não só usada inline) para o teste unitário travar a proporção — não há
+// infra de render de componente neste projeto (vitest roda em
+// `environment: "node"`, sem jsdom/testing-library), então o teste
+// verifica a string de classes em vez do DOM renderizado.
 export const HOME_BANNER_IMAGE_CLASSNAME =
-  "mx-auto aspect-video h-auto w-full max-w-2xl rounded-[var(--radius-card)] border border-border object-cover";
+  "mx-auto aspect-[2/1] h-auto w-full max-w-2xl max-h-64 rounded-[var(--radius-card)] border border-border object-cover";
 
 interface HomeBannerProps {
   title: string
