@@ -35,7 +35,7 @@ Monolito Next.js App Router + TypeScript estrito + PostgreSQL/Prisma + Tailwind/
 
 - `npm run dev` — sobe local
 - `npm run lint && npm run typecheck && npm run test` — deve passar ANTES de todo commit
-- `npx prisma migrate dev` / `npx prisma db seed` — banco local
+- `npx prisma migrate deploy` / `npx prisma db seed` — banco local (nunca `migrate dev`, ver regra 9)
 
 ## Fluxo de sessão
 
