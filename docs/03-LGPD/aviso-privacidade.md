@@ -1,5 +1,9 @@
 # Aviso de Privacidade — [NOME DO PRODUTO / CONECTA]
 
+> **Minuta.** Os campos entre colchetes dependem de revisão jurídica e de dados do
+> controlador, definidos na contratação. Documento incluído para demonstrar
+> tratamento de privacidade desde o desenho do produto.
+
 > **STATUS: MINUTA INTERINA — PENDENTE DE REVISÃO JURÍDICA.**
 > Este texto é uma base bem-estruturada e conforme os requisitos gerais da LGPD,
 > mas NÃO substitui a revisão por um advogado antes do go-live com dados reais.
