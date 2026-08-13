@@ -72,7 +72,10 @@ describe("INC-018 — publicar agora a partir da tela de criacao", () => {
     expect(announcement?.status).toBe("published");
     expect(announcement?.seqNumber).toBe(result.seqNumber);
     expect(announcement?.year).toBe(result.year);
-    expect(announcement?.publishAt).toBeNull();
+    // INC-027 bloco 3.9: publish_at passou a ser gravado tambem na publicacao
+    // imediata (antes ficava null pra sempre nesse caminho — a raiz do bug de
+    // ordenacao "recem-publicado aparece no fim da lista").
+    expect(announcement?.publishAt).not.toBeNull();
 
     const history = await withTenant({ tenantId: tenant.tenant.id }, (tx) =>
       findAnnouncementVersionHistory(tx, result.announcementId),

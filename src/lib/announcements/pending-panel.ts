@@ -1,6 +1,10 @@
 import type { Announcement, Prisma } from "@prisma/client";
 import { buildAnnouncementReaderState, computeRequiredAckVersionNumber } from "./reader-state";
-import { findAnnouncementById, findRequiresAckAnnouncementsForPanel } from "../repositories/announcement.repository";
+import {
+  announcementOrderingDate,
+  findAnnouncementById,
+  findRequiresAckAnnouncementsForPanel,
+} from "../repositories/announcement.repository";
 import {
   findAnnouncementVersionHistory,
   findAnnouncementVersionsForAnnouncements,
@@ -128,7 +132,7 @@ export async function listAnnouncementPendencySummaries(
     });
   }
 
-  summaries.sort((a, b) => (b.announcement.publishAt?.getTime() ?? 0) - (a.announcement.publishAt?.getTime() ?? 0));
+  summaries.sort((a, b) => announcementOrderingDate(b.announcement) - announcementOrderingDate(a.announcement));
   return summaries;
 }
 
@@ -263,6 +267,6 @@ export async function getUserPendencyHistory(
     });
   }
 
-  items.sort((a, b) => (b.announcement.publishAt?.getTime() ?? 0) - (a.announcement.publishAt?.getTime() ?? 0));
+  items.sort((a, b) => announcementOrderingDate(b.announcement) - announcementOrderingDate(a.announcement));
   return { user: userLite, items };
 }

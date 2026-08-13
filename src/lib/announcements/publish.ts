@@ -32,7 +32,16 @@ export async function publishAnnouncement(
 
   const year = getSaoPauloYear(now);
   const seqNumber = await nextAnnouncementSequenceNumber(tx, input.tenantId, year);
-  const result = await markAnnouncementPublished(tx, input.tenantId, input.announcementId, { seqNumber, year });
+  // publish_at passa a valer como "quando ficou visivel ao colaborador"
+  // (INC-027 bloco 3.9): rascunho nunca teve publish_at (era null ate aqui) —
+  // vira `now`, o instante real da publicacao. Agendado ja' devido (sweep, ou
+  // "publicar agora" apos a data marcada) preserva o publish_at gravado no
+  // agendamento. So' o caso de "publicar agora" ANTES da data agendada
+  // (publish_at ainda no futuro) usa `now` tambem — senao a lista ordenaria
+  // pelo agendamento original em vez do instante em que o conteudo de fato
+  // ficou disponivel.
+  const publishAt = current.publishAt && current.publishAt.getTime() <= now.getTime() ? current.publishAt : now;
+  const result = await markAnnouncementPublished(tx, input.tenantId, input.announcementId, { seqNumber, year, publishAt });
 
   // count 0 = perdeu a corrida entre o SELECT acima e este UPDATE (outro
   // admin publicou o MESMO rascunho no meio do caminho — o UPDATE dele

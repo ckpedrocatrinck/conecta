@@ -1,4 +1,17 @@
-import type { AnnouncementCriticality, AnnouncementStatus, Prisma } from "@prisma/client";
+import type { Announcement, AnnouncementCriticality, AnnouncementStatus, Prisma } from "@prisma/client";
+
+/**
+ * Data que governa a ordem de exibicao de um comunicado (INC-027 bloco 3.9):
+ * `publish_at` — quando ficou visivel ao colaborador (real na publicacao
+ * imediata, agendado no caso scheduled/published-via-sweep) — com fallback
+ * para `created_at` so' para rascunho, o unico status que nunca recebe
+ * `publish_at` (ver `markAnnouncementPublished`). Ordenar por `created_at`
+ * sem esse fallback produz resultado errado sempre que um comunicado
+ * agendado e' publicado depois de outro criado antes dele.
+ */
+export function announcementOrderingDate(a: Pick<Announcement, "publishAt" | "createdAt">): number {
+  return (a.publishAt ?? a.createdAt).getTime();
+}
 
 export function findAnnouncementsByTenant(tx: Prisma.TransactionClient, tenantId: string) {
   return tx.announcement.findMany({ where: { tenantId } });
@@ -96,11 +109,11 @@ export function markAnnouncementPublished(
   tx: Prisma.TransactionClient,
   tenantId: string,
   id: string,
-  data: { seqNumber: number; year: number },
+  data: { seqNumber: number; year: number; publishAt: Date },
 ) {
   return tx.announcement.updateMany({
     where: { id, tenantId, status: { in: ["draft", "scheduled"] } },
-    data: { status: "published", seqNumber: data.seqNumber, year: data.year },
+    data: { status: "published", seqNumber: data.seqNumber, year: data.year, publishAt: data.publishAt },
   });
 }
 
@@ -110,16 +123,23 @@ export function findDueScheduledAnnouncements(tx: Prisma.TransactionClient, tena
   });
 }
 
-export function findAnnouncementsForAdminList(
+/**
+ * `orderBy: created_at` nao serve aqui (INC-027 bloco 3.9): rascunho e
+ * agendado nao tem `publish_at` significativo na hora da criacao, mas um
+ * agendado publicado depois de outro comunicado criado antes dele precisa
+ * aparecer antes na lista — so' `announcementOrderingDate` (publish_at com
+ * fallback pra created_at) da a ordem certa em todo estado.
+ */
+export async function findAnnouncementsForAdminList(
   tx: Prisma.TransactionClient,
   tenantId: string,
   status?: AnnouncementStatus,
 ) {
-  return tx.announcement.findMany({
+  const announcements = await tx.announcement.findMany({
     where: { tenantId, ...(status ? { status } : {}) },
     include: { versions: { orderBy: { versionNumber: "desc" }, take: 1 } },
-    orderBy: { createdAt: "desc" },
   });
+  return announcements.sort((a, b) => announcementOrderingDate(b) - announcementOrderingDate(a));
 }
 
 /**

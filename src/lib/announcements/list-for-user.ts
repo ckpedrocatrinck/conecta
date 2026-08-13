@@ -1,7 +1,11 @@
 import { cache } from "react";
 import type { Announcement, AnnouncementVersion, Prisma } from "@prisma/client";
 import { withTenant } from "../db/with-tenant";
-import { findVisibleAnnouncementIdsForUser, searchAnnouncementIds } from "../repositories/announcement.repository";
+import {
+  announcementOrderingDate,
+  findVisibleAnnouncementIdsForUser,
+  searchAnnouncementIds,
+} from "../repositories/announcement.repository";
 import { findAnnouncementVersionsForAnnouncements } from "../repositories/announcement-version.repository";
 import { findAnnouncementReadsForUser } from "../repositories/announcement-read.repository";
 import { findAnnouncementAcksForUser } from "../repositories/announcement-ack.repository";
@@ -73,9 +77,7 @@ export async function listAnnouncementsForUser(
     const xUnread = x.state.badge === "novo" || x.state.badge === "confirmar_leitura";
     const yUnread = y.state.badge === "novo" || y.state.badge === "confirmar_leitura";
     if (xUnread !== yUnread) return xUnread ? -1 : 1;
-    const xDate = x.announcement.publishAt?.getTime() ?? 0;
-    const yDate = y.announcement.publishAt?.getTime() ?? 0;
-    return yDate - xDate;
+    return announcementOrderingDate(y.announcement) - announcementOrderingDate(x.announcement);
   });
 
   return { items, categories };
