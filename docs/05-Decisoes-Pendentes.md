@@ -4,6 +4,11 @@
 
 > **Nota sobre a numeração (reconciliação de vault, 2026-07-16, achado A6-7 da auditoria):** a numeração salta de DP-03 para DP-05 de propósito — não existe DP-04 pendente nem a registrar; o número foi descartado/consolidado antes de virar um registro formal neste arquivo. Não é uma lacuna a preencher.
 
+## ✅ Resolvidas em 2026-08-12
+
+- **DP-38 — Nomes de colaborador no seed de demonstração (INC-027).** ✅ **Resolvida:** mantém os rótulos genéricos já usados hoje (`Colaborador 0-N`), sem trocar por nomes fictícios individuais. O README da raiz declara explicitamente que o seed é sintético, para que o rótulo genérico leia como deliberado e não como dado faltando.
+  **Responsável:** Pedro.
+
 ## ✅ Resolvidas em 2026-07-09
 
 - **DP-01 — Acordo de IP com o Rede Vale Verde.** ✅ **100% aprovado pela diretoria** (produto é do Pedro; empresa é cliente-piloto). Recomendação: guardar o registro escrito dessa aprovação (e-mail/termo) junto ao projeto.
@@ -148,7 +153,8 @@
 **Responsável:** Pedro (confirmar escopo — só início ou as 3 seções — antes de abrir o INC).
 
 **DP-27 — Branch de seed de senha padrão parada por footgun de segurança.** A branch `chore/seed-senha-padrao` (13/07, não mergeada) padroniza a senha de seed para `12345678` e adiciona `prisma/reset-seed-passwords.ts` + `npm run db:reset-passwords`. A troca de senha de seed em si é contida (só usada por seed/testes). O problema é o script novo: sem guarda de ambiente (`NODE_ENV`, confirmação), usa a role owner (bypassa RLS de propósito) e faz `updateMany` na senha de **todos os usuários do tenant**, com slug default `vale-verde` — o tenant do piloto. Rodar com `DATABASE_URL` de produção reseta a senha de todo colaborador real para `12345678`. Não mergear sem adicionar a guarda (mínimo: recusar rodar se `NODE_ENV=production` ou o slug bater com o do piloto). Também tem conflito com a main em `package.json` e `infra-banco-dev-e-ci.md`.
-**Responsável:** Pedro (decidir se resgata a branch ou reimplementa quando precisar).
+**Atualização (2026-08-12, INC-027):** a branch `chore/seed-senha-padrao` foi **excluída** (`git branch -D`) como parte da preparação do repositório público — o código do script sem guarda não deve existir em ref alguma, independentemente da publicação. Preservada apenas no bundle cifrado de backup, fora do repositório ativo. A **decisão em si permanece aberta**: se o Pedro quiser essa facilidade de novo, precisa ser reimplementada com a guarda de ambiente desde o início.
+**Responsável:** Pedro (decidir se reimplementa com guarda quando precisar).
 
 **DP-28 — GAP-01a: next.js desatualizado (4 CVEs altos), bump bloqueado pela DP-21.** `next` está em 16.2.10; a auditoria de 2026-07-27 pede 16.2.12 por 4 CVEs altos. O bloqueador real é a **DP-21**: `npm install` na máquina do Pedro (Windows) poda as entradas `@emnapi/*` do lock, e `npm ci` no CI falha antes de rodar qualquer teste — foi por isso que o INC-022 não pôde adicionar `jsdom`. A **DP-25** (orçamento de 1s do teste de performance, sensível a contenção paralela) é um motivo adicional para querer sinal determinístico antes de trocar dependência sensível, mas não é o que impede o `npm install` de rodar — essa é a DP-21.
 **Responsável:** Pedro (o bump em si). ⚠️ **Atualização 2026-08-05:** a DP-21 foi **resolvida** (procedimento Docker oficializado, ver seção de resolvidas) — este item não está mais bloqueado, só não priorizado. O lock do bump precisa ser gerado pelo container Linux.
@@ -176,6 +182,9 @@
 
 **DP-36 — `/icon` e `/apple-icon` (convenção de metadata do Next) redirecionam 307 por causa do regex de slug do middleware.** `SLUG_RE` em `slug-path.ts` casa esses dois caminhos sem extensão como candidato a tenant, redirecionando antes do Route Handler responder — diferente de `icon-192.png`/`icon-512.png`/`icon-512-maskable.png` (caminhos fixos com extensão, referenciados pelo manifest, confirmados 200 com magic number PNG real). Impacto real depende de o `<head>` de fato emitir `<link rel="apple-touch-icon" href="/apple-icon...">` — não verificado (Docker Desktop caiu durante a investigação, dev server não subiu). Se confirmado, a correção é excluir `/icon` e `/apple-icon` do regex de slug, mesmo padrão de exceção que `favicon.ico`/`icon-192.png` já têm.
 **Responsável:** Pedro (verificar o `<head>` renderizado quando testar instalação hoje — o teste de Android que já está na sua lista serve pra isso também).
+
+**DP-37 — Demo online pública em VPS com seed de demonstração e reset diário (INC-027).** Rodar uma instância pública, populada com o seed Rede Vale Verde, com reset automático diário via cron, para portfólio. **Bloqueada:** sem infraestrutura de VPS contratada.
+**Responsável:** Pedro (priorizar quando decidir contratar a infra).
 
 ---
 
