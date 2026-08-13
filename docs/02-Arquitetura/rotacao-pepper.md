@@ -2,7 +2,9 @@
 
 **Relaciona-se com:** ADR-006 (auth por CPF; `cpf_hash` = hash determinístico com pepper).
 **Status:** procedimento operacional (não é ADR). Exigido pelo checklist LGPD (§Segurança).
-**Origem:** G6 da auditoria de conformidade (`docs/00-Processo/auditoria-conformidade-lgpd-2026-07.md`).
+**Origem:** achado G6 da auditoria de conformidade LGPD de 2026-07 — identificou a
+ausência de um procedimento formal de rotação do pepper (o relatório completo da
+auditoria não é versionado neste repositório).
 
 > O ADR-006 (§ "Consequências") já previa esta necessidade desde julho: "`cpf_hash`
 > determinístico também precisa de rotação de pepper documentada como procedimento

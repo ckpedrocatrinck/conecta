@@ -6,7 +6,7 @@
 **Decisores:** Pedro Catrinck
 
 ## Contexto
-A causa raiz do abandono da portal legado é o custo de alimentação: o RH monta cartazes no Canva e sobe como imagem porque o sistema não ajuda a produzir conteúdo estruturado bonito. IA generativa resolveria, mas cria custo variável e dependência externa no MVP. Análise de custo: o uso real (RH, ~100-200 gerações/mês, textos curtos) custaria unidades de reais/mês — irrelevante na margem, mas ainda assim uma dependência que o MVP não precisa ter.
+A causa raiz do abandono do portal legado é o custo de alimentação: o RH monta cartazes no Canva e sobe como imagem porque o sistema não ajuda a produzir conteúdo estruturado bonito. IA generativa resolveria, mas cria custo variável e dependência externa no MVP. Análise de custo: o uso real (RH, ~100-200 gerações/mês, textos curtos) custaria unidades de reais/mês — irrelevante na margem, mas ainda assim uma dependência que o MVP não precisa ter.
 
 ## Decisão
 1. **MVP:** cards visuais (aniversariante, reconhecimento, tempo de casa, promoção, vaga) são **gerados automaticamente por templates HTML/CSS** a partir dos dados estruturados. Custo zero por card, sem dependência externa. O produto funciona 100% sem IA.

@@ -79,11 +79,11 @@ pergunte (não deveria ser necessário).
 **Branch:** inc-014-tenant-por-path
 
 #### O que foi implementado (por bloco)
-- **Bloco 0 — Setup** (`d482633`, `5f94b75`, `72a887b`): merge `--no-ff` do INC-013.5 na `main`; branch `inc-014` da `main` atualizada; ADR-010 movido para `docs/02-Arquitetura/ADR/` **com §2 corrigido** (resolução autoritativa na camada Node, não no middleware Edge).
-- **Bloco 1 — Resolução** (`6036222`): `slug-path.ts` (Edge, extração de slug string-pura) + `resolve-tenant.ts` (Node, `getTenantBySlug` cache) + componente "empresa não encontrada" + middleware propaga `x-tenant-slug` (sempre reescrito no servidor — anti-spoofing).
-- **Bloco 2 — Login tenant-scoped** (`b2118a2`): `/{slug}/login` sob boundary `[slug]/layout.tsx` (resolve + `notFound`); seletor de empresa removido; `tenantSlug` no JWT (dep. do Bloco 3); `/{slug}/login` público.
-- **Bloco 3 — Vínculo sessão↔tenant** (`cb61dca`): `sessionMatchesTenant` (type-guard puro) + `requireSessionWithSlug` (base dos guards); testes de isolamento reforçado (decisão pura + **backstop RLS**: a `Session` de A não existe no contexto de B).
-- **Bloco 4 — Migração de rotas + nav + PWA** (`5cc0927`, `2f53abf`): `(app)`/onboarding sob `[slug]`; `/login` legado removido; imports que escapavam → alias `@/`; links/redirects/nav slug-aware; guards ligados nas rotas; Edge compare (fast-fail); manifest por tenant; SW inalterado.
+- **Bloco 0 — Setup** (`2ecb9d1`, `caf8b8b`): merge `--no-ff` do INC-013.5 na `main`; branch `inc-014` da `main` atualizada; ADR-010 movido para `docs/02-Arquitetura/ADR/` **com §2 corrigido** (resolução autoritativa na camada Node, não no middleware Edge). *(Um terceiro commit deste período só adicionava a auditoria de conformidade LGPD, removida do histórico público — não fazia parte do trabalho deste INC e não existe mais no repositório.)*
+- **Bloco 1 — Resolução** (`05c5b81`): `slug-path.ts` (Edge, extração de slug string-pura) + `resolve-tenant.ts` (Node, `getTenantBySlug` cache) + componente "empresa não encontrada" + middleware propaga `x-tenant-slug` (sempre reescrito no servidor — anti-spoofing).
+- **Bloco 2 — Login tenant-scoped** (`b1ab1e4`): `/{slug}/login` sob boundary `[slug]/layout.tsx` (resolve + `notFound`); seletor de empresa removido; `tenantSlug` no JWT (dep. do Bloco 3); `/{slug}/login` público.
+- **Bloco 3 — Vínculo sessão↔tenant** (`dd7fdd4`): `sessionMatchesTenant` (type-guard puro) + `requireSessionWithSlug` (base dos guards); testes de isolamento reforçado (decisão pura + **backstop RLS**: a `Session` de A não existe no contexto de B).
+- **Bloco 4 — Migração de rotas + nav + PWA** (`251918b`, `bdd525c`): `(app)`/onboarding sob `[slug]`; `/login` legado removido; imports que escapavam → alias `@/`; links/redirects/nav slug-aware; guards ligados nas rotas; Edge compare (fast-fail); manifest por tenant; SW inalterado.
 
 #### Decisões tomadas durante a implementação
 1. **Correção do ADR-010 §2** (aprovada por Pedro no kickoff): o ADR dizia "middleware resolve slug→tenantId", mas o middleware é Edge-sem-banco (ADR-007). Resolução autoritativa movida para a camada Node (boundary `[slug]` + `getActiveSession`); Edge faz só a checagem leve via `tenantSlug` do JWT. Objetivo do ADR inalterado.

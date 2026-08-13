@@ -11,7 +11,7 @@
 
 ## ✅ Resolvidas em 2026-07-09
 
-- **DP-01 — Acordo de IP com o Rede Vale Verde.** ✅ **100% aprovado pela diretoria** (produto é do Pedro; empresa é cliente-piloto). Recomendação: guardar o registro escrito dessa aprovação (e-mail/termo) junto ao projeto.
+- **DP-01 — Acordo de IP com a Rede Vale Verde.** ✅ **100% aprovado pela diretoria** (produto é do Pedro; empresa é cliente-piloto). Recomendação: guardar o registro escrito dessa aprovação (e-mail/termo) junto ao projeto.
 - **DP-03 — Aceite dos ADRs 001-005.** ✅ Aceitos por Pedro. Ressalva registrada no ADR-002: app nativo nas lojas é plano futuro assumido (não "talvez"), PWA é a estratégia do MVP.
 - **DP-08 — Dispositivos da base.** ✅ Maioria Android, **parcela relevante de iPhone**. Consequência: risco de push no iOS elevado de marginal para material → salvaguardas adicionadas ao ADR-002 e critério de medição ao INC-012.
 - **Login (contradição do kickoff).** ✅ Resolvida no **ADR-006**: login por CPF completo + senha; `cpf_hash` determinístico com pepper. "CPF parcial" eliminado do escopo.
@@ -104,19 +104,19 @@
 **DP-02 — Nome/domínio definitivo do produto.** "Conecta" é placeholder. Impacta domínio, repo, manifest do PWA e marca. Antes de fixar: verificar **disponibilidade do domínio** (registro.br) **e da marca** (INPI). Pode rodar com o placeholder e renomear depois (custo baixo se decidido cedo), mas o nome definitivo deve estar resolvido antes do go-live do piloto (aparece no aviso de privacidade — G2/DP separado — e na marca do header). Relacionado: DP-18 (site institucional na raiz do domínio).
 **Responsável:** Pedro.
 
-**DP-05 — Dados de custo/contrato da portal legado.** Quanto o Vale Verde paga, fidelidade, quem assinou. Define teto de preço e timing da troca. Não bloqueia dev; informa a estratégia comercial.
+**DP-05 — Dados de custo/contrato do portal legado.** Quanto o Vale Verde paga, fidelidade, quem assinou. Define teto de preço e timing da troca. Não bloqueia dev; informa a estratégia comercial.
 **Responsável:** Pedro.
 
 **DP-06 — Prazos de retenção LGPD.** Defaults (24 meses gerais; 5 anos + margem para ciência) precisam de validação jurídica **antes da venda comercial**. Para o piloto, defaults documentados bastam com ciência da controladora.
 **Responsável:** Pedro + jurídico (fase comercial).
 
-**DP-07 — Migração do histórico da portal legado.** Importar os ~450 comunicados legados (imagens) como arquivo morto ou começar do zero? Impacta INC-013. Proposta: começar do zero + legado guardado pelo RH fora do sistema.
+**DP-07 — Migração do histórico do portal legado.** Importar os ~450 comunicados legados (imagens) como arquivo morto ou começar do zero? Impacta INC-013. Proposta: começar do zero + legado guardado pelo RH fora do sistema.
 **Responsável:** Pedro + RH do piloto.
 
 **DP-09 — Contraste AA de `--primary`/`--action` no modo escuro.** O `design-system.md` (seção 8) pede "luminância ajustada para AA" para o verde/laranja no dark mode, mas não dá o hex resultante. O INC-003.5 implementou só os tokens neutros do escuro (fundo/superfície/texto, hex exato documentado) e reaproveitou o hex do modo claro para `--primary`/`--action` sem ajuste — dark mode "funciona" mas o contraste desses dois tokens no escuro não foi validado/ajustado. Bloqueia considerar o dark mode "pronto" (hoje é bônus, não MVP).
 **Responsável:** Pedro (Claude Design define o hex ajustado quando dark mode for priorizado).
 
-**DP-10 — Itens reais do bottom nav.** O componente `BottomNav` (INC-003.5) existe e está estilizado conforme a seção 4 do design-system, mas sem os 4–5 itens de navegação reais nem integração em nenhuma tela — o próprio design-system pede para não copiar os itens da portal legado sem revisar. Precisa de um INC de navegação (IA do app: quais telas, em que ordem, quais ícones) antes de qualquer tela usar o componente. O INC-005 (leitura/ack de comunicados) navega até `/comunicados` só pelo banner de pendência e um link na home, sem integrar o `BottomNav`, exatamente por essa decisão continuar aberta.
+**DP-10 — Itens reais do bottom nav.** O componente `BottomNav` (INC-003.5) existe e está estilizado conforme a seção 4 do design-system, mas sem os 4–5 itens de navegação reais nem integração em nenhuma tela — o próprio design-system pede para não copiar os itens do portal legado sem revisar. Precisa de um INC de navegação (IA do app: quais telas, em que ordem, quais ícones) antes de qualquer tela usar o componente. O INC-005 (leitura/ack de comunicados) navega até `/comunicados` só pelo banner de pendência e um link na home, sem integrar o `BottomNav`, exatamente por essa decisão continuar aberta.
 **Responsável:** Pedro (definir escopo do INC de navegação).
 
 **DP-12 — Gestor multi-filial não suportado.** `User.branchId` é uma filial por usuário — não existe vínculo "gestor → várias filiais" no modelo de dados. O painel de pendências (INC-006) usa exatamente essa única filial para restringir a visão do gestor (`requireAdminOrManager` + `session.branchId`); a redação do INC-006 ("à(s) sua(s) filial(is)") é genérica, mas na prática resolve para 1 filial com o schema atual. Se um gestor cobrindo múltiplas filiais virar requisito real do piloto, é mudança de modelo de dados (tabela de vínculo gestor↔filiais) + ADR novo, não ajuste trivial no painel existente.
@@ -190,7 +190,7 @@
 
 ## Bloqueadores e dependências do go-live do piloto (INC-013)
 
-> Itens do hardening que **não são código** — dependem de input do Pedro (jurídico) ou de verificação em painel (host/Neon/Vercel). Rastreados em detalhe na auditoria (`docs/00-Processo/auditoria-conformidade-lgpd-2026-07.md`) e no INC (`docs/04-Roadmap/incrementos/INC-013-hardening-piloto.md`); consolidados aqui para não se perderem. **Os 🔴 bloqueiam a entrada de dado real de pessoa no piloto.**
+> Itens do hardening que **não são código** — dependem de input do Pedro (jurídico) ou de verificação em painel (host/Neon/Vercel). Rastreados em detalhe na auditoria de conformidade LGPD de 2026-07 (relatório não versionado neste repositório) e no INC (`docs/04-Roadmap/incrementos/INC-013-hardening-piloto.md`); consolidados aqui para não se perderem. **Os 🔴 bloqueiam a entrada de dado real de pessoa no piloto.**
 
 **G2 — Aviso de privacidade definitivo.** 🔴 Substituir o placeholder (`src/lib/privacy/notice.ts`), bumpar `PRIVACY_NOTICE_VERSION` e **declarar transferência internacional** (LGPD Art. 33) se a infra rodar fora do Brasil. **Travado em:** (a) texto jurídico do Pedro; (b) M3 (região da infra). Os drafts (`aviso-privacidade.md`, `guia-conformidade-lgpd.md`) estão **untracked** na árvore de trabalho e vão para `docs/03-LGPD/` (não `04-Roadmap/`) quando preenchidos, commitados junto do G2. O código do G2 em si é pequeno.
 **Responsável:** Pedro + jurídico.

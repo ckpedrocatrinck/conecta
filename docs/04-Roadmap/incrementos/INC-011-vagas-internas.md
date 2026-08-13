@@ -5,7 +5,7 @@
 **Depende de:** INC-003 (e INC-009 para o card)
 
 ## Objetivo
-Vaga como entidade com candidatura em 1 toque — a demo perfeita da diferença para a portal legado.
+Vaga como entidade com candidatura em 1 toque — a demo perfeita da diferença para o portal legado.
 
 ## Escopo
 1. CRUD admin de vagas: cargo, descrição rich text, filial (ou todas), turno, requisitos, prazo, status.
@@ -22,6 +22,6 @@ Vaga como entidade com candidatura em 1 toque — a demo perfeita da diferença 
 ## Registro de conclusão
 **Data:** 2026-07-14
 **Branch:** inc-011-vagas-internas
-**Merge em main:** d560024 (`--no-ff`, 2026-07-14)
+**Merge em main:** 603d941 (`--no-ff`, 2026-07-14)
 
 Reconciliação de vault de 2026-07-16 (achado A6-1 da auditoria): código mergeado e presente na main, mas este registro e a marcação no roadmap ficaram vazios/`⬜` até esta data. Preenchido a partir do `git log`, sem Relatório de Entrega original recuperável — se um relatório detalhado for necessário, verificar histórico de conversa com o Claude Code na época.

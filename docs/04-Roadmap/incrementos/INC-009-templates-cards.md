@@ -22,6 +22,6 @@ Matar o Canva: todo post gera card visual bonito automaticamente a partir dos da
 ## Registro de conclusão
 **Data:** 2026-07-13
 **Branch:** inc-009-templates-cards
-**Merge em main:** c1aeb80 (`--no-ff`, 2026-07-13)
+**Merge em main:** 699a157 (`--no-ff`, 2026-07-13)
 
 Reconciliação de vault de 2026-07-16 (achado A6-1 da auditoria): código mergeado e presente na main, mas este registro e a marcação no roadmap ficaram vazios/`⬜` até esta data. Preenchido a partir do `git log`, sem Relatório de Entrega original recuperável — se um relatório detalhado for necessário, verificar histórico de conversa com o Claude Code na época.

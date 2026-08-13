@@ -6,7 +6,7 @@
 - INC-005, escopo item 4 / critério "Pendência reaberta por versão material aparece para quem já tinha confirmado" (checkbox nunca marcado no arquivo do INC).
 - INC-012.5, Bloco A, item A2-1 (comunicado agendado não publicava).
 
-> **Correção de premissa (2026-08-04, após investigação).** O spec original deste INC afirmava (a) que a reabertura de pendência por mudança material não estava implementada e (b) que o middleware bloqueava `/api/cron/publish-announcements` antes do handler avaliar o `CRON_SECRET`. **Nenhuma das duas se sustentou.** A reabertura está implementada e correta; o matcher já exclui `api/cron` desde o INC-012.5 (`443c4da`) e o endpoint responde e publica. O escopo real deste INC ficou sendo **apenas** o que a investigação revelou como faltando: **não existe nenhum agendador chamando os endpoints de cron**. Este arquivo foi reescrito com os achados reais.
+> **Correção de premissa (2026-08-04, após investigação).** O spec original deste INC afirmava (a) que a reabertura de pendência por mudança material não estava implementada e (b) que o middleware bloqueava `/api/cron/publish-announcements` antes do handler avaliar o `CRON_SECRET`. **Nenhuma das duas se sustentou.** A reabertura está implementada e correta; o matcher já exclui `api/cron` desde o INC-012.5 (`a684ee8`) e o endpoint responde e publica. O escopo real deste INC ficou sendo **apenas** o que a investigação revelou como faltando: **não existe nenhum agendador chamando os endpoints de cron**. Este arquivo foi reescrito com os achados reais.
 
 ## Objetivo
 Fechar os dois comportamentos do núcleo jurídico reportados no teste manual de 2026-08-04: (1) editar um comunicado publicado com "mudança material" reabrir a pendência de quem já confirmou ciência — **verificado como já funcionando**; (2) comunicado agendado publicar automaticamente no horário marcado — **faltava o agendador**, entregue aqui.
@@ -78,23 +78,23 @@ docker compose logs -f scheduler
 
 **Data:** 2026-08-04
 **Branch:** `inc-023-correcoes-criticas`
-**Merge em main:** 2026-08-04 (`--no-ff`; commit de merge `ff9f822`)
+**Merge em main:** 2026-08-04 (`--no-ff`; commit de merge `1453d94`)
 
 ### O que foi implementado
 
 **Parte 1 — nada.** A investigação mostrou que o comportamento já existia e estava correto em todas as superfícies. Os critérios foram marcados como satisfeitos, não implementados aqui. O único artefato desta parte é documental (correção da premissa do spec + DP-32).
 
-**Parte 2 — serviço `scheduler` no `docker-compose.yml`** (`e96ce03`). Imagem `curlimages/curl:8.11.1`, `restart: unless-stopped`, loop `sh` com `sleep`:
+**Parte 2 — serviço `scheduler` no `docker-compose.yml`** (`a7bae22`). Imagem `curlimages/curl:8.11.1`, `restart: unless-stopped`, loop `sh` com `sleep`:
 - `GET /api/cron/publish-announcements` a cada `SCHEDULER_PUBLISH_INTERVAL_SECONDS` (default 300s).
 - `GET /api/cron/anonymize-users` uma vez por dia, quando a hora UTC bate `SCHEDULER_ANONYMIZE_AT_HOUR_UTC` (default `03` = meia-noite em São Paulo) e o dia mudou desde a última execução.
 - `Authorization: Bearer $CRON_SECRET`, interpolado do mesmo `.env` da app pelo Compose.
 - Log por chamada: `<timestamp UTC> OK|FALHA GET <rota> -> <status>`; `curl -sS` deixa o erro de rede também visível no stderr do container.
 
-**Documentação:** nota do A2-1 corrigida no INC-012.5 (`cd1bff0`), este arquivo reescrito com os achados reais (`d7f218b`), DP-32 registrada (`bfb5593`).
+**Documentação:** nota do A2-1 corrigida no INC-012.5 (`5c5dbbf`), este arquivo reescrito com os achados reais (`7b1a26f`), DP-32 registrada (`56e52c2`).
 
 ### Decisões tomadas
 
-1. **Não excluir `api/cron` do matcher, porque já estava excluído.** O spec original mandava fazer isso; aplicar seria no-op. O matcher exclui `api/auth|api/cron|_next/static|_next/image|favicon.ico` desde o INC-012.5 (`443c4da`), em `src/middleware.ts` e no `MIDDLEWARE_MATCHER` espelhado. A autenticação Bearer dentro dos handlers não foi tocada.
+1. **Não excluir `api/cron` do matcher, porque já estava excluído.** O spec original mandava fazer isso; aplicar seria no-op. O matcher exclui `api/auth|api/cron|_next/static|_next/image|favicon.ico` desde o INC-012.5 (`a684ee8`), em `src/middleware.ts` e no `MIDDLEWARE_MATCHER` espelhado. A autenticação Bearer dentro dos handlers não foi tocada.
 2. **Agendador como serviço do Compose, não `node-cron` in-process.** In-process duplicaria o disparo com múltiplas réplicas e mudaria a arquitetura da app; cron no host do VPS não teria paridade com dev nem versionamento no repo. O Compose é o que o ADR-011 já fixa como ambiente de produção.
 3. **Loop `sh` em vez de `crond` do busybox.** `crond` exigiria montar um crontab por volume e ainda redirecionar log para stdout; o loop dá timestamp, status HTTP e o prefixo `FALHA` diretamente, sem arquivo extra.
 4. **Perfil `scheduler` (não sobe com `docker compose up` puro).** O serviço `app` de `APP_INTERNAL_URL` ainda não existe neste compose — hoje ele só tem o `postgres` que serve o dev local. Sem o perfil, `docker compose up` em dev passaria a subir um container gritando `FALHA` a cada 5 min. **Custo aceito:** em produção é obrigatório subir com `--profile scheduler`, senão o agendador não roda. Remover o perfil quando o serviço `app` entrar.

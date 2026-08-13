@@ -23,4 +23,4 @@ Líder de setor/encarregado. Celular. Precisa saber quem da SUA equipe não conf
 
 ## P4 — Diretoria (patrocinadora)
 
-Não usa o sistema no dia a dia. Quer: proteção jurídica, colaborador informado, custo baixo. É quem aprova a troca da portal legado. Recebe o argumento de venda: trilha de auditoria + LGPD + adoção real.
+Não usa o sistema no dia a dia. Quer: proteção jurídica, colaborador informado, custo baixo. É quem aprova a troca do portal legado. Recebe o argumento de venda: trilha de auditoria + LGPD + adoção real.

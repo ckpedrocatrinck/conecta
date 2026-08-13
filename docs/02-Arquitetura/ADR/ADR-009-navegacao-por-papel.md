@@ -8,7 +8,7 @@
 **Nota de manutenção:** este ADR descreve a decisão de arquitetura (dois sistemas de navegação por papel), não o inventário exato de telas do header — a lista de itens administrativos muda conforme novos INCs adicionam telas (ex. Vagas no INC-011) sem que isso mude a decisão em si.
 
 ## Contexto
-Até o INC-008, cada tela nasceu acessível só por link direto ou URL digitada à mão — não existe navegação global. O painel admin, por exemplo, só aparece digitando `/admin`. Isso foi adiado de propósito (DP-10): definir os itens de navegação exigia saber quais telas existiriam, o que só agora está claro (comunicados, feed, pendências, posts, perfil, admin). O produto tem dois perfis de uso com necessidades opostas: o colaborador (maioria, celular modesto, pressa, precisa de pouquíssimas opções grandes) e o admin/RH (desktop majoritariamente, precisa de muitas opções organizadas). Misturar os dois num menu só foi exatamente o erro da portal legado (hambúrguer de 18 itens misturando "Foi show" com "Sair").
+Até o INC-008, cada tela nasceu acessível só por link direto ou URL digitada à mão — não existe navegação global. O painel admin, por exemplo, só aparece digitando `/admin`. Isso foi adiado de propósito (DP-10): definir os itens de navegação exigia saber quais telas existiriam, o que só agora está claro (comunicados, feed, pendências, posts, perfil, admin). O produto tem dois perfis de uso com necessidades opostas: o colaborador (maioria, celular modesto, pressa, precisa de pouquíssimas opções grandes) e o admin/RH (desktop majoritariamente, precisa de muitas opções organizadas). Misturar os dois num menu só foi exatamente o erro do portal legado (hambúrguer de 18 itens misturando "Foi show" com "Sair").
 
 ## Decisão
 Dois sistemas de navegação distintos, selecionados por papel.
@@ -25,7 +25,7 @@ Dois sistemas de navegação distintos, selecionados por papel.
   revisão).
 - Máximo de 5 itens (regra de bottom nav: 3–5, alvos ≥48px). Com o INC-015 o
   bottom nav do colaborador está **cheio (5 itens)**.
-- O item **Comunicados exibe badge** (contador) quando há comunicado pendente de ciência — puxa o colaborador para a ação mais importante do produto sem ele procurar. É o oposto do banner dispensável da portal legado.
+- O item **Comunicados exibe badge** (contador) quando há comunicado pendente de ciência — puxa o colaborador para a ação mais importante do produto sem ele procurar. É o oposto do banner dispensável do portal legado.
 - Componente `BottomNav` já existe (INC-003.5) — este INC popula os itens reais.
 
 ### Admin — bottom nav + menu administrativo no header
@@ -38,7 +38,7 @@ Dois sistemas de navegação distintos, selecionados por papel.
 - No piloto (Vale Verde) o papel manager não será usado (gestão centralizada no RH), mas a navegação já respeita o papel para clientes futuros que deleguem gestão por filial.
 
 ## Alternativas consideradas
-- **Menu único (hambúrguer) para todos** — simples de implementar, mas reproduz o erro da portal legado (mistura tudo, alvos ruins, sem hierarquia por papel); rejeitada.
+- **Menu único (hambúrguer) para todos** — simples de implementar, mas reproduz o erro do portal legado (mistura tudo, alvos ruins, sem hierarquia por papel); rejeitada.
 - **Admin só no bottom nav (item "Admin")** — funcionaria, mas espreme 6 telas administrativas num item só e ignora que o RH usa desktop; rejeitada em favor do header.
 - **Sem bottom nav para admin** — obrigaria o RH a trocar de conta para ver o produto como colaborador; rejeitada (ele precisa conferir o que publica).
 

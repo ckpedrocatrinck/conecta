@@ -29,7 +29,7 @@ Login funcional por CPF + senha, papéis aplicados, e RH capaz de popular a base
 ## Relatório de Entrega — INC-003
 **Data:** 2026-07-10
 **Branch:** inc-003-auth-cadastro
-**Merge:** fast-forward para `main` em 2026-07-10, commit `3dcf123a69cd37896a4f04fb34dcd0f5346a45e5`
+**Merge:** fast-forward para `main` em 2026-07-10, commit `80ad64c86e395a3580e87562cc89b0e967f09ccc`
 
 ### O que foi implementado
 

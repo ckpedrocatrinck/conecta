@@ -22,5 +22,5 @@ Fechar o ciclo probatório: cobrar pendentes e exportar evidência; ações admi
 
 - **Data:** 2026-07-13 (marcação retroativa — implementação já estava mergeada em `main`, doc não tinha sido fechada)
 - **Branch:** `inc-007-cobranca-export-audit`
-- **Commit:** `857a381` (`feat(INC-007): cobranca de pendentes, export CSV e AuditLog`)
+- **Commit:** `807babd` (`feat(INC-007): cobranca de pendentes, export CSV e AuditLog`)
 - **CI:** cobertura via `tests/integration/announcement-ack-export.test.ts`, `tests/integration/audit-log.test.ts` e `tests/integration/remind-pending.test.ts`.

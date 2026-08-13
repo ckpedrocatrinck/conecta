@@ -43,6 +43,11 @@ em `tenants`, autorização das ações novas.
 > (não só em `src/`): zero uso em componentes, rotas, seeds, scripts ou
 > manifests — os manifests PWA apontam para `/icon-192.png` e afins, que são
 > Route Handlers próprios, não estes arquivos.
+>
+> **Atualização — 2026-08-13 (INC-027):** os arquivos reais (logotipo e marca
+> do cliente-piloto) foram removidos do repositório e do histórico na
+> preparação para publicação. Um ativo substituto (Rede Vale Verde) entra no
+> Bloco 3 do INC-027.
 
 Conclusão: nada de meio-de-merge. A auditoria roda sobre código fechado.
 
@@ -654,7 +659,9 @@ Só o que de fato precisa de ação. Esforço: **P** ≈ até 2h · **M** ≈ me
 > - ✅ **`fivicon.png` / `logo.png` — resolvido hoje.** Movidos para
 >   `public/branding/`, o primeiro renomeado para `favicon.png` (o typo estava
 >   confirmado), ambos versionados. Detalhe na nota da seção de arquivos
->   untracked, no início deste documento.
+>   untracked, no início deste documento. *(Atualização 2026-08-13, INC-027: os
+>   arquivos reais foram removidos do repositório e do histórico na preparação
+>   para publicação; ativo substituto entra no Bloco 3.)*
 > - ⬜ **Empty state do admin de benefícios — segue aberto.** O
 >   `<p className="text-meta text-muted-foreground">` cru em
 >   `admin/beneficios/page.tsx:49-50` continua não usando `EmptyState`, ao

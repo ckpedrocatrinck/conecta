@@ -13,7 +13,7 @@ Colaborador lê comunicados no celular e declara ciência com registro probatór
 2. Leitura em texto nativo responsivo; registro de `AnnouncementRead` na primeira abertura por versão.
 3. Botão "Declaro ciência" (apenas se `requires_ack`): grava usuário, timestamp UTC, versão e `content_hash_at_ack`; UI mostra data/hora em America/Sao_Paulo; ação irreversível pela UI.
 4. Se houver versão nova material após ack: item volta a pendente com aviso "este comunicado foi atualizado".
-5. Home do colaborador: card fixo "X comunicados aguardando sua ciência" — **não dispensável** enquanto houver pendência (anti-padrão do X da portal legado).
+5. Home do colaborador: card fixo "X comunicados aguardando sua ciência" — **não dispensável** enquanto houver pendência (anti-padrão do X do portal legado).
 
 ## Critérios de aceite
 - [ ] Ack duplicado impossível (constraint + UI idempotente).
@@ -25,6 +25,6 @@ Colaborador lê comunicados no celular e declara ciência com registro probatór
 
 - **Data:** 2026-07-10
 - **Branch:** `inc-005-comunicados-leitura-ack`
-- **Commit de merge (fast-forward):** `361b5dfc7d9ed89bb7ad9f3f6eac75bf72bcd6c1`
+- **Commit de merge (fast-forward):** `8f18a1dab994a915b70931a93992b122e445a65d`
 - **CI:** verde na branch antes do merge (mesmo commit foi fast-forwarded para a `main`; o workflow tem `branches-ignore: [main]` por desenho, então não roda de novo na main).
 - **Decisões registradas:** DP-11 (`docs/05-Decisoes-Pendentes.md`) — arquivar comunicado com pendência aberta absolve a pendência; aceito para o MVP, sugerido como métrica para o INC-006.

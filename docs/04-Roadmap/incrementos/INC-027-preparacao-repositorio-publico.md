@@ -33,7 +33,7 @@ Não altera, cria, remove nem commita nada. Produz relatório com severidade �
 `arquivo:linha` ou SHA, e veredito explícito BLOQUEIA / NÃO BLOQUEIA.
 
 - **D1 — Segredos no histórico completo.** A auditoria anterior cobriu apenas até
-  `inc-012-pwa-push@46a0122`; os INCs 013–026 nunca foram varridos. `gitleaks detect
+  `inc-012-pwa-push@614effd`; os INCs 013–026 nunca foram varridos. `gitleaks detect
   --source . --log-opts="--all"`; `.env*` já adicionado em qualquer commit; buscar chave
   privada VAPID, `CPF_HASH_PEPPER`, `CRON_SECRET`, `APP_DB_PASSWORD`, `POSTGRES_PASSWORD`,
   credenciais MinIO.

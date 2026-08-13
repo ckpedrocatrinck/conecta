@@ -48,5 +48,5 @@
 Observações:
 - 008-011 podem rodar após a fase 2 em qualquer ordem; a ordem acima é a recomendada (engajamento antes de vagas para o go-live ter feed vivo).
 - Cada INC tem arquivo próprio em `incrementos/` com escopo e critérios de aceite — o arquivo é o contrato com o Claude Code.
-- Fase 1.5/2 do produto (ouvidoria, IA, quiz) está em `01-Produto/fora-do-escopo-fase2.md` e ganhará INCs próprios quando especificada. **Benefícios foi adiantado para o pré-piloto (INC-015, paridade com a portal legado)** — só a fase 2 do próprio benefício (logo/R2) segue fora de escopo.
+- Fase 1.5/2 do produto (ouvidoria, IA, quiz) está em `01-Produto/fora-do-escopo-fase2.md` e ganhará INCs próprios quando especificada. **Benefícios foi adiantado para o pré-piloto (INC-015, paridade com o portal legado)** — só a fase 2 do próprio benefício (logo/R2) segue fora de escopo.
 - INC-012.5 é transversal de correção (triagem das auditorias de 2026-07-16, "Balde 1") — não é uma feature nova de fase, roda entre o INC-012 e o polimento visual (DP-13/DP-14)/INC-013.

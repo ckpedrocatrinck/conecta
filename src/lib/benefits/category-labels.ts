@@ -2,7 +2,7 @@ import type { BenefitCategory } from "@prisma/client";
 
 /** Rotulos pt-BR das categorias do Clube de Beneficios (INC-015), centralizados
  * (CLAUDE.md: strings de UI em pt-BR, centralizadas). Capitalizacao correta —
- * "Saude", "Educacao" com acento — explicitamente sem os defeitos da portal legado
+ * "Saude", "Educacao" com acento — explicitamente sem os defeitos do portal legado
  * ("SAUDE"/"SAude"). O enum no banco e' minusculo (ver BenefitCategory em
  * schema.prisma); estes sao apenas os rotulos de exibicao. */
 export const BENEFIT_CATEGORY_LABELS: Record<BenefitCategory, string> = {

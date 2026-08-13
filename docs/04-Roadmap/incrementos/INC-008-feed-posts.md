@@ -21,7 +21,7 @@ RH publica reconhecimentos/tempo de casa/promoções como dados estruturados; co
 ## Registro de conclusão
 - **Concluído em:** 2026-07-13
 - **Branch:** inc-008-feed-posts
-- **Commit de merge:** 550a7f8
+- **Commit de merge:** 5f29add
 - **QA validado por Pedro:** consentimento de foto testado no navegador —
   colaborador sem consentimento aparece só com nome; ao ligar o consentimento
   no perfil, a foto surge no card sem reeditar o post (prova de que a checagem

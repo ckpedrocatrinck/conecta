@@ -35,8 +35,8 @@ App instalável na home do celular com push funcionando — o mecanismo de retor
 ## Registro de conclusão
 **Data do merge:** 2026-07-16
 **Branch:** inc-012-pwa-push
-**Merge em main:** `e01df13` (`--no-ff`)
+**Merge em main:** `e5bcfb5` (`--no-ff`)
 
 **Ressalva explícita — este INC NÃO está concluído:** o código está completo e mergeado (manifest, service worker, Web Push VAPID, opt-in/revogação, limitações iOS documentadas abaixo), mas o critério de aceite "push testado em iPhone real, taxa de entrega registrada no vault" continua pendente. A tabela de medição real (`docs/02-Arquitetura/pwa-push-ios.md`) existe e está vazia. Só marcar ✅ no roadmap quando essa tabela tiver dados reais de teste em iPhone — código completo não é o mesmo que concluído aqui (ADR-002/ADR-006: base tem parcela relevante de iOS, não presumir).
 
-Histórico: código implementado nos commits `94e69cd`, `43085b9`, `b2302a1`, `46a0122`. A tabela de medição não existia no vault até a reconciliação de 2026-07-16 (achado A6-4 da auditoria) — foi criada vazia para não perder o requisito.
+Histórico: código implementado nos commits `d3dc164`, `af16d7d`, `f194081`, `614effd`. A tabela de medição não existia no vault até a reconciliação de 2026-07-16 (achado A6-4 da auditoria) — foi criada vazia para não perder o requisito.

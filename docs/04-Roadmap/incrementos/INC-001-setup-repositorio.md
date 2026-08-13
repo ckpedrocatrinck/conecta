@@ -32,7 +32,7 @@ Banco, auth, qualquer feature de domínio.
 ## Registro de conclusão
 - **Data:** 2026-07-09
 - **Branch:** `inc-001-setup-repositorio`
-- **Commit final da branch:** `2fceb60` (fix(INC-001): regenerar package-lock.json do zero) — merge para `main` ainda pendente, a cargo do Pedro.
+- **Commit final da branch:** `d1fa71f` (fix(INC-001): regenerar package-lock.json do zero) — merge para `main` ainda pendente, a cargo do Pedro.
 - **Repositório remoto:** https://github.com/pedromcatrinck/conecta (privado)
 - **CI:** verde — https://github.com/pedromcatrinck/conecta/actions/runs/29049213260
 - **Observações:** `main` foi criada no remoto com um commit inicial vazio (sem o conteúdo do INC-001) e definida como branch padrão do repo; o merge de `inc-001-setup-repositorio` para `main` continua sendo ação do Pedro. Duas iterações de correção de `package-lock.json` foram necessárias até a CI passar no runner Linux do GitHub Actions (lockfile gerado originalmente no Windows). Ver Relatório de Entrega e adendo na sessão de execução para detalhes completos.

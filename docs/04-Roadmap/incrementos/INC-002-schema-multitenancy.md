@@ -25,7 +25,7 @@ Banco PostgreSQL com o modelo de dados completo do MVP, RLS por tenant ativa e t
 ## Registro de conclusão
 - **Data:** 2026-07-10
 - **Branch:** `inc-002-schema-multitenancy`
-- **Commit de merge em `main`:** `73a01a3` (fast-forward — sem commit de merge próprio)
+- **Commit de merge em `main`:** `f46ac56` (fast-forward — sem commit de merge próprio)
 - **Notas técnicas:**
   - RLS por `tenant_id` com role de runtime separada (`conecta_app`, não-superuser) da role de migração/seed — necessário porque o `POSTGRES_USER` do Docker é superuser e superuser sempre bypassa RLS, mesmo com `FORCE ROW LEVEL SECURITY`.
   - `AnnouncementAck` imutável por trigger de banco (recusa UPDATE/DELETE/TRUNCATE independente de role/GRANT), além de o repositório nunca expor essas funções.

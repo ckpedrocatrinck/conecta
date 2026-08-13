@@ -15,7 +15,7 @@ manda evitar.
 
 **Já feito (com evidência no repositório):**
 
-- **Bloco A — checklist LGPD percorrido:** `docs/00-Processo/auditoria-conformidade-lgpd-2026-07.md`.
+- **Bloco A — checklist LGPD percorrido.** Auditoria de conformidade LGPD completa (2026-07); o relatório detalhado foi removido do repositório na preparação para publicação (INC-027) — os achados foram endereçados nos blocos abaixo.
 - **Bloco B — headers de segurança:** HSTS, CSP e `X-Content-Type-Options`
   em `next.config.ts`, cobertos por `next.config.test.ts`.
 - **Bloco B — rate limit:** `src/lib/security/rate-limit.ts` (fixed-window em

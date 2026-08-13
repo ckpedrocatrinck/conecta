@@ -1,11 +1,11 @@
 # Especificação de design — INC-013.5 (extraída do protótipo aprovado)
 
-O protótipo original ("Conecta - Protótipo (offline).html") tem 2,8 MB porque o
-export do Claude Design embute ilustrações e runtime. Este documento extrai o que
-importa para a implementação: a PALETA EXATA (tirada do CSS do próprio protótipo)
-e a referência das telas. Use `redesenho-referencia-leve.html` (versão sem os
-blobs de imagem) para inspecionar estrutura/layout, e as imagens em
-`docs/06-Design/redesenho-prints/` para conferir a aparência-alvo.
+O protótipo original ("Conecta - Protótipo (offline).html") tinha 2,8 MB porque o
+export do Claude Design embutia ilustrações e runtime. Este documento extrai o que
+importa para a implementação: a PALETA EXATA (tirada do CSS do próprio protótipo).
+*(Os arquivos de referência HTML e os prints do protótipo foram removidos do
+repositório na preparação para publicação (INC-027) — continham marca e dados de
+terceiro. A paleta abaixo é a fonte de verdade que sobrevive independente deles.)*
 
 ## PALETA EXATA (hex tirados do protótipo, por papel)
 

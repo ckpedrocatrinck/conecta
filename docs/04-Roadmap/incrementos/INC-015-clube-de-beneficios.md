@@ -1,9 +1,9 @@
 # INC-015 — Clube de Benefícios / Parceiros
 
 **Status:** ✅ Concluído (2026-07-23)
-**Fase:** feature pré-piloto (necessária para paridade com a portal legado no go-live)
+**Fase:** feature pré-piloto (necessária para paridade com o portal legado no go-live)
 **Depende de:** INC-014 (tenant por path) na main; padrão de CRUD admin dos INCs anteriores
-**Origem:** o Vale Verde usa e valoriza a aba de benefícios da portal legado; ausência no go-live seria retrocesso visível de adoção (decisão de Pedro).
+**Origem:** o Vale Verde usa e valoriza a aba de benefícios do portal legado; ausência no go-live seria retrocesso visível de adoção (decisão de Pedro).
 
 ## O que é
 Área onde a EMPRESA-CLIENTE (tenant) cadastra e divulga os benefícios que ELA
@@ -19,8 +19,8 @@ aos seus empregados. O admin/gestor configura tudo.
   fase 2 não exigir migration. Isto evita abrir a caixa do R2 no caminho crítico
   do piloto.
 - Multi-tenant nativo (tenant_id + RLS, como tudo).
-- "Melhor que a portal legado": mesmo conteúdo, visual do Conecta (accordion limpo por
-  categoria), SEM os defeitos da portal legado (capitalização quebrada tipo "SAúDE",
+- "Melhor que o portal legado": mesmo conteúdo, visual do Conecta (accordion limpo por
+  categoria), SEM os defeitos do portal legado (capitalização quebrada tipo "SAúDE",
   visual pesado). Categorias com capitalização correta.
 
 ## Modelo de dados
@@ -85,7 +85,7 @@ Benefit
       CRUD em `admin/beneficios` (autorização `requireAdmin`; ordenação por
       `sort_order` dentro da categoria).
 - [x] Colaborador vê os benefícios ativos por categoria, no visual Conecta (sem
-      defeitos da portal legado), no mobile 360px — `/{slug}/beneficios` (accordion),
+      defeitos do portal legado), no mobile 360px — `/{slug}/beneficios` (accordion),
       capitalização correta via rótulos centralizados.
 - [x] Multi-tenant: benefícios de um tenant nunca aparecem noutro (RLS + teste) —
       RLS forçada na migration; `tenant-isolation.test.ts` + `benefits.test.ts`

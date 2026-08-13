@@ -5,7 +5,7 @@
 PMEs brasileiras com força de trabalho operacional (varejo, indústria leve, logística) precisam comunicar normas internas, celebrar pessoas e divulgar oportunidades — e hoje fazem isso com ferramentas que falham em três pontos:
 
 1. **Compliance frágil.** Comunicados são imagens escaneadas; a "ciência" do colaborador é um botão dispensável. Em ação trabalhista, a empresa não consegue provar de forma robusta que o colaborador foi informado.
-2. **Custo de alimentação alto.** Os sistemas exigem que o RH produza conteúdo (cartazes no Canva subidos como imagem) em vez de ajudá-lo. Resultado: sistema vazio → colaborador não volta → sistema mais vazio (ciclo vicioso observado na portal legado).
+2. **Custo de alimentação alto.** Os sistemas exigem que o RH produza conteúdo (cartazes no Canva subidos como imagem) em vez de ajudá-lo. Resultado: sistema vazio → colaborador não volta → sistema mais vazio (ciclo vicioso observado no portal legado).
 3. **Experiência ruim no celular.** O usuário final é operacional, sem desktop, usando o próprio smartphone. As ferramentas legadas são web desktop adaptada.
 
 ## Tese
@@ -21,7 +21,7 @@ Diferenciais em ordem de prioridade:
 
 ## Estratégia de entrada
 
-- **Piloto:** Rede Vale Verde (interior do RJ-RJ), substituindo a portal legado. Acesso privilegiado do fundador como funcionário/usuário real.
+- **Piloto:** Rede Vale Verde (interior do RJ), substituindo o portal legado. Acesso privilegiado do fundador como funcionário/usuário real.
 - **Pré-condição do piloto:** acordo formal com a diretoria garantindo que a propriedade intelectual do produto é do fundador e que a empresa atua como cliente-piloto. ⚠️ Ver `05-Decisoes-Pendentes.md` — isto é bloqueante antes de qualquer deploy interno.
 - **Case alvo:** métricas de adoção e depoimento do RH para venda às próximas empresas da região.
 

@@ -7,13 +7,13 @@
 
 ## 0. Princípios (o "porquê" antes do "quê")
 
-O design resolve a tese do produto: a portal legado é abandonada por ser feia, pesada e confusa. Cada decisão visual serve a:
+O design resolve a tese do produto: o portal legado é abandonado por ser feio, pesado e confuso. Cada decisão visual serve a:
 
 1. **Mobile-first de verdade** — desenhado para 360px e polegar. Alvos de toque ≥ 48px. Nada essencial em hover.
 2. **Leve em rede ruim** — dados móveis limitados, aparelhos modestos. Sem peso decorativo inútil, feedback de carregamento honesto.
 3. **Claro em 30 segundos** — abrir e entender "o que é novo / o que preciso fazer" quase instantaneamente. Hierarquia forte.
 4. **Digno, não infantil** — profissional sem ser sisudo nem gamificado-bobo. É ambiente de trabalho (normas trabalhistas, hora extra).
-5. **Anti-portal legado explícito** — NÃO repetir: texto como imagem; capitalização quebrada ("SAúDE"); telas vazias sem estado; navegação redundante ("Lazer > Lazer"); erro em inglês; visual pesado e datado.
+5. **Anti-padrão do portal legado explícito** — NÃO repetir: texto como imagem; capitalização quebrada ("SAúDE"); telas vazias sem estado; navegação redundante ("Lazer > Lazer"); erro em inglês; visual pesado e datado.
 
 ## 0.1 Conceito da direção escolhida — "Balcão"
 
@@ -82,7 +82,7 @@ Carregar via `next/font` (self-host, sem FOUT pesado). Uma família só.
 
 ## 4. Componentes-chave (aparência)
 
-- **Bottom navigation:** fundo `--card`, item ativo `--primary`, inativo `--muted-foreground`. Ícones lucide, rótulos curtos. Definir os 4–5 itens no INC de navegação (não copiar os 4 da portal legado sem revisar).
+- **Bottom navigation:** fundo `--card`, item ativo `--primary`, inativo `--muted-foreground`. Ícones lucide, rótulos curtos. Definir os 4–5 itens no INC de navegação (não copiar os 4 do portal legado sem revisar).
 - **Card de comunicado (lista):** os três estados acima. Só o pendente é laranja.
 - **Tela de leitura de comunicado:** texto real legível; botão "Declaro ciência" em `--action`, largura total, alvo grande — ação mais importante do app.
 - **Banner de pendência:** fundo `--action-subtle`, texto `--foreground`, **sem botão de fechar**. Persiste enquanto houver pendência.

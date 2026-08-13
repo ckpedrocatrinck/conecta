@@ -98,7 +98,7 @@ Confirmado no código antes de escrever o escopo, para o executor não precisar 
 
 - **Código concluído em:** 2026-08-04
 - **Branch:** `inc-022-client-error-reporter` (criada da `main` depois de mergear o
-  INC-021, que estava concluído mas não mergeado — `d51681d`)
+  INC-021, que estava concluído mas não mergeado — `85ed60f`)
 
 ### Arquivos
 

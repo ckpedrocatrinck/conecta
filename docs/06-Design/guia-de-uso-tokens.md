@@ -1,6 +1,6 @@
 # Guia de uso — tokens e componentes-base (INC-003.5, elevado no INC-013.5)
 
-> Como este documento se relaciona com o resto: `docs/06-Design/design-system.md` é a fonte de verdade visual (decisões) e, desde o INC-013.5, `docs/06-Design/redesenho-referencia.html` ("Conecta Elevacao") é a referência dos valores exatos. Este guia é a tradução para código — para quem (Claude Code incluído) vai montar uma tela a partir dos INCs.
+> Como este documento se relaciona com o resto: `docs/06-Design/design-system.md` é a fonte de verdade visual (decisões) e `docs/06-Design/especificacao-design-inc0135.md` traz a paleta exata extraída do protótipo do INC-013.5 ("Conecta Elevação"). Este guia é a tradução para código — para quem (Claude Code incluído) vai montar uma tela a partir dos INCs. *(A referência HTML original do protótipo foi removida do repositório na preparação para publicação, INC-027 — os valores exatos já estão capturados no documento de especificação.)*
 
 ## Tokens
 

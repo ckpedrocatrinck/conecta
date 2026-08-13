@@ -53,7 +53,7 @@ export default async function AdminHomePage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-0.5">
         <h1 className="text-display text-foreground">Início</h1>
-        <p className="text-meta text-muted-foreground">Visão geral do Rede Vale Verde · {todayLabel}</p>
+        <p className="text-meta text-muted-foreground">Visão geral da Rede Vale Verde · {todayLabel}</p>
       </div>
 
       <HomeBanner

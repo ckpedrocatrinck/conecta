@@ -1,6 +1,6 @@
 # Projeto Conecta — Documentação Central
 
-> Nome provisório. Plataforma de comunicação interna e engajamento para PMEs brasileiras, nascida da substituição da portal legado no Rede Vale Verde (piloto).
+> Nome provisório. Plataforma de comunicação interna e engajamento para PMEs brasileiras, nascida da substituição do portal legado na Rede Vale Verde (piloto).
 
 **Dono do projeto:** Pedro Catrinck
 **Última atualização:** 2026-07-09

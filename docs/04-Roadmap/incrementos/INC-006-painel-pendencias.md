@@ -22,7 +22,7 @@ RH e gestores enxergam quem falta confirmar o quê, por filial, em tempo real.
 
 - **Data:** 2026-07-13
 - **Branch:** `inc-006-painel-pendencias`
-- **Commit de merge (fast-forward):** `a28269e696fa98d53b807ebf07b9663524ac230c`
+- **Commit de merge (fast-forward):** `26841fd1cc431d7ea4bf164b257f0fed6a910784`
 - **CI:** verde na branch antes do merge (mesmo commit foi fast-forwarded para a `main`; o workflow tem `branches-ignore: [main]` por desenho, então não roda de novo na main).
 - **Decisões registradas:**
   - Denominador de pendência é uma leitura ao vivo de `status: active` (não um snapshot da data de publicação) — desligado sai do denominador na hora, mas o `AnnouncementAck` dele permanece intacto no histórico.
