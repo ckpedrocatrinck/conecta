@@ -316,26 +316,23 @@ export async function seedTodaysBirthdays(
   return picks.length;
 }
 
-/** Corrige a mídia dos posts de exemplo (`buildTenantFixtures`): o fixture
+/** Remove a mídia dos posts de exemplo (`buildTenantFixtures`): o fixture
  * compartilhado (usado por 27 arquivos de teste) grava
  * `mediaUrl: "https://example.com/placeholder.jpg"` — um literal que nunca
- * existiu no storage local, porque nenhum teste chega a resolver essa key de
- * verdade. Na demo isso aparecia como ícone de imagem quebrada nos 3 cards do
- * feed (INC-027 Bloco 3.5, Defeito 1b). Corrige só os registros do tenant de
- * demonstração, sem tocar `buildTenantFixtures` nem os testes que dependem
- * dele. Reaproveita uma arte já existente em `public/banners/` como capa —
- * não introduz asset novo. */
-export async function seedDemoPostMedia(db: PrismaClient, tenantId: string, coverImagePath: string): Promise<number> {
-  const bytes = await readFile(coverImagePath);
-  const media = await db.postMedia.findMany({ where: { tenantId, mediaUrl: "https://example.com/placeholder.jpg" } });
-
-  for (const m of media) {
-    const key = `posts/${tenantId}/${m.postId}/${randomUUID()}`;
-    await writeMediaFile(key, bytes, "image/png");
-    await db.postMedia.update({ where: { id: m.id }, data: { mediaUrl: key } });
-  }
-
-  return media.length;
+ * existiu no storage local. No Bloco 3.5 isso virou ícone de imagem quebrada;
+ * a correção (subir uma arte real, o banner da Home, como capa) resolveu o
+ * ícone quebrado mas criou um novo problema no Bloco 3.6: a MESMA arte
+ * repetida e cortada nos 3 cards do feed, redundante e sem sentido (não é a
+ * "foto" do reconhecimento/tempo de casa, é só o banner institucional).
+ * `PostMedia` é uma tabela à parte — nada no schema exige ao menos 1 linha
+ * por post — e `PostAttachments` (post-card.tsx) já devolve `null` quando não
+ * há mídia (sem área cinza vazia, sem layout quebrado), confirmado antes de
+ * remover. Solução correta: o post de exemplo simplesmente não tem foto —
+ * remove as linhas em vez de apontar para qualquer arte. Só afeta o tenant de
+ * demonstração, sem tocar `buildTenantFixtures` nem os testes. */
+export async function removeDemoPostMedia(db: PrismaClient, tenantId: string): Promise<number> {
+  const result = await db.postMedia.deleteMany({ where: { tenantId } });
+  return result.count;
 }
 
 /** Sobe o wordmark do tenant de demonstração para o media storage local (mesma

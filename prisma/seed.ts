@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { DEV_ADMIN_USER_ID, DEV_TENANT_ID } from "../src/lib/dev/seed-ids";
 import { ensureAppRolePassword } from "./db-admin";
 import { buildTenantFixtures } from "./seed-data";
-import { seedDemoAnnouncements, seedDemoPostMedia, seedTenantLogo, seedTodaysBirthdays } from "./seed-demo-content";
+import { removeDemoPostMedia, seedDemoAnnouncements, seedTenantLogo, seedTodaysBirthdays } from "./seed-demo-content";
 
 // Usa DATABASE_URL (role owner do docker-compose) — bypassa RLS de
 // proposito, seed e' operacao administrativa.
@@ -60,8 +60,7 @@ async function main() {
   const logoPath = path.resolve(process.cwd(), "public/branding/logo.png");
   await seedTenantLogo(db, tenant.id, logoPath);
 
-  const homeBannerPath = path.resolve(process.cwd(), "public/banners/home.png");
-  const fixedMediaCount = await seedDemoPostMedia(db, tenant.id, homeBannerPath);
+  const removedMediaCount = await removeDemoPostMedia(db, tenant.id);
 
   const employees = users.filter((u) => u.role === "employee");
   const birthdaysToday = await seedTodaysBirthdays(db, employees);
@@ -73,7 +72,7 @@ async function main() {
     console.log(`  [${r.status}] ${r.title}${pct}`);
   }
   console.log("Logo do tenant enviado para o media storage local.");
-  console.log(`Mídia de ${fixedMediaCount} post(s) do feed corrigida (key real de storage).`);
+  console.log(`Mídia redundante removida de ${removedMediaCount} post(s) do feed (sem foto, só texto).`);
   console.log(`${birthdaysToday} aniversariante(s) ajustado(s) para hoje.`);
   console.log("");
   console.log("Credenciais de demonstração (senha inicial igual para todos, troca obrigatória no 1º login):");
