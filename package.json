@@ -12,6 +12,8 @@
     "format": "prettier --write .",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:tenant-b": "tsx prisma/seed-dev-tenant-b.ts",
+    "db:migrate": "prisma migrate deploy",
+    "db:migrate:dev": "node scripts/guard-migrate-dev.js",
     "prepare": "husky"
   },
   "prisma": {
