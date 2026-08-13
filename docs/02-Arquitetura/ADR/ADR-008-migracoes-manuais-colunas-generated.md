@@ -31,16 +31,28 @@ O Postgres recusa esse comando porque a coluna é `GENERATED` (o erro correto é
 aplicar (`P3018`) e o `prisma migrate dev` fica bloqueado até o erro ser
 resolvido manualmente.
 
-Isso já aconteceu três vezes:
+Isso já aconteceu quatro vezes:
 - **INC-002** — na própria migration que criou `search_vector`.
 - **INC-003** — ao adicionar campos/tabelas de sessão e usuário.
 - **INC-007** — ao adicionar a tabela `notifications`.
+- **INC-027** — o `README.md` recomendava `npx prisma migrate dev` como parte
+  da rotina normal de banco de dev (não criação de migration), o que por
+  semanas conviveu, sem ninguém notar, com a regra 9 do `CLAUDE.md` dizendo o
+  oposto três seções acima no mesmo repositório. Diferente dos três
+  incidentes anteriores (falha ao criar migration nova, detectada na hora),
+  este só foi descoberto pelo sintoma em produção-de-dev (senha de
+  demonstração revertendo a cada reinício) — o comando "só" precisa ser
+  executado, não precisa criar nada, para disparar o problema. Motivou o
+  registro da **DP-40** (ausência de trava técnica), a correção do
+  `README.md`/`CLAUDE.md` (Bloco 3.11) e o wrapper de bloqueio em
+  `package.json` (Bloco 5, `npm run db:migrate:dev`).
 
-Nas três, a solução foi a mesma: gerar/escrever a migração à mão, sem o passo
-indevido sobre `search_vector`, e aplicar com `prisma migrate deploy` (que não
-faz o diff via shadow database — só executa migrations pendentes em ordem).
-Sem registrar isso, os próximos INCs que criam tabela (INC-008 feed, INC-011
-vagas, INC-012 push) vão redescobrir o mesmo erro do zero.
+Nas quatro, a solução de fundo foi a mesma: gerar/escrever a migração à mão,
+sem o passo indevido sobre `search_vector`, e aplicar com `prisma migrate
+deploy` (que não faz o diff via shadow database — só executa migrations
+pendentes em ordem). Sem registrar isso, os próximos INCs que criam tabela
+(INC-008 feed, INC-011 vagas, INC-012 push) vão redescobrir o mesmo erro do
+zero.
 
 ## Decisão
 **Toda migração que cria ou altera tabela neste projeto é escrita/ajustada à
@@ -183,7 +195,13 @@ acumular).
   rodar `prisma migrate dev` direto em produção/CI — mitigado por este
   documento ser referenciado em `CLAUDE.md`, `stack.md` e no topo do
   `schema.prisma`, os três lugares que qualquer sessão de trabalho neste
-  projeto já lê.
+  projeto já lê, **e** (desde o Bloco 5 do INC-027, DP-40) por um wrapper em
+  `package.json` (`npm run db:migrate:dev`) que bloqueia com esta mesma
+  explicação em vez de rodar o comando. **Cobertura parcial, documentada:** o
+  wrapper só intercepta quem tenta via `npm run` — `npx prisma migrate dev`
+  ou `prisma migrate dev` digitado direto (o caminho que causou o incidente
+  do INC-027) passam inteiramente por fora do `package.json` e continuam sem
+  trava técnica. A mitigação para esse caminho continua sendo só documental.
 
 ## Gatilho de revisão
 O Prisma passar a suportar colunas `GENERATED`/computed columns nativamente

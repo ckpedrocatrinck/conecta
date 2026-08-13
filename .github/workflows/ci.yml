@@ -24,16 +24,25 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     env:
+      # DATABASE_URL/POSTGRES_* configuram só o container de servico acima —
+      # efemero, destruido no fim do job, sem exposicao fora do runner. Nao e'
+      # segredo real (nenhum dado real trafega por ele), por isso fica literal
+      # (INC-027 Bloco 5, achado A7-4 da auditoria de julho).
       DATABASE_URL: postgresql://conecta:conecta_ci@localhost:5432/conecta_test
-      APP_DB_PASSWORD: conecta_ci_app
-      APP_DATABASE_URL: postgresql://conecta_app:conecta_ci_app@localhost:5432/conecta_test
-      CPF_HASH_PEPPER: conecta_ci_pepper
-      CRON_SECRET: conecta_ci_cron_secret
+      # Os 4 abaixo sao o MESMO NOME de variavel que carrega segredo real em
+      # producao (rotacao documentada em docs/02-Arquitetura/rotacao-pepper.md
+      # para CPF_HASH_PEPPER) — mesmo o valor de CI sendo inerte, ficam em
+      # `secrets.*` para nao normalizar "segredo em texto claro no workflow"
+      # como padrao aceitavel neste repositorio publico.
+      APP_DB_PASSWORD: ${{ secrets.APP_DB_PASSWORD }}
+      APP_DATABASE_URL: postgresql://conecta_app:${{ secrets.APP_DB_PASSWORD }}@localhost:5432/conecta_test
+      CPF_HASH_PEPPER: ${{ secrets.CPF_HASH_PEPPER }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
       # Dummy, so' para o `npm run build`: `next build` roda com
       # NODE_ENV=production e importa toda rota (inclusive /api/auth), e o
       # Auth.js espera um segredo em producao. Valor inerte — a CI nao serve
-      # request nenhuma.
-      AUTH_SECRET: conecta_ci_auth_secret
+      # request nenhuma. Em `secrets.*` pela mesma razao dos 3 acima.
+      AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
