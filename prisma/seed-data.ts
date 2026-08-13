@@ -2,6 +2,7 @@ import type { PrismaClient } from "@prisma/client";
 import { computeContentHash } from "../src/lib/crypto/content-hash";
 import { hashCpf } from "../src/lib/crypto/cpf-hash";
 import { hashPassword } from "../src/lib/crypto/password-hash";
+import { PRIVACY_NOTICE_VERSION } from "../src/lib/privacy/notice";
 
 export type BuildTenantFixturesOptions = {
   id?: string;
@@ -24,6 +25,14 @@ export type BuildTenantFixturesOptions = {
    * announcement_acks (menos superficie para a corrida entre arquivos de
    * teste que rodam em paralelo e compartilham esse ALTER TABLE global). */
   includeSampleAnnouncements?: boolean;
+  /** Default false (preserva o comportamento de produto: todo usuário criado
+   * exige troca de senha e aceite do aviso de privacidade no 1º acesso —
+   * ADR-006 — e os 27 arquivos de teste que dependem desse estado inicial).
+   * `true` só é usado pelo seed de demonstração (INC-027 Bloco 3.7): pula
+   * as duas telas de primeiro acesso para permitir login direto com as
+   * credenciais publicadas no README, sem alterar `createEmployee`/
+   * `resetEmployeePassword` (caminhos reais de criação/reset, intocados). */
+  skipFirstAccessFlow?: boolean;
 };
 
 const BRANCH_NAMES = ["Filial Centro", "Filial Norte", "Filial Sul", "Filial Leste", "Filial Oeste"];
@@ -64,6 +73,7 @@ export async function buildTenantFixtures(db: PrismaClient, opts: BuildTenantFix
   }
 
   const defaultPasswordHash = await hashPassword("Trocar123!");
+  const skipFirstAccessFlow = opts.skipFirstAccessFlow ?? false;
 
   const users = [];
   for (let i = 0; i < userCount; i++) {
@@ -87,7 +97,10 @@ export async function buildTenantFixtures(db: PrismaClient, opts: BuildTenantFix
           hiredAt: new Date(2020 + (i % 5), i % 12, 1),
           status: i === userCount - 1 ? "inactive" : "active",
           passwordHash: defaultPasswordHash,
-          mustChangePassword: true,
+          mustChangePassword: !skipFirstAccessFlow,
+          ...(skipFirstAccessFlow
+            ? { privacyAcceptedAt: new Date(), privacyNoticeVersion: PRIVACY_NOTICE_VERSION }
+            : {}),
         },
       }),
     );
