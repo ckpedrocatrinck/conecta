@@ -27,6 +27,22 @@ const BANNER_SIZE_HINT = (
   </p>
 );
 
+// Derivado de onde a logo é DE FATO consumida (não é um tamanho inventado):
+// card-shell.tsx renderiza em altura fixa (h-6) + largura livre (object-contain,
+// nunca corta); o card exportável via satori (card-image-shell.tsx) usa uma
+// caixa fixa de 120×40px (proporção 3:1) com objectFit "contain" — uma logo
+// muito quadrada ou vertical fica pequena dentro dela, sobrando espaço vazio
+// nas laterais. `object-contain` nunca corta a logo (diferente do banner,
+// que usa object-cover) — a orientação aqui é sobre aproveitamento do
+// espaço, não sobre recorte.
+const LOGO_SIZE_HINT = (
+  <p className="rounded-[var(--radius-card)] border border-border bg-primary-subtle px-3 py-2 text-meta text-foreground-soft">
+    <span className="font-semibold text-foreground">Formato horizontal, proporção próxima de 3:1 (ex.: 480×160px).</span>{" "}
+    PNG com fundo transparente combina com qualquer cor de card — a logo nunca é
+    cortada, mas fica pequena se for muito quadrada ou vertical.
+  </p>
+);
+
 // Preview FIEL: reaproveita a MESMA classe do banner ao vivo (home-banner.tsx)
 // — o admin ve o recorte real, nao a arte inteira (INC-027 Bloco 3.6: duas
 // strings de classe duplicadas podiam divergir silenciosamente).
@@ -121,6 +137,7 @@ export default async function AparenciaPage() {
             Aparece nos cards gerados (reconhecimentos, vagas) e no card baixável.
           </p>
         </div>
+        {LOGO_SIZE_HINT}
         <AppearanceUploader
           target="logo"
           currentUrl={logoUrl}
