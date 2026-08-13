@@ -54,6 +54,13 @@ export async function buildAnnouncementAckExportCsv(
     ? acks.filter((a) => userById.get(a.userId)?.branchId === scope.branchId)
     : acks;
 
+  // announcement.publishAt garantido nao-nulo: exportacao so' roda para
+  // status published/archived (guarda acima), e publishAnnouncement() sempre
+  // grava publish_at na publicacao (INC-027 bloco 3.9). Sem essa coluna, o
+  // comprovante provava a ciencia mas nao o intervalo entre a publicacao e a
+  // confirmacao — metade do valor probatorio que o ADR-001 sustenta.
+  const publishedAt = formatDateTimeSaoPaulo(announcement.publishAt as Date);
+
   const rows = [...scopedAcks]
     .sort((a, b) => a.ackedAt.getTime() - b.ackedAt.getTime())
     .map((ack) => {
@@ -63,6 +70,7 @@ export async function buildAnnouncementAckExportCsv(
         Matrícula: user?.registrationCode ?? "",
         Filial: user ? (branchNameById.get(user.branchId) ?? "") : "",
         Versão: versionNumberById.get(ack.versionId) ?? "",
+        "Publicado em": publishedAt,
         Hash: ack.contentHashAtAck,
         "Confirmado em": formatDateTimeSaoPaulo(ack.ackedAt),
       };

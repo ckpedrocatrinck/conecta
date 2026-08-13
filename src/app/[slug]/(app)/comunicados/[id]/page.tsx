@@ -71,6 +71,15 @@ export default async function LerComunicadoPage({ params }: { params: Promise<{ 
           {formatAnnouncementCategory(announcement.category)}
         </span>
         <h1 className="text-display text-foreground">{latest.title}</h1>
+        {/* announcement.publishAt e' garantido nao-nulo aqui: so' se chega
+            nesta tela para status published/archived (isAnnouncementVisibleToUser),
+            e publishAnnouncement() sempre grava publish_at na publicacao
+            (INC-027 bloco 3.9) — necessario pro valor probatorio do ADR-001:
+            sem a data de publicacao, prova-se a ciencia mas nao o intervalo
+            entre a informacao ficar disponivel e a confirmacao. */}
+        <p className="text-meta font-medium text-muted-foreground">
+          Publicado em {formatDateTimeSaoPaulo(announcement.publishAt as Date)}
+        </p>
       </div>
 
       <RichTextContent html={latest.body} />
