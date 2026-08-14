@@ -196,6 +196,30 @@
 **O que continua descoberto, por limitação real do mecanismo, não por falta de esforço:** o wrapper só intercepta quem chama via `npm run db:migrate:dev` — **exatamente o caminho que causou este incidente (`npx prisma migrate dev` digitado direto, ou `prisma migrate dev` com o Prisma instalado global) continua sem nenhuma trava técnica**, porque essas chamadas nunca passam por `package.json#scripts`. Não existe hoje, neste projeto, um mecanismo que intercepte a CLI do Prisma invocada diretamente sem risco/complexidade desproporcional (ex.: sombrear o binário, proxy de rede) — avaliado e não implementado. **Severidade residual:** idêntica à de antes para esse caminho específico — alta se o projeto ganhar staging/produção com dado real antes de uma trava mais forte existir; a mitigação ali continua sendo 100% documental (`ADR-008`, `CLAUDE.md`, `stack.md`, topo do `schema.prisma`). Trava parcial e documentada, não presumida como completa.
 **Responsável:** Pedro (escolher a trava, se houver; decisão registrada aqui até ser implementada ou formalmente aceita como risco residual).
 
+**DP-41 — `package-lock.json` perde as entradas `@emnapi/*` toda vez que `npm install` roda no Windows: quarta ocorrência, e a primeira depois da DP-21 já ter sido "resolvida".** A DP-21 (seção de resolvidas, 2026-08-05) já tinha diagnosticado exatamente esta causa — `npm install`/`npm install --package-lock-only` rodado no Windows recalcula a árvore de dependências opcionais só para a plataforma atual e derruba as entradas top-level `@emnapi/core@1.11.2`/`@emnapi/runtime@1.11.2`, que existem só para satisfazer o binário wasm32-wasi do Tailwind no Linux — e oficializou o procedimento (`docs/00-Processo/convencoes-git.md`, regra 6): toda alteração de dependência regenera o lock via `docker run --rm -v <dir>:/app -w /app node:22 npm install --package-lock-only`, nunca via `npm install` direto no Windows.
+
+**Histórico completo — 4 ocorrências, 3 antes da regra existir, 1 depois:**
+- `86c85d7` (2026-07-16) e `cf8ba80` (2026-07-23) — ocorrências que motivaram a investigação.
+- `885d771` (2026-07-27) — última ocorrência antes da DP-21 ser fechada; a resolução de 2026-08-05 nasceu dessas três.
+- `c994642` (2026-08-13, Bloco 5 do INC-027, "hook de pre-commit com varredura de segredos") — **quebrou de novo, 8 dias depois do procedimento virar regra escrita obrigatória.** `npm install husky --save-dev` foi rodado fora do container Linux, violando a regra 6 já documentada. Corrigida agora (ainda no Bloco 5, container `node:22`, `git diff` limitado às entradas `@emnapi/*` mais reformatação de metadado `peer` em dependências não relacionadas — sem bump de versão de nenhum pacote).
+
+**Isto não é uma causa nova — é a regra 6 sem nenhum mecanismo que a torne difícil de esquecer.** A DP-21 documentou o procedimento certo; nada impede alguém (inclusive eu, neste caso) de rodar `npm install` direto por hábito e só descobrir o problema quando o CI (ou, como desta vez, o primeiro push a um repositório novo) rodar de verdade.
+
+**Por que `npm run lint`/`typecheck`/`test` locais nunca pegam isto:** os três reaproveitam o `node_modules` já instalado na máquina — nenhum recria o lock nem reinstala do zero. E mais: nem `npm ci` local no Windows pegaria, porque as entradas que somem são de um pacote opcional exclusivo do Linux (`@tailwindcss/oxide-wasm32-wasi`) — no Windows essa branch da árvore nunca é resolvida, então o `package-lock.json` quebrado "funciona" localmente. O único ambiente onde o problema aparece é `npm ci` num runner Linux — ou seja, exclusivamente no CI.
+
+**O que isso ameaça:** com o repositório agora público, um CI vermelho no primeiro run fica visível para qualquer visitante — inclusive potenciais empregadores/clientes olhando o portfólio, o motivo declarado da publicação (INC-027).
+
+**Opções de trava avaliadas (nenhuma implementada — decisão do Pedro):**
+
+| Opção | Mecanismo | Custo | Efetividade |
+|---|---|---|---|
+| **A — hook local (pre-commit ou pre-push) rodando o comando Docker oficial da regra 6** | Dispara só quando `package-lock.json` está no stage/diff; roda o mesmo `docker run node:22 npm ci` (ou `--package-lock-only`) antes de permitir o commit/push | Precisa Docker Desktop sempre disponível; adiciona ~dezenas de segundos a minutos **só nos commits que tocam o lock** (não no dia a dia) | **Alta** — reproduz exatamente o ambiente Linux que falha hoje; teria pego as 4 ocorrências |
+| **B — job de CI dedicado que valida o lock antes do resto** | Um step isolado no início do workflow, com mensagem apontando para a regra 6, em vez de deixar o erro genérico do `npm ci` | Baixíssimo (poucas linhas de YAML) | **Baixa como prevenção** — `npm ci` já é o primeiro step hoje, então já é a validação; o ganho real é só diagnóstico mais rápido/claro, não evita o commit quebrado. Vale ter de qualquer forma, como rede de segurança barata mesmo se A for adotada |
+| **C — `npm install --package-lock-only --os=linux --cpu=x64` (ou equivalente) no lugar do Docker** | Usa as flags de plataforma do npm para resolver a árvore Linux sem container | Potencialmente mais rápido que A (sem overhead de container) | **Não verificada** — precisa do mesmo teste de idempotência que a DP-21 fez para o comando Docker antes de virar procedimento confiável; há histórico de comportamento inconsistente entre versões do npm com essas flags |
+
+Nenhuma opção resolve sozinha sem decisão do Pedro sobre o custo aceitável (Docker obrigatório em todo commit de dependência vs. confiar em disciplina + rede de segurança do CI).
+**Responsável:** Pedro (escolher a trava; até lá, a regra 6 continua sendo o único mecanismo, e é manual).
+
 ---
 
 ## Bloqueadores e dependências do go-live do piloto (INC-013)
