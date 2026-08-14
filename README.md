@@ -2,7 +2,7 @@
 
 Plataforma multi-tenant de comunicação interna para empresas com operação distribuída em filiais. O núcleo do produto não é o mural — é a **prova de que a informação chegou**.
 
-Projeto próprio, em fase pré-piloto. Concepção, arquitetura e implementação por [Pedro Catrinck](https://github.com/pedromcatrinck).
+Projeto próprio, em fase pré-piloto. Concepção, arquitetura e implementação por [Pedro Catrinck](https://linkedin.com/in/pedromcatrinck).
 
 ---
 
