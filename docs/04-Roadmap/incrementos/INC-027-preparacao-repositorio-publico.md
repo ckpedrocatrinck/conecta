@@ -255,14 +255,16 @@ substituição de termos (`--replace-text`/`--replace-message`) e remoção de 1
 favicon reais do cliente, e três documentos de auditoria/insumo jurídico interno. Todas as
 51 citações de SHA em Relatórios de Entrega corrigidas via `commit-map`; 9 referências
 órfãs reescritas (frase reescrita, não só link apagado); dois bugs sistêmicos de
-concordância de gênero encontrados e corrigidos ("Rede Vale Verde" feminino herdando artigo
-masculino de "Armazém"; "portal legado" masculino herdando artigo feminino de "Endoweb"),
+concordância de gênero encontrados e corrigidos (a substituição do nome isolado do
+cliente-piloto por "Rede Vale Verde" — feminino — inverteu o gênero gramatical herdado do
+nome antigo, masculino; a substituição do nome do sistema legado do fornecedor por "portal
+legado" — masculino — herdou artigo feminino do nome antigo, também invertido),
 incluindo uma string de UI viva (`src/app/[slug]/(app)/admin/page.tsx`). As 10 verificações
 finais (ausência de termo em HEAD/histórico/mensagens/paths/objetos soltos, SHAs resolvem,
 `gitleaks` limpo, lint/typecheck/build/test verdes, branches `inc-025`/`inc-026`/`main`
 sobreviventes) passaram todas.
 
-**Desvio consciente registrado:** um resíduo do termo "Unigrão" (nome de um LMS de
+**Desvio consciente registrado:** um resíduo do nome real do LMS legado (produto de
 terceiro, não vinculável ao cliente-piloto nem ao autor) permanece em texto de **um** commit
 antigo do histórico (fora do HEAD, já corrigido). Decisão: não repetir o `filter-repo` só
 por isso — uma segunda passada trocaria os 237 SHAs novamente, invalidando as 51 citações
@@ -296,7 +298,7 @@ DP-36 (`/icon` e `/apple-icon` caem no regex de slug do middleware) não foi toc
 bloco e continua se aplicando sem mudança.
 
 **Auditoria do seed antigo (Passo 2):** nomes de filial já eram genéricos
-(`Filial Centro/Norte/Sul/Leste/Oeste`) — nenhum topônimo real de Petrópolis encontrado.
+(`Filial Centro/Norte/Sul/Leste/Oeste`) — nenhum topônimo real da região do cliente encontrado.
 Nenhum outro dado de lugar/pessoa/empresa real no seed. Vínculo gestor↔filial (DP-12) já
 respeitado pela distribuição por índice (1 gestor por filial quando `branchCount` = nº de
 gestores). Seed idempotente (checagem de tenant existente). **Gap encontrado:** nenhuma
@@ -342,7 +344,7 @@ teste existente foi tocado. Todo o conteúdo de demonstração vive em
 Relatório completo: `C:\backups\inc027\bloco-3-inc027.md` (fora do repositório).
 
 **Pendências para antes do Bloco 4/6:** repodar as ~20 branches ressuscitadas pelo Bloco 2;
-decidir o resíduo histórico "Unigrão" (aceitar vs. segunda passada de `filter-repo`);
+decidir o resíduo histórico do nome real do LMS legado (aceitar vs. segunda passada de `filter-repo`);
 resolver o placeholder `[NOME DO PRODUTO]` em `docs/03-LGPD/guia-conformidade-lgpd.md`
 (identificado em auditoria anterior, fora do escopo deste bloco); decidir o destino de
 `public/branding/favicon.png` (hoje sem consumidor); commitar ou descartar as edições locais
@@ -448,7 +450,7 @@ Relatório completo: `C:\backups\inc027\bloco-4-inc027.md`.
 
 ### Síntese do INC (Blocos 0–4)
 
-**Desvio consciente do resíduo "Unigrão" (detalhe completo no Bloco 2 acima).** Um resíduo do termo "Unigrão" (nome de um LMS de terceiro — produto, não identificador do cliente-piloto nem do autor) permanece em texto de **um commit antigo** do histórico reescrito, fora do HEAD (já corrigido no HEAD). Decisão: não repetir o `filter-repo` só por isso — uma segunda passada trocaria os 237 SHAs novamente, invalidando as 51 citações de SHA já corrigidas nos Relatórios de Entrega, por um ganho marginal (termo de produto de terceiro, não vinculável a ninguém).
+**Desvio consciente do resíduo do nome real do LMS legado (detalhe completo no Bloco 2 acima).** Um resíduo do nome real do LMS legado (produto de terceiro, não identificador do cliente-piloto nem do autor) permanece em texto de **um commit antigo** do histórico reescrito, fora do HEAD (já corrigido no HEAD). Decisão: não repetir o `filter-repo` só por isso — uma segunda passada trocaria os 237 SHAs novamente, invalidando as 51 citações de SHA já corrigidas nos Relatórios de Entrega, por um ganho marginal (termo de produto de terceiro, não vinculável a ninguém).
 
 **Bugs de PRODUTO descobertos durante a preparação, que os 337 testes da época (antes dos blocos 3.9/3.12) não pegavam** — nenhum é bug de seed:
 1. **Middleware tratando `/banners/` (e `/branding/`) como slug de tenant** (Bloco 3.5) — quebrava o banner da Home em **todo tenant**, não só no de demonstração; passou despercebido porque nenhum teste de integração exercitava uma rota estática por baixo do middleware de resolução de tenant.
@@ -479,7 +481,7 @@ Relatório completo: `C:\backups\inc027\bloco-5-inc027.md`.
 
 ### Bloco 6 (publicação) — 2026-08-14
 
-**Autorização e pré-voo (G1):** Pedro confirmou explicitamente a conta GitHub nova (`ckpedrocatrinck`, reautenticada) antes de qualquer ação irreversível. As 10 verificações read-only do Passo 1 passaram: sem termo residual novo em HEAD/histórico/mensagens/paths; `gitleaks detect --log-opts="--all"` limpo (210 commits); 4 screenshots presentes; sem `LICENSE`; nenhum `.env` real rastreado; bundle cifrado confirmado (~6,9 MB). O resíduo "Unigrão" já conhecido (ver Bloco 2) foi pinpointado com precisão nova: introduzido em `ac0ec1b` (INC-001), corrigido em `9cc9b0f` (2026-08-13) — não sobrevive a HEAD.
+**Autorização e pré-voo (G1):** Pedro confirmou explicitamente a conta GitHub nova (`ckpedrocatrinck`, reautenticada) antes de qualquer ação irreversível. As 10 verificações read-only do Passo 1 passaram: sem termo residual novo em HEAD/histórico/mensagens/paths; `gitleaks detect --log-opts="--all"` limpo (210 commits); 4 screenshots presentes; sem `LICENSE`; nenhum `.env` real rastreado; bundle cifrado confirmado (~6,9 MB). O resíduo do nome real do LMS legado já conhecido (ver Bloco 2) foi pinpointado com precisão nova: introduzido em `ac0ec1b` (INC-001), corrigido em `9cc9b0f` (2026-08-13) — não sobrevive a HEAD.
 
 **Repositório novo:** `https://github.com/ckpedrocatrinck/conecta`, criado público, sem README/license/gitignore automáticos. `main` enviada primeiro (sem `--force`), seguida de `inc-025-servico-app-compose` e `inc-026-push-service-worker` (sem cópia remota na conta nova, por isso enviadas mesmo não mergeadas); `inc-027-preparacao-repositorio-publico` **não** enviada (já mergeada, seria ruído). `main` confirmada como branch padrão.
 
@@ -511,7 +513,9 @@ Relatório completo: `C:\backups\inc027\bloco-5-inc027.md`.
 1. **"Repositório antigo deletado"** — **não cumprido, sem previsão.** O repositório antigo (privado, histórico original) ficou inacessível quando o Pedro perdeu a conta que o hospedava. Não há caminho técnico para deletá-lo a partir da conta nova. Fora do escopo deste INC a partir de agora — não é um passo pendente, é um passo que deixou de ser executável.
 2. **"Bundle offline verificado antes de o repo antigo ser deletado"** — **decisão revertida em relação ao plano original.** O plano original previa destruir o bundle cifrado (`C:\backups\inc027\conecta-pre-rewrite.zip`) depois de confirmar o repo novo funcional, já que ele seria redundante com o repositório antigo. Como o repositório antigo é inacessível, o bundle é hoje a **única cópia existente** do histórico original (pré-`filter-repo`) do projeto — decisão explícita do Pedro (mensagem de abertura do Bloco 6) de **não o destruir**. Ele já foi verificado na criação (Bloco 1); permanece em `C:\backups\inc027\`, fora do repositório ativo.
 
-**Resíduo "Unigrão":** aceito como está (ver Bloco 2 e Bloco 6 acima) — termo de produto de terceiro, não identificador do cliente-piloto nem do autor, isolado a um commit antigo fora do HEAD. Localização exata agora documentada: introduzido em `ac0ec1b`, corrigido em `9cc9b0f`.
+**Resíduo do nome real do LMS legado:** aceito como está (ver Bloco 2 e Bloco 6 acima) — termo de produto de terceiro, não identificador do cliente-piloto nem do autor, isolado a um commit antigo fora do HEAD. Localização exata agora documentada: introduzido em `ac0ec1b`, corrigido em `9cc9b0f`.
+
+**Termos vinculantes residuais no HEAD, achado da auditoria em clone limpo (2026-08-14).** Uma auditoria adversarial em clone limpo do repositório já público encontrou o nome real do cliente-piloto, o nome real do sistema legado do fornecedor e o topônimo real da região do cliente citados em prosa neste próprio arquivo (nas passagens sobre os bugs de concordância de gênero do Bloco 2 e sobre a auditoria do seed do Bloco 3) — os mesmos termos que o `filter-repo` do Bloco 2 existiu para eliminar. Causa raiz: os prompts de execução desses blocos citavam os termos literalmente para descrever o defeito encontrado, e essa prosa foi copiada para o vault sem passar por uma revisão adversarial dedicada a procurar exatamente esse tipo de resíduo — o mesmo tipo de tolerância que já explicava o resíduo "do nome real do LMS legado" acima. **Decisão:** corrigir apenas no HEAD (reescrever as passagens preservando o sentido, sem os termos literais), sem nova passada de `filter-repo` — o repositório já é público, os commits já foram distribuídos, e uma segunda reescrita trocaria os 237 SHAs de novo, invalidando as 51 citações de SHA já corrigidas, sem desfazer o que já foi distribuído. Os termos originais permanecem, portanto, nos commits do histórico reescrito onde foram introduzidos (`bbbb2b4`, "registro de conclusão dos blocos 0 a 3") — mesma situação de exposição residual do resíduo do LMS legado, agora com uma segunda instância confirmada da mesma causa: descrever um defeito de sanitização citando o termo que deveria ter sido sanitizado.
 
 **Trava contra `prisma migrate dev`:** cobertura parcial mantida como está — `npm run db:migrate:dev` bloqueia, `npx prisma migrate dev` direto não. Ver DP-40 para o detalhe completo e a decisão de não fechar essa lacuna neste INC.
 
