@@ -88,8 +88,8 @@ Requisitos: Node 20+, Docker, Docker Compose e [gitleaks](https://github.com/git
 git clone https://github.com/ckpedrocatrinck/conecta.git
 cd conecta
 npm ci
-cp .env.example .env          # preencha os valores
-docker compose up -d          # PostgreSQL local
+cp .env.example .env          # preencha os valores — cada chave tem comentário no próprio arquivo explicando formato e o que precisa bater com o quê
+docker compose up -d          # PostgreSQL local (porta 5432; se já estiver em uso, troque POSTGRES_PORT no .env)
 npx prisma migrate deploy     # aplica as migrations (nunca migrate dev — ver ADR-008)
 npx prisma db seed            # popula a base de demonstração
 npm run dev
