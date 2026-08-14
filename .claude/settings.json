@@ -12,10 +12,12 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git checkout:*)",
-      "Bash(git branch:*)"
+      "Bash(git branch:*)",
+      "Read(.env.example)"
     ],
     "deny": [
       "Read(.env)",
+      "Read(.env.local)",
       "Read(.env.*)",
       "Bash(git push --force:*)",
       "Bash(git push -f:*)",
