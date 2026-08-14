@@ -1,8 +1,11 @@
 # INC-027 — Preparação e publicação do repositório
 
-**Status:** 🔄 Em andamento — Blocos 0 a 4 concluídos (auditoria, backup/rotação, reescrita de
-histórico, seed de demonstração, correções de produto, vitrine); Blocos 5 (travas) e 6
-(publicação) pendentes. Repositório permanece **privado** até o Bloco 6.
+**Status:** ✅ Concluído (2026-08-14) — Blocos 0 a 6 executados (auditoria, backup/rotação,
+reescrita de histórico, seed de demonstração, correções de produto, vitrine, travas
+técnicas, publicação). Repositório **público**: https://github.com/ckpedrocatrinck/conecta.
+Duas exceções aos critérios originais, registradas no Encerramento (Bloco 6): repositório
+antigo não deletado (acesso perdido) e bundle cifrado não destruído (decisão revertida — é
+hoje a única cópia do histórico original).
 **Fase:** Fora de fase (higiene de repositório / infraestrutura de portfólio)
 **Depende de:** ADR-012 aceito
 **ADRs relevantes:** 012, 010 (slug na URL), 011 (infra)
@@ -200,8 +203,13 @@ Não é limpeza; é feature de portfólio e insumo futuro de onboarding/treiname
 - [ ] Hook de pre-commit **testado de verdade**: um segredo plantado deliberadamente é
       bloqueado.
 - [ ] `docs/README.md` não declara mais "nenhuma linha de código escrita".
-- [ ] Bundle offline verificado (`git bundle verify`) antes de o repo antigo ser deletado.
-- [ ] Repositório antigo deletado.
+- [ ] ~~Bundle offline verificado (`git bundle verify`) antes de o repo antigo ser deletado.~~
+      **Exceção registrada (Bloco 6, Encerramento):** verificado na criação (Bloco 1); não
+      destruído — é hoje a única cópia do histórico original, decisão revertida do plano
+      original porque o repositório antigo ficou inacessível.
+- [ ] ~~Repositório antigo deletado.~~ **Exceção registrada (Bloco 6, Encerramento):** Pedro
+      perdeu acesso à conta que hospedava o repositório antigo durante o INC — não há
+      caminho técnico para deletá-lo a partir da conta nova.
 - [ ] Nenhum arquivo `LICENSE` presente.
 - [ ] `docs/03-LGPD/rotacao-de-pepper.md` escrito a partir da rotação real do Bloco 1.
 - [ ] Autorização explícita do Pedro registrada **antes** de o Bloco 6 começar.
@@ -455,6 +463,32 @@ Padrão comum aos 5: nenhum foi pego por "suíte verde" — cada um exigia olhar
 
 **DPs criadas ao longo do caminho:** DP-37 (demo pública em VPS, bloqueada por infraestrutura), DP-38 (✅ resolvida — nomes genéricos no seed), DP-39 (🟡 aviso de privacidade "404" reportado, não reproduzido, hipótese de sessão órfã pós-reset), DP-40 (🟡 ausência de trava técnica contra `migrate dev`, mitigação hoje 100% documental). Propostas nos Blocos 3.9 e 3.12 (não abertas como DP formal — ficam para o Pedro decidir se abre): fuso de `formatCalendarDate` aplicado a `JobOpening.deadline` (mesma classe de bug do INC-020, fora do escopo de comunicados); anexos na tela de leitura de comunicado; filiais destinatárias visíveis ao colaborador; navegação de retorno explícita na tela de leitura.
 
+### Bloco 5 (travas técnicas e números no README) — 2026-08-13
+
+**Tabelas sem RLS esclarecidas:** `tenants` e `_prisma_migrations` confirmadas como infraestrutura legítima, não gap de isolamento — autorização de escrita nunca depende de RLS nessas duas (`session.tenantId` nunca vem do cliente), verificado contra código e teste de guarda existente.
+
+**Números inseridos no README** (verificados no Bloco 4, aplicados agora): "19 tabelas de domínio", "360 testes automatizados", "12 ADRs", "31 INCs" — edição cirúrgica, mais um path de imagem e um colchete solto corrigidos.
+
+**Hook de pre-commit com `gitleaks` (husky):** implementado e testado de verdade — primeira tentativa com as credenciais de exemplo oficiais da AWS deu falso "sem vazamento" (allowlist do próprio gitleaks para esse par bem conhecido); descartado o commit (`git reset --soft`), retestado com um PAT sintético de alta entropia gerado localmente — bloqueado corretamente (`RuleID: github-pat`, exit 1).
+
+**Trava parcial contra `prisma migrate dev`:** `scripts/guard-migrate-dev.js` via `npm run db:migrate:dev` — cobre só quem chama pelo nome do script npm; `npx prisma migrate dev`/Prisma global continuam sem trava técnica (limitação documentada, não escondida — DP-40).
+
+**Segredos de CI migrados para GitHub Secrets:** `APP_DB_PASSWORD`, `CPF_HASH_PEPPER`, `CRON_SECRET`, `AUTH_SECRET`. `POSTGRES_USER`/`POSTGRES_PASSWORD`/`DATABASE_URL` do container efêmero mantidos literais (achado A7-4 da auditoria — não são segredo real).
+
+Relatório completo: `C:\backups\inc027\bloco-5-inc027.md`.
+
+### Bloco 6 (publicação) — 2026-08-14
+
+**Autorização e pré-voo (G1):** Pedro confirmou explicitamente a conta GitHub nova (`ckpedrocatrinck`, reautenticada) antes de qualquer ação irreversível. As 10 verificações read-only do Passo 1 passaram: sem termo residual novo em HEAD/histórico/mensagens/paths; `gitleaks detect --log-opts="--all"` limpo (210 commits); 4 screenshots presentes; sem `LICENSE`; nenhum `.env` real rastreado; bundle cifrado confirmado (~6,9 MB). O resíduo "Unigrão" já conhecido (ver Bloco 2) foi pinpointado com precisão nova: introduzido em `ac0ec1b` (INC-001), corrigido em `9cc9b0f` (2026-08-13) — não sobrevive a HEAD.
+
+**Repositório novo:** `https://github.com/ckpedrocatrinck/conecta`, criado público, sem README/license/gitignore automáticos. `main` enviada primeiro (sem `--force`), seguida de `inc-025-servico-app-compose` e `inc-026-push-service-worker` (sem cópia remota na conta nova, por isso enviadas mesmo não mergeadas); `inc-027-preparacao-repositorio-publico` **não** enviada (já mergeada, seria ruído). `main` confirmada como branch padrão.
+
+**Correções de vitrine feitas neste bloco, antes e depois do push:** link de perfil do README (`github.com/pedromcatrinck`, conta antiga sem acesso) trocado por LinkedIn; commit de screenshots faltantes (`docs/06-Design/screenshots/`, sem elas o README publicado ficaria com imagens quebradas) e arte final de branding (favicon/logo); ajuste de `.env.example` (removido e-mail pessoal do `VAPID_SUBJECT` de exemplo) e de `.claude/settings.json` (permitir leitura de `.env.example` sem afrouxar o deny de `.env`/`.env.local` reais).
+
+**Incidente local sem impacto no repositório:** ao validar o fix do lockfile (ver seção seguinte) num container Docker com bind-mount, um `rm -rf node_modules` operou sobre o diretório real do Windows (não uma cópia isolada) e apagou parte do `node_modules` local antes de ser interrompido. `node_modules` está no `.gitignore` — nada versionado foi afetado — e foi restaurado via `npm ci` + `npx prisma generate`, com lint/typecheck/test (360/360) voltando a passar. Registrado por transparência, não por ter causado dano permanente.
+
+**Interferência de sessão concorrente:** durante a execução deste bloco, uma sessão paralela operou no mesmo checkout local e no mesmo `origin`, sem coordenação direta com esta sessão — criou branches próprias (`fix-readme-clone-url-conta-antiga`, `docs-registro-conclusao-inc027-ci-fix`), corrigiu de forma independente a URL de clone do README (linha 88, mesma conta antiga) e escreveu a seção seguinte deste registro. Nenhum trabalho foi perdido (verificado via `git reflog`); a branch órfã que essa sessão deixou no checkout local (`fix-ci-lockfile-windows-e-actions-node24`, já mergeada) foi removida a pedido do Pedro. Fica registrado como risco operacional, não como decisão de arquitetura: duas sessões escrevendo no mesmo repositório sem coordenação podem colidir.
+
 ### CI vermelho no primeiro run do repositório novo e URLs de conta antiga — 2026-08-14
 
 **Causa raiz do CI vermelho (`quality`, `npm ci`, exit 1) — DP-41.** `c994642` (Bloco 5, hook de pre-commit) rodou `npm install husky --save-dev` fora do container Linux exigido pela regra 6 (`convencoes-git.md`), derrubando de novo as entradas top-level `@emnapi/core@1.11.2`/`@emnapi/runtime@1.11.2` do lock (regressão da DP-21, quarta ocorrência — histórico e opções de trava registrados em DP-41). `npm run lint`/`typecheck`/`test` locais não pegam isso: reaproveitam o `node_modules` já instalado, e mesmo um `npm ci` local no Windows não reproduz o sintoma, porque a dependência que some é exclusiva do binário wasm32-wasi do Linux — só aparece num `npm ci` de verdade num runner Linux. **Corrigido:** lock regenerado via `docker run --rm -v <dir>:/app -w /app node:22 npm install --package-lock-only` (diff limitado às entradas `@emnapi/*` e à remoção de metadado `peer` espúrio, sem bump de versão de pacote) — `1038caf`/`7f71ae6`.
@@ -466,6 +500,36 @@ Padrão comum aos 5: nenhum foi pego por "suíte verde" — cada um exigia olhar
 **URLs de conta antiga (`github.com/pedromcatrinck`).** Varredura por `pedromcatrinck` no repo, a pedido do Pedro: (1) link de perfil no README — já corrigido em `a82cd0d` (linkedin); (2) comando `git clone` no README (linha 88) — ainda apontava pra conta antiga sem acesso; corrigido para `github.com/ckpedrocatrinck/conecta` (`27400fc`/merge `c62aaca`); (3) `ADR-012` (linha 18) e `INC-001` — Registro de Conclusão (linhas 36-37) citam a URL antiga como **fato histórico** (contexto da decisão de tornar o repo público; estado do repo em 2026-07-09) — mantidos sem alteração, mesmo critério da tabela do Apêndice A ("Pedro Catrinck — manter, é o portfólio"): não é vínculo a corrigir, é registro do que era verdade no momento.
 
 **Achado não resolvido, reportado ao Pedro:** o cabeçalho deste INC (linha 5) e a Regra de execução (linha 20-21) declaram o repositório **privado até o Bloco 6**, mas o `origin` já aponta para `github.com/ckpedrocatrinck/conecta` (não `pedromcatrinck`) e o CI já rodou publicamente neste run — ou seja, o Bloco 6 (ou ao menos o passo 1, criar repositório novo e enviar o histórico) parece já ter acontecido, sem que o status deste arquivo tenha sido atualizado. Não alterado aqui — decidir se o Bloco 6 já ocorreu (e então atualizar status/checklist) é decisão do Pedro, fora do escopo desta correção de CI.
+
+**Resolução do achado acima:** confirmado — o Bloco 6 estava em execução (nesta sessão) no momento em que a sessão concorrente escreveu a nota anterior. Status do cabeçalho e roadmap corrigidos abaixo.
+
+### Encerramento do INC-027 — 2026-08-14
+
+**Repositório publicado:** `https://github.com/ckpedrocatrinck/conecta`, público, `main` como branch padrão. HEAD de `main` no momento em que este registro foi escrito: `1f77969` (o commit deste próprio registro, mergeado logo em seguida, é o último ato do INC).
+
+**Duas exceções aos critérios de aceite originais, ambas por mudança de circunstância (Pedro perdeu acesso à conta GitHub antiga durante o INC) — nenhuma é desvio silencioso:**
+1. **"Repositório antigo deletado"** — **não cumprido, sem previsão.** O repositório antigo (privado, histórico original) ficou inacessível quando o Pedro perdeu a conta que o hospedava. Não há caminho técnico para deletá-lo a partir da conta nova. Fora do escopo deste INC a partir de agora — não é um passo pendente, é um passo que deixou de ser executável.
+2. **"Bundle offline verificado antes de o repo antigo ser deletado"** — **decisão revertida em relação ao plano original.** O plano original previa destruir o bundle cifrado (`C:\backups\inc027\conecta-pre-rewrite.zip`) depois de confirmar o repo novo funcional, já que ele seria redundante com o repositório antigo. Como o repositório antigo é inacessível, o bundle é hoje a **única cópia existente** do histórico original (pré-`filter-repo`) do projeto — decisão explícita do Pedro (mensagem de abertura do Bloco 6) de **não o destruir**. Ele já foi verificado na criação (Bloco 1); permanece em `C:\backups\inc027\`, fora do repositório ativo.
+
+**Resíduo "Unigrão":** aceito como está (ver Bloco 2 e Bloco 6 acima) — termo de produto de terceiro, não identificador do cliente-piloto nem do autor, isolado a um commit antigo fora do HEAD. Localização exata agora documentada: introduzido em `ac0ec1b`, corrigido em `9cc9b0f`.
+
+**Trava contra `prisma migrate dev`:** cobertura parcial mantida como está — `npm run db:migrate:dev` bloqueia, `npx prisma migrate dev` direto não. Ver DP-40 para o detalhe completo e a decisão de não fechar essa lacuna neste INC.
+
+**Incidente de CI (quarta ocorrência da DP-21) — DP-41 registrada e propositalmente deixada ABERTA.** O `package-lock.json` quebrou de novo (`c994642`, Bloco 5) exatamente pelo mecanismo que a DP-21 já tinha diagnosticado e "resolvido" em 2026-08-05 — a diferença desta vez é que a regra 6 (`convencoes-git.md`) já existia e foi violada mesmo assim, o que expôs a lacuna real: o procedimento correto depende inteiramente de alguém lembrar de segui-lo, sem nenhum mecanismo técnico que force isso. Corrigido neste bloco (lockfile regenerado, CI real verificado verde). **DP-41 não foi fechada** — ela registra 3 opções de trava avaliadas (hook local via Docker, job de CI dedicado, flags `--os`/`--cpu` do npm) com custo e efetividade de cada, e a escolha entre elas é do Pedro, feita fora deste INC.
+
+**Balanço final de bugs/incidentes encontrados durante o INC-027** (nenhum fazia parte do escopo original de "higiene de repositório"):
+1. Middleware tratando `/banners/`/`/branding/` como slug de tenant (Bloco 3.5) — produto.
+2. Proporção do banner de Aparência cortando até ~40% da arte (Bloco 3.6) — produto.
+3. `publish_at` nunca gravado na publicação imediata (Bloco 3.9) — produto.
+4. Versão confirmada não exposta na leitura do comunicado (Bloco 3.12) — produto.
+5. README/`CLAUDE.md` recomendando `prisma migrate dev`, proibido pelo ADR-008 (Bloco 3.11/DP-40) — documentação operacional.
+6. `package-lock.json` dessincronizado quebrando o primeiro CI do repositório público (Bloco 6/DP-41) — processo/infraestrutura, quarta ocorrência da mesma causa-raiz da DP-21.
+
+Padrão: nenhum dos 6 foi pego por "suíte verde" — cada um só aparecia olhando a tela renderizada, o dado gravado, a documentação operacional ou (no caso do 6º) um ambiente Linux real em vez do Windows de desenvolvimento.
+
+**Ações manuais pendentes (Pedro, fora do que este INC pode automatizar):** fixar o repositório no perfil do GitHub; conferir a renderização do README na página do repositório (imagens, links internos); adicionar topics/description no GitHub; inserir o link do repositório no CV/LinkedIn.
+
+**INC-027 encerrado.** Critérios de aceite: todos cumpridos exceto os dois listados acima como exceção registrada, não como pendência aberta.
 
 ---
 
